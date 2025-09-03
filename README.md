@@ -45,6 +45,7 @@ Aquí voy a documentarles toda la creación del proyecto.
 # **Dependencias que se vayan agregando**
     ```
     npm install react-router-dom
+    npm install --save chart.js react-chartjs-2
     ```
 
 # Recomendaciones

@@ -1,6 +1,6 @@
 
 
-const Home = () => {
+function Home(){
     return (
         <div>
             <h1>Bienvenido a Aprendizaje Adaptativo</h1>
