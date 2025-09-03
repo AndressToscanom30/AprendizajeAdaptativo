@@ -16,7 +16,7 @@ const Navbar = () => {
     }, []);
 
     const navItems = [
-        { name: 'Home', href: '#home' },
+        { name: 'Home', href: '/' },
         { name: 'Sobre Nosotros', href: '#about' },
         { name: 'Contáctanos', href: '#contact' }
     ];
@@ -69,7 +69,7 @@ const Navbar = () => {
                         <button onClick={() => navigate('/login')} className="relative px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg border border-gray-300 hover:border-gray-400 transition-all duration-300 hover:shadow-sm">
                             Iniciar Sesión
                         </button>
-                        <button className="relative px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 overflow-hidden group">
+                        <button onClick={() => navigate('/register')}className="relative px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 overflow-hidden group">
                             <span className="relative z-10">Registrarse</span>
                             <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </button>
