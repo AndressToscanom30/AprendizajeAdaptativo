@@ -40,5 +40,6 @@ Aquí voy a documentarles toda la creación del proyecto, pero solo tendrán que
     ```bash
     npm run dev
     ```
+    En caso de algún error, hacer "npm install vite"
 
 ¡Listo! Ahora puedes usar clases de Tailwind en tus componentes React.
