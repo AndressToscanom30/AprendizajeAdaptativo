@@ -53,7 +53,7 @@ function Login() {
           </form>
           <div className="mt-6 text-center text-sm">
             ¿No tienes cuenta?{" "}
-            <a href="#" className="text-blue-600 font-semibold hover:underline">
+            <a href="/register" className="text-blue-600 font-semibold hover:underline">
               Regístrate aquí
             </a>
           </div>
