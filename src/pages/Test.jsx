@@ -1,9 +1,7 @@
-
-
 function Test(){
     return(
         <div>
-            <h1 className="h-10 bg-amber-200 text-center text-2xl text-white">Ejemplo de gráficos con ChartJS</h1>
+            <h1 className="h-10 bg-amber-200 text-center mt-20 text-white">Ejemplo de gráficos con ChartJS</h1>
             <section className="h-100 border-2">
                 <h3>Ejemplo 1: Gráfico de líneas</h3>
             </section>
