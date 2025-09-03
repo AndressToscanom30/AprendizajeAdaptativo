@@ -1,10 +1,15 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Navbar from "./components/Navbar";
 
-
-function App(){
-  return(
-    <div>
-      <h1 className="text-blue-400">Hola, si el texto aparece en otro color diferente al negro es pq sirve el tailwind</h1>
-    </div>
+const App = () => {
+  return( 
+    <BrowserRouter>
+    <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
