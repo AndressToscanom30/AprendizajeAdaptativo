@@ -3,7 +3,6 @@ import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
 import Test from "./pages/Test";
 import Login from "./pages/Login"
-import Register from "./pages/Register"
 
 
 function App(){
