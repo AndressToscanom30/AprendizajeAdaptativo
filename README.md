@@ -42,4 +42,10 @@ Aquí voy a documentarles toda la creación del proyecto, pero solo tendrán que
     ```
     En caso de algún error, hacer "npm install vite"
 
-¡Listo! Ahora puedes usar clases de Tailwind en tus componentes React.
+# **Dependencias que se vayan agregando**
+    ```
+    npm install react-router-dom
+    ```
+
+# Recomendaciones
+1. Instalar "Tailwind CSS IntelliSense" para VScode.
