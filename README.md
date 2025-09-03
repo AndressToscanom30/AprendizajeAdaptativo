@@ -1,6 +1,6 @@
 # Pasos para crear proyecto React con Vite y Tailwind CSS
 
-Aquí voy a documentarles toda la creación del proyecto, pero solo tendrán que seguir los pasos que tengan --*
+Aquí voy a documentarles toda la creación del proyecto.
 
 1. **Crear el proyecto con Vite**
     ```bash
