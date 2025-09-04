@@ -2,19 +2,15 @@ function Register() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f4f8fd]">
       <div className="bg-white rounded-2xl shadow-lg px-8 py-8 w-full max-w-md flex flex-col items-center">
-        {/* Logo pequeño y centrado */}
         <img
           src="/AA-logo.png"
-          alt="Logo Aprendizaje Adaptativo"
-          className="w-16 h-16 object-contain mb-4"
+          className="w-50 h-50 object-contain mb-4"
         />
-        {/* Título */}
         <div className="text-center mb-6">
           <h2 className="text-base font-normal text-gray-800">
             Únete y comienza tu experiencia de aprendizaje adaptativo
           </h2>
         </div>
-        {/* Formulario */}
         <form className="w-full">
           <div className="flex gap-3 mb-4">
             <div className="w-1/2">
@@ -69,7 +65,7 @@ function Register() {
             <input
               id="confirm-password"
               type="password"
-              placeholder="Confirme ps"
+              placeholder="Confirmar contraseña"
               className="register-input w-full px-3 py-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
             />
           </div>

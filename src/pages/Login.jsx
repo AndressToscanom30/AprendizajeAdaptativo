@@ -5,7 +5,6 @@ function Login() {
         <div className="bg-white rounded-2xl shadow-lg p-12 flex items-center justify-center">
           <img
             src="/AA-logo.png"
-            alt="Logo Aprendizaje Adaptativo"
             className="w-[220px] h-[220px] object-contain"
           />
         </div>
