@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, ProtectedRoute } from "react-router-dom";
 import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
 import Test from "./pages/Test";
@@ -22,6 +22,7 @@ function App(){
         <Route path="/contact" element={<Contact/>}/>
         
         {/*Rutas para los usuarios con cuenta*/}
+        
         
         <Route path="*" element={<NotFound/>} />
       </Routes>
