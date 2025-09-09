@@ -21,6 +21,7 @@ function App(){
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact/>}/>
         
+        {/*Rutas para los usuarios con cuenta*/}
         
         <Route path="*" element={<NotFound/>} />
       </Routes>
