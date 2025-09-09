@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react"; // Añadimos useState para el menú móvil
+import { useState } from "react"; 
 
 const Navbar = () => {
     const navigate = useNavigate();
