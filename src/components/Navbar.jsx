@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react"; 
+import { useState } from "react";
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -68,8 +68,8 @@ const Navbar = () => {
                                 key={item.name}
                                 onClick={() => navigate(item.href)}
                                 className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${currentPath === item.href
-                                        ? "text-blue-600 bg-blue-50"
-                                        : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                                    ? "text-blue-600 bg-blue-50"
+                                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
                                     }`}
                             >
                                 {item.name}
@@ -84,8 +84,8 @@ const Navbar = () => {
                         <button
                             onClick={() => navigate("/login")}
                             className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-300 ${currentPath === "/login"
-                                    ? "bg-blue-600 text-white border-blue-700 shadow-md"
-                                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                                ? "bg-blue-600 text-white border-blue-700 shadow-md"
+                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
                                 }`}
                         >
                             Iniciar Sesión
@@ -93,8 +93,8 @@ const Navbar = () => {
                         <button
                             onClick={() => navigate("/register")}
                             className={`px-6 py-2 text-sm font-medium rounded-lg shadow-lg transition-all duration-300 ${currentPath === "/register"
-                                    ? "bg-purple-600 text-white"
-                                    : "bg-gradient-to-r from-blue-400 to-blue-600 text-white hover:from-blue-400 hover:to-blue-700"
+                                ? "bg-purple-600 text-white"
+                                : "bg-gradient-to-r from-blue-400 to-blue-600 text-white hover:from-blue-400 hover:to-blue-700"
                                 }`}
                         >
                             Registrarse
@@ -112,11 +112,10 @@ const Navbar = () => {
                                         navigate(item.href);
                                         setIsMenuOpen(false);
                                     }}
-                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                                        currentPath === item.href
+                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${currentPath === item.href
                                             ? "text-blue-600 bg-blue-50"
                                             : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                                    }`}
+                                        }`}
                                 >
                                     {item.name}
                                 </button>
@@ -129,11 +128,10 @@ const Navbar = () => {
                                     navigate("/login");
                                     setIsMenuOpen(false);
                                 }}
-                                className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-300 ${
-                                    currentPath === "/login"
+                                className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-300 ${currentPath === "/login"
                                         ? "bg-blue-600 text-white border-blue-700"
                                         : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                                }`}
+                                    }`}
                             >
                                 Iniciar Sesión
                             </button>
@@ -142,11 +140,10 @@ const Navbar = () => {
                                     navigate("/register");
                                     setIsMenuOpen(false);
                                 }}
-                                className={`px-6 py-2 text-sm font-medium rounded-lg shadow-lg transition-all duration-300 ${
-                                    currentPath === "/register"
+                                className={`px-6 py-2 text-sm font-medium rounded-lg shadow-lg transition-all duration-300 ${currentPath === "/register"
                                         ? "bg-purple-600 text-white"
                                         : "bg-gradient-to-r from-blue-400 to-blue-600 text-white hover:from-blue-400 hover:to-blue-700"
-                                }`}
+                                    }`}
                             >
                                 Registrarse
                             </button>
