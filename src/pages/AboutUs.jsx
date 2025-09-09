@@ -4,7 +4,6 @@
 function AboutUs() {
     return (
         <div>
-            {/* Hero Section */}
             <div className="bg-white">
                 <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row items-center justify-between">
                     <div className="md:w-1/2 text-left md:ml-10 mb-8 md:mb-0">
@@ -27,7 +26,6 @@ function AboutUs() {
                 </div>
             </div>
 
-            {/* Misión, Visión y Valores */}
             <div className="bg-gray-50 py-12">
                 <div className="container mx-auto px-4 max-w-4xl">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
@@ -53,7 +51,6 @@ function AboutUs() {
                 </div>
             </div>
 
-            {/* Equipo */}
             <div className="bg-white py-16">
                 <div className="container mx-auto px-4 max-w-4xl">
                     <h2 className="text-2xl font-bold text-center mb-8">Nuestro Equipo</h2>
@@ -66,18 +63,17 @@ function AboutUs() {
                         <div className="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-sm">
                             <img src="/Baljeet.png" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
                             <h4 className="font-semibold text-blue-600">Yeremy Silva</h4>
-                            <p className="text-sm text-gray-600">Backend/IA</p>
+                            <p className="text-sm text-gray-600">Bobo Hijueputa (Adjetivo CALIFICATIVO)</p>
                         </div>
                         <div className="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-sm">
                             <img src="/Phineas.webp" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
-                            <h4 className="font-semibold text-blue-600">Keivercito</h4>
-                            <p className="text-sm text-gray-600">Gay</p>
+                            <h4 className="font-semibold text-blue-600">Keiver Castellanos</h4>
+                            <p className="text-sm text-gray-600">Lider y Arquitecto</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* CTA final */}
             <div className="bg-blue-50 py-12">
                 <div className="container mx-auto px-4 text-center">
                     <h2 className="text-2xl font-bold mb-4 text-blue-600">¿Quieres formar parte de nuestra comunidad?</h2>
