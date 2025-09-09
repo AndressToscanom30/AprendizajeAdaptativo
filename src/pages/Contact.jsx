@@ -2,10 +2,10 @@
 function Contact() {
     return (
         <div>
-            {/* Hero Contact */}
+            
             <div className="bg-white">
-                <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row items-center justify-between">
-                    <div className="md:w-1/2 text-left md:ml-10 mb-8 md:mb-0">
+                <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="w-full md:w-1/2 text-left md:ml-10 mb-8 md:mb-0">
                         <h1 className="text-4xl font-bold mb-2">¡Hablemos!</h1>
                         <p className="text-gray-600 mb-4 max-w-lg">
                             ¿Tienes dudas, sugerencias o quieres colaborar con nosotros? Nuestro equipo está listo para escucharte y ayudarte.
@@ -28,20 +28,20 @@ function Contact() {
                             <a href="https://instagram.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Instagram</a>
                         </div>
                     </div>
-                    <div className="flex-1 flex justify-center md:w-1/2">
+                    <div className="w-full flex justify-center md:w-1/2">
                         <img
                             src="/AA-logo.png"
                             alt="Logo Aprendizaje Adaptativo"
-                            className="max-w-[260px] w-full object-contain rounded-2xl shadow-md"
+                            className="max-w-[200px] sm:max-w-[260px] w-full object-contain rounded-2xl shadow-md"
                         />
                     </div>
                 </div>
             </div>
 
-                    {/* Formulario */}
+                    
                     <div className="bg-gray-50 py-12">
                         <div className="container mx-auto px-4 max-w-2xl">
-                            <div className="bg-white p-8 rounded-lg shadow-lg">
+                            <div className="bg-white p-4 sm:p-8 rounded-lg shadow-lg">
                                 <h2 className="text-xl font-bold text-blue-600 mb-4">Envíanos un mensaje</h2>
                                 <form className="w-full">
                                     <div className="mb-4">
@@ -63,7 +63,7 @@ function Contact() {
                     </div>
 
 
-            {/* CTA final */}
+            
             <div className="bg-blue-50 py-12">
                 <div className="container mx-auto px-4 text-center">
                     <h2 className="text-2xl font-bold mb-4 text-blue-600">¿Listo para aprender con nosotros?</h2>
