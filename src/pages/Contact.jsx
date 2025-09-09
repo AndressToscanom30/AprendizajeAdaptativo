@@ -78,7 +78,6 @@ function Contact() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 relative overflow-hidden">
-            {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden">
                 <div
                     className="absolute -top-40 -right-40 w-96 h-96 bg-blue-100 rounded-full opacity-30 blur-3xl"
@@ -111,7 +110,6 @@ function Contact() {
                 </div>
             </div>
 
-            {/* Hero Section */}
             <div className="relative z-10">
                 <div className="min-h-screen flex items-center">
                     <div className="container mx-auto px-4 py-8">
@@ -181,7 +179,6 @@ function Contact() {
                     </div>
                 </div>
 
-                {/* Contact Info Cards */}
                 <div className="py-20 bg-white/70 backdrop-blur-sm">
                     <div className="container mx-auto px-4">
                         <div className="max-w-6xl mx-auto">
@@ -229,7 +226,6 @@ function Contact() {
                                 ))}
                             </div>
 
-                            {/* Social Links */}
                             <div className="text-center">
                                 <h3 className="text-xl font-semibold text-slate-800 mb-6">Síguenos en redes sociales</h3>
                                 <div className="flex justify-center gap-6 flex-wrap">
@@ -255,7 +251,6 @@ function Contact() {
                     </div>
                 </div>
 
-                {/* Contact Form */}
                 <div className="py-20 bg-gradient-to-br from-blue-50 to-slate-50">
                     <div className="container mx-auto px-4">
                         <div className="max-w-3xl mx-auto">
@@ -344,7 +339,6 @@ function Contact() {
                     </div>
                 </div>
 
-                {/* CTA Section */}
                 <div className="py-20 bg-white/70 backdrop-blur-sm">
                     <div className="container mx-auto px-4">
                         <div className="max-w-4xl mx-auto text-center">
