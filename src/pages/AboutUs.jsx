@@ -58,17 +58,17 @@ function AboutUs() {
                         <div className="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-sm">
                             <img src="/Ferb.webp" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
                             <h4 className="font-semibold text-blue-600">Andres Toscano</h4>
-                            <p className="text-sm text-gray-600">Frontend/UX</p>
+                            <p className="text-sm text-gray-600 text-center">Frontend/UX</p>
                         </div>
                         <div className="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-sm">
                             <img src="/Baljeet.png" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
                             <h4 className="font-semibold text-blue-600">Yeremy Silva</h4>
-                            <p className="text-sm text-gray-600">Bobo Hijueputa (Adjetivo CALIFICATIVO)</p>
+                            <p className="text-sm text-gray-600 text-center">Bobo Hijueputa (Adjetivo CALIFICATIVO)</p>
                         </div>
                         <div className="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-sm">
                             <img src="/Phineas.webp" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
                             <h4 className="font-semibold text-blue-600">Keiver Castellanos</h4>
-                            <p className="text-sm text-gray-600">Lider y Arquitecto</p>
+                            <p className="text-sm text-gray-600 text-center">Lider y Arquitecto</p>
                         </div>
                     </div>
                 </div>
