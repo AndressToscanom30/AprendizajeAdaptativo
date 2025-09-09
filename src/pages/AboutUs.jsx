@@ -59,17 +59,17 @@ function AboutUs() {
                     <h2 className="text-2xl font-bold text-center mb-8">Nuestro Equipo</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <div className="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-sm">
-                            <img src="/AA-logo.png" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
+                            <img src="/Ferb.webp" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
                             <h4 className="font-semibold text-blue-600">Andres Toscano</h4>
                             <p className="text-sm text-gray-600">Frontend/UX</p>
                         </div>
                         <div className="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-sm">
-                            <img src="/AA-logo.png" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
+                            <img src="/Baljeet.png" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
                             <h4 className="font-semibold text-blue-600">Yeremy Silva</h4>
                             <p className="text-sm text-gray-600">Backend/IA</p>
                         </div>
                         <div className="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-sm">
-                            <img src="/AA-logo.png" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
+                            <img src="/Phineas.webp" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
                             <h4 className="font-semibold text-blue-600">Keivercito</h4>
                             <p className="text-sm text-gray-600">Gay</p>
                         </div>
