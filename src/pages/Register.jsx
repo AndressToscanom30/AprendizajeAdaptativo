@@ -1,10 +1,11 @@
 function Register() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f4f8fd]">
-      <div className="bg-white rounded-2xl shadow-lg px-8 py-8 w-full max-w-md flex flex-col items-center">
+    <div className="min-h-screen flex items-center justify-center bg-[#f4f8fd] px-2 sm:px-0">
+      <div className="bg-white rounded-2xl shadow-lg px-4 sm:px-8 py-8 w-full max-w-md flex flex-col items-center">
         <img
           src="/AA-logo.png"
-          className="w-50 h-50 object-contain mb-4"
+          className="w-32 h-32 sm:w-40 sm:h-40 object-contain mb-4"
+          alt="Logo Aprendizaje Adaptativo"
         />
         <div className="text-center mb-6">
           <h2 className="text-base font-normal text-gray-800">
@@ -12,8 +13,8 @@ function Register() {
           </h2>
         </div>
         <form className="w-full">
-          <div className="flex gap-3 mb-4">
-            <div className="w-1/2">
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="w-full sm:w-1/2">
               <label className="block text-gray-700 mb-1" htmlFor="nombre">
                 Nombre
               </label>
@@ -24,7 +25,7 @@ function Register() {
                 className="register-input w-full px-3 py-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
               />
             </div>
-            <div className="w-1/2">
+            <div className="w-full sm:w-1/2">
               <label className="block text-gray-700 mb-1" htmlFor="apellidos">
                 Apellidos
               </label>

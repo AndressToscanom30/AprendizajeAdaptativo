@@ -1,14 +1,15 @@
 function Login() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f4f8fd]">
-      <div className="flex gap-12">
-        <div className="bg-white rounded-2xl shadow-lg p-12 flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-[#f4f8fd] px-2 sm:px-0">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-12 w-full max-w-3xl items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 flex items-center justify-center w-full md:w-auto mb-6 md:mb-0">
           <img
             src="/AA-logo.png"
-            className="w-[220px] h-[220px] object-contain"
+            className="w-40 h-40 sm:w-[220px] sm:h-[220px] object-contain"
+            alt="Logo Aprendizaje Adaptativo"
           />
         </div>
-        <div className="bg-white rounded-2xl shadow-lg p-10 w-[350px] flex flex-col justify-center">
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-10 w-full max-w-xs sm:max-w-sm flex flex-col justify-center">
           <form>
             <div className="mb-4">
               <label className="block text-gray-700 mb-1" htmlFor="email">

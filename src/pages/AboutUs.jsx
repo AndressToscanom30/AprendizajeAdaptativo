@@ -5,8 +5,8 @@ function AboutUs() {
     return (
         <div>
             <div className="bg-white">
-                <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row items-center justify-between">
-                    <div className="md:w-1/2 text-left md:ml-10 mb-8 md:mb-0">
+                <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="w-full md:w-1/2 text-left md:ml-10 mb-8 md:mb-0">
                         <h1 className="text-4xl font-bold mb-2">Conócenos</h1>
                         <p className="text-gray-600 mb-4 max-w-lg">
                             En Aprendizaje Adaptativo creemos que la educación debe ser personalizada, inclusiva y emocionante. Nuestra misión es transformar la manera en que las personas aprenden, conectando tecnología, pasión y comunidad.
@@ -16,11 +16,11 @@ function AboutUs() {
                             <a href="/register" className="text-gray-700 px-6 py-2 rounded-lg border hover:bg-gray-50">Únete</a>
                         </div>
                     </div>
-                    <div className="flex-1 flex justify-center md:w-1/2">
+                    <div className="w-full flex justify-center md:w-1/2">
                         <img
                             src="/AA-logo.png"
                             alt="Logo Aprendizaje Adaptativo"
-                            className="max-w-[260px] w-full object-contain rounded-2xl shadow-md"
+                            className="max-w-[200px] sm:max-w-[260px] w-full object-contain rounded-2xl shadow-md"
                         />
                     </div>
                 </div>
@@ -28,7 +28,7 @@ function AboutUs() {
 
             <div className="bg-gray-50 py-12">
                 <div className="container mx-auto px-4 max-w-4xl">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 text-center">
                         <div className="bg-white p-6 rounded-lg shadow-sm">
                             <h3 className="text-xl font-bold text-blue-600 mb-2">Misión</h3>
                             <p className="text-gray-600 text-sm">Empoderar a cada persona para que alcance su máximo potencial a través de experiencias de aprendizaje adaptativas y tecnológicas.</p>
@@ -54,7 +54,7 @@ function AboutUs() {
             <div className="bg-white py-16">
                 <div className="container mx-auto px-4 max-w-4xl">
                     <h2 className="text-2xl font-bold text-center mb-8">Nuestro Equipo</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
                         <div className="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-sm">
                             <img src="/Ferb.webp" alt="Miembro del equipo" className="w-20 h-20 object-contain rounded-full mb-4" />
                             <h4 className="font-semibold text-blue-600">Andres Toscano</h4>
