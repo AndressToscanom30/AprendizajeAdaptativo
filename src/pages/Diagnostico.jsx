@@ -286,7 +286,6 @@ function Diagnostico() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 bg-[#155dfc] text-white px-4 py-2 rounded-full mb-4">
               <Code className="w-5 h-5" />
@@ -296,7 +295,6 @@ function Diagnostico() {
             <p className="text-slate-600">Evalúa tus conocimientos fundamentales de programación</p>
           </div>
 
-          {/* Progress Bar */}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-medium text-slate-600">Progreso del Test</span>
@@ -311,7 +309,6 @@ function Diagnostico() {
               ></div>
             </div>
             
-            {/* Question Navigation */}
             <div className="flex flex-wrap gap-2">
               {questions.map((_, index) => {
                 const isAnswered = userAnswers.some(answer => answer.questionId === questions[index].id);
@@ -335,7 +332,6 @@ function Diagnostico() {
             </div>
           </div>
 
-          {/* Question Card */}
           <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4">
@@ -381,7 +377,6 @@ function Diagnostico() {
             </div>
           </div>
 
-          {/* Navigation */}
           <div className="flex justify-between items-center">
             <button
               onClick={handlePrevious}
