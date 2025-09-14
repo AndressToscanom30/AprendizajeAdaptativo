@@ -38,6 +38,21 @@ function Register() {
             </div>
           </div>
           <div className="mb-4">
+            <label className="block text-gray-700 mb-1" htmlFor="rol">
+              Rol
+            </label>
+            <select
+              id="rol"
+              className="register-input w-full px-3 py-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+              defaultValue=""
+            >
+              <option value="" disabled>Selecciona tu rol</option>
+              <option value="estudiante">Estudiante</option>
+              <option value="docente">Docente</option>
+              <option value="administrador">Administrador</option>
+            </select>
+          </div>
+          <div className="mb-4">
             <label className="block text-gray-700 mb-1" htmlFor="email">
               Correo electrónico
             </label>
