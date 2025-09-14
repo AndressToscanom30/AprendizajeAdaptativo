@@ -51,6 +51,9 @@ function Login() {
               <span className="ml-1">→</span>
             </button>
           </form>
+          <div className="text-center mt-6 text-sm">
+            <a href="/recuperarPass" className="text-blue-600 hover:underline">¿Olvidaste tu contraseña?</a>
+          </div>
           <div className="mt-6 text-center text-sm">
             ¿No tienes cuenta?{" "}
             <a href="/register" className="text-blue-600 font-semibold hover:underline">
