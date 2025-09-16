@@ -47,6 +47,7 @@ Aquí voy a documentarles toda la creación del proyecto.
     npm install react-router-dom
     npm install --save chart.js react-chartjs-2
     npm install lucide-react
+    npm i react-google-recaptcha
     ```
 
 # Recomendaciones
