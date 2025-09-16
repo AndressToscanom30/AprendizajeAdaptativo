@@ -106,7 +106,7 @@ function Home() {
 
                                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                                     <button
-                                        onClick={() => navigate("/test")}
+                                        onClick={() => navigate("/diagnostico")}
                                         className="group relative px-8 py-4 bg-blue-600 text-white font-medium text-lg rounded-xl transition-all duration-300 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-200 hover:-translate-y-1"
                                     >
                                         <span className="flex items-center justify-center gap-3">
@@ -219,7 +219,7 @@ function Home() {
                                 </p>
 
                                 <button
-                                    onClick={() => navigate("/test")}
+                                    onClick={() => navigate("/diagnostico")}
                                     className="group relative px-12 py-5 bg-blue-600 text-white font-medium text-xl rounded-2xl transition-all duration-300 hover:bg-blue-700 hover:shadow-2xl hover:shadow-blue-200 hover:-translate-y-2"
                                 >
                                     <span className="flex items-center justify-center gap-4">

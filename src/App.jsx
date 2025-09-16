@@ -10,24 +10,21 @@ import NotFound from "./pages/NotFound";
 import Diagnostico from "./pages/Diagnostico";
 
 
-function App(){
-  return( 
+function App() {
+  return (
     <BrowserRouter>
-    <Navbar />
+      <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/about" element={<AboutUs />} />
-        <Route path="/contact" element={<Contact/>}/>
+        <Route path="/contact" element={<Contact />} />
 
-        
-        {/*Rutas para los usuarios con cuenta*/}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/diagnostico" element={<Diagnostico />} />
-        
-        
-        <Route path="*" element={<NotFound/>} />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )

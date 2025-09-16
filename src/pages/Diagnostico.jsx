@@ -1,126 +1,359 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle, Circle, Code, Trophy, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight, CheckCircle, Circle, Code, Trophy, RotateCcw, Play, Terminal, Lightbulb, Zap, Brain, Target } from 'lucide-react';
+
+const CodeEditor = ({ code, onChange, language = 'javascript', readOnly = false }) => {
+  const textareaRef = useRef(null);
+  
+  const handleKeyDown = (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = e.target.selectionStart;
+      const end = e.target.selectionEnd;
+      const newValue = code.substring(0, start) + '  ' + code.substring(end);
+      onChange(newValue);
+      setTimeout(() => {
+        e.target.selectionStart = e.target.selectionEnd = start + 2;
+      }, 0);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <div className="bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
+        <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+          </div>
+          <span className="text-slate-400 text-sm font-mono">{language}</span>
+        </div>
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            value={code}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            readOnly={readOnly}
+            className="w-full h-40 p-4 bg-slate-900 text-green-400 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+            style={{ lineHeight: '1.5' }}
+            spellCheck={false}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CodeOutput = ({ output, isError = false, isLoading = false }) => {
+  return (
+    <div className="bg-slate-900 rounded-lg border border-slate-700 mt-4">
+      <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+        <Terminal className="w-4 h-4 text-slate-400" />
+        <span className="text-slate-400 text-sm font-mono">Salida</span>
+        {isLoading && (
+          <div className="ml-auto">
+            <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+          </div>
+        )}
+      </div>
+      <div className="p-4">
+        {isLoading ? (
+          <div className="text-slate-400 font-mono text-sm">Ejecutando código...</div>
+        ) : (
+          <pre className={`font-mono text-sm whitespace-pre-wrap ${
+            isError ? 'text-red-400' : 'text-green-400'
+          }`}>
+            {output || 'Presiona "Ejecutar" para ver el resultado'}
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const questions = [
   {
     id: 1,
-    question: "¿Cuál es la diferencia principal entre una variable y una constante?",
-    options: [
-      "Las variables pueden cambiar su valor, las constantes no",
-      "Las constantes son más rápidas que las variables",
-      "No hay diferencia, son sinónimos",
-      "Las variables solo almacenan números"
+    type: 'coding',
+    question: "Crea una función que salude a una persona",
+    description: "Escribe una función llamada 'saludar' que reciba un nombre como parámetro y retorne un saludo personalizado.",
+    initialCode: `function saludar(nombre) {
+  // Tu código aquí
+  
+}
+
+// Prueba tu función
+console.log(saludar("Ana"));`,
+    solution: `function saludar(nombre) {
+  return "¡Hola, " + nombre + "!";
+}
+
+// Prueba tu función
+console.log(saludar("Ana"));`,
+    expectedOutput: "¡Hola, Ana!",
+    hints: [
+      "Usa 'return' para devolver el resultado",
+      "Puedes concatenar strings con el operador '+'",
+      "No olvides usar el parámetro 'nombre' en tu función"
     ],
-    correctAnswer: 0,
-    explanation: "Las variables pueden modificar su valor durante la ejecución del programa, mientras que las constantes mantienen el mismo valor."
+    explanation: "Las funciones nos permiten encapsular código reutilizable. En este caso, creamos una función que toma un parámetro y retorna un valor calculado."
   },
   {
     id: 2,
-    question: "¿Qué hace un bucle 'for'?",
-    options: [
-      "Ejecuta código una sola vez",
-      "Repite un bloque de código un número específico de veces",
-      "Solo funciona con números pares",
-      "Elimina variables de la memoria"
+    type: 'coding',
+    question: "Suma de números en un array",
+    description: "Crea una función que calcule la suma de todos los números en un array.",
+    initialCode: `function sumarArray(numeros) {
+  // Tu código aquí
+  
+}
+
+// Prueba tu función
+const miArray = [1, 2, 3, 4, 5];
+console.log(sumarArray(miArray));`,
+    solution: `function sumarArray(numeros) {
+  let suma = 0;
+  for (let i = 0; i < numeros.length; i++) {
+    suma += numeros[i];
+  }
+  return suma;
+}
+
+// Prueba tu función
+const miArray = [1, 2, 3, 4, 5];
+console.log(sumarArray(miArray));`,
+    expectedOutput: "15",
+    hints: [
+      "Inicializa una variable 'suma' en 0",
+      "Usa un bucle for para recorrer el array",
+      "Suma cada elemento al total"
     ],
-    correctAnswer: 1,
-    explanation: "Un bucle 'for' permite repetir un bloque de código un número determinado de veces, controlado por una condición."
+    explanation: "Los bucles nos permiten iterar sobre estructuras de datos como arrays. El bucle for es perfecto cuando conocemos la cantidad de iteraciones."
   },
   {
     id: 3,
-    question: "¿Cuál es el propósito de una función?",
-    options: [
-      "Ocupar más espacio en memoria",
-      "Hacer el código más lento",
-      "Organizar y reutilizar código",
-      "Solo para matemáticas complejas"
+    type: 'coding',
+    question: "Números pares e impares",
+    description: "Escribe una función que determine si un número es par o impar.",
+    initialCode: `function esParOImpar(numero) {
+  // Tu código aquí
+  
+}
+
+// Prueba tu función
+console.log(esParOImpar(4));
+console.log(esParOImpar(7));`,
+    solution: `function esParOImpar(numero) {
+  if (numero % 2 === 0) {
+    return "par";
+  } else {
+    return "impar";
+  }
+}
+
+// Prueba tu función
+console.log(esParOImpar(4));
+console.log(esParOImpar(7));`,
+    expectedOutput: "par\nimpar",
+    hints: [
+      "Usa el operador módulo (%) para obtener el resto de la división",
+      "Si el resto es 0, el número es par",
+      "Usa una estructura if-else para la lógica"
     ],
-    correctAnswer: 2,
-    explanation: "Las funciones permiten organizar el código en bloques reutilizables, mejorando la legibilidad y mantenimiento."
+    explanation: "El operador módulo (%) nos da el resto de una división. Es muy útil para determinar si un número es divisible por otro."
   },
   {
     id: 4,
-    question: "¿Qué es un array (arreglo)?",
-    options: [
-      "Un tipo de variable que solo almacena texto",
-      "Una colección ordenada de elementos",
-      "Un error en el programa",
-      "Una función especial"
+    type: 'coding',
+    question: "Encontrar el mayor número",
+    description: "Crea una función que encuentre el número mayor en un array.",
+    initialCode: `function encontrarMayor(numeros) {
+  // Tu código aquí
+  
+}
+
+// Prueba tu función
+const numeros = [3, 7, 2, 9, 1, 5];
+console.log(encontrarMayor(numeros));`,
+    solution: `function encontrarMayor(numeros) {
+  let mayor = numeros[0];
+  for (let i = 1; i < numeros.length; i++) {
+    if (numeros[i] > mayor) {
+      mayor = numeros[i];
+    }
+  }
+  return mayor;
+}
+
+// Prueba tu función
+const numeros = [3, 7, 2, 9, 1, 5];
+console.log(encontrarMayor(numeros));`,
+    expectedOutput: "9",
+    hints: [
+      "Inicializa 'mayor' con el primer elemento del array",
+      "Compara cada elemento con el valor actual de 'mayor'",
+      "Actualiza 'mayor' si encuentras un valor más grande"
     ],
-    correctAnswer: 1,
-    explanation: "Un array es una estructura de datos que permite almacenar múltiples elementos de forma ordenada y accesible por índice."
+    explanation: "Este algoritmo usa una técnica común: mantener el mejor valor encontrado hasta ahora y comparar cada nuevo elemento con él."
   },
   {
     id: 5,
-    question: "¿Cuál de estos NO es un tipo de dato básico?",
-    options: [
-      "String (cadena de texto)",
-      "Integer (número entero)",
-      "Boolean (verdadero/falso)",
-      "Loop (bucle)"
+    type: 'coding',
+    question: "Contador de vocales",
+    description: "Escribe una función que cuente cuántas vocales hay en una palabra.",
+    initialCode: `function contarVocales(palabra) {
+  // Tu código aquí
+  
+}
+
+// Prueba tu función
+console.log(contarVocales("programacion"));`,
+    solution: `function contarVocales(palabra) {
+  const vocales = "aeiouAEIOU";
+  let contador = 0;
+  
+  for (let i = 0; i < palabra.length; i++) {
+    if (vocales.includes(palabra[i])) {
+      contador++;
+    }
+  }
+  
+  return contador;
+}
+
+// Prueba tu función
+console.log(contarVocales("programacion"));`,
+    expectedOutput: "5",
+    hints: [
+      "Define una string con todas las vocales",
+      "Recorre cada carácter de la palabra",
+      "Usa el método includes() para verificar si es vocal"
     ],
-    correctAnswer: 3,
-    explanation: "Loop no es un tipo de dato, sino una estructura de control. Los tipos básicos incluyen string, integer, boolean, etc."
+    explanation: "Este ejercicio combina bucles, condicionales y métodos de string. El método includes() es muy útil para verificar si un elemento está en una colección."
   },
   {
     id: 6,
-    question: "¿Qué hace el operador '==' en la mayoría de lenguajes?",
+    type: 'multiple',
+    question: "¿Cuál es la diferencia entre '==' y '===' en JavaScript?",
     options: [
-      "Asigna un valor a una variable",
-      "Compara si dos valores son iguales",
-      "Suma dos números",
-      "Elimina una variable"
+      "No hay diferencia, son sinónimos",
+      "== compara valor, === compara valor y tipo",
+      "=== es más lento que ==",
+      "== solo funciona con números"
     ],
     correctAnswer: 1,
-    explanation: "El operador '==' se usa para comparar si dos valores son iguales, no para asignar valores (eso es '=')."
+    explanation: "== realiza conversión de tipos antes de comparar, mientras que === compara tanto el valor como el tipo sin conversión."
   },
   {
     id: 7,
-    question: "¿Cuál es la diferencia entre '++i' e 'i++'?",
-    options: [
-      "No hay diferencia",
-      "++i incrementa antes de usar, i++ incrementa después de usar",
-      "++i es más lento que i++",
-      "Solo funciona con números negativos"
+    type: 'coding',
+    question: "Tabla de multiplicar",
+    description: "Crea una función que genere la tabla de multiplicar de un número del 1 al 10.",
+    initialCode: `function tablaMultiplicar(numero) {
+  // Tu código aquí
+  
+}
+
+// Prueba tu función
+tablaMultiplicar(5);`,
+    solution: `function tablaMultiplicar(numero) {
+  for (let i = 1; i <= 10; i++) {
+    console.log(numero + " x " + i + " = " + (numero * i));
+  }
+}
+
+// Prueba tu función
+tablaMultiplicar(5);`,
+    expectedOutput: "5 x 1 = 5\n5 x 2 = 10\n5 x 3 = 15\n5 x 4 = 20\n5 x 5 = 25\n5 x 6 = 30\n5 x 7 = 35\n5 x 8 = 40\n5 x 9 = 45\n5 x 10 = 50",
+    hints: [
+      "Usa un bucle for del 1 al 10",
+      "Multiplica el número por cada valor del bucle",
+      "Usa console.log para mostrar cada resultado"
     ],
-    correctAnswer: 1,
-    explanation: "++i (pre-incremento) incrementa primero y luego devuelve el valor, i++ (post-incremento) devuelve el valor y luego incrementa."
+    explanation: "Los bucles son perfectos para tareas repetitivas como generar tablas de multiplicar. Cada iteración realiza el mismo cálculo con diferentes valores."
   },
   {
     id: 8,
-    question: "¿Qué es la recursión en programación?",
-    options: [
-      "Un error que se repite",
-      "Una función que se llama a sí misma",
-      "Un tipo de variable especial",
-      "Una forma de comentar código"
+    type: 'coding',
+    question: "Invertir una cadena",
+    description: "Escribe una función que invierta una cadena de texto.",
+    initialCode: `function invertirCadena(texto) {
+  // Tu código aquí
+  
+}
+
+// Prueba tu función
+console.log(invertirCadena("hola"));`,
+    solution: `function invertirCadena(texto) {
+  let resultado = "";
+  for (let i = texto.length - 1; i >= 0; i--) {
+    resultado += texto[i];
+  }
+  return resultado;
+}
+
+// Prueba tu función
+console.log(invertirCadena("hola"));`,
+    expectedOutput: "aloh",
+    hints: [
+      "Recorre la cadena desde el último carácter hasta el primero",
+      "Usa un bucle for con i-- para ir hacia atrás",
+      "Concatena cada carácter en una nueva string"
     ],
-    correctAnswer: 1,
-    explanation: "La recursión es cuando una función se invoca a sí misma para resolver un problema dividiéndolo en subproblemas más pequeños."
+    explanation: "Para invertir una cadena, recorremos desde el final hacia el principio. El índice texto.length - 1 nos da la posición del último carácter."
   },
   {
     id: 9,
-    question: "¿Cuál es el propósito del debugging?",
+    type: 'multiple',
+    question: "¿Qué es el scope (ámbito) de una variable?",
     options: [
-      "Hacer el código más rápido",
-      "Encontrar y corregir errores en el código",
-      "Añadir más funciones al programa",
-      "Cambiar el lenguaje de programación"
+      "El tipo de dato que puede almacenar",
+      "La región del código donde la variable es accesible",
+      "La cantidad de memoria que ocupa",
+      "La velocidad de acceso a la variable"
     ],
     correctAnswer: 1,
-    explanation: "El debugging es el proceso de identificar, analizar y corregir errores (bugs) en el código para que funcione correctamente."
+    explanation: "El scope determina dónde en el código una variable puede ser accedida. Puede ser global, de función, o de bloque."
   },
   {
     id: 10,
-    question: "¿Qué significa que un algoritmo sea eficiente?",
-    options: [
-      "Que sea muy largo y complejo",
-      "Que use muchas variables",
-      "Que resuelva el problema usando pocos recursos (tiempo/memoria)",
-      "Que solo funcione en ciertos ordenadores"
+    type: 'coding',
+    question: "Calculadora básica",
+    description: "Crea una función calculadora que realice operaciones básicas (+, -, *, /).",
+    initialCode: `function calculadora(num1, operador, num2) {
+  // Tu código aquí
+  
+}
+
+// Prueba tu función
+console.log(calculadora(10, "+", 5));
+console.log(calculadora(10, "*", 3));`,
+    solution: `function calculadora(num1, operador, num2) {
+  switch(operador) {
+    case "+":
+      return num1 + num2;
+    case "-":
+      return num1 - num2;
+    case "*":
+      return num1 * num2;
+    case "/":
+      return num1 / num2;
+    default:
+      return "Operador no válido";
+  }
+}
+
+// Prueba tu función
+console.log(calculadora(10, "+", 5));
+console.log(calculadora(10, "*", 3));`,
+    expectedOutput: "15\n30",
+    hints: [
+      "Usa una estructura switch para manejar diferentes operadores",
+      "Cada case debe retornar el resultado de la operación",
+      "Incluye un case default para operadores inválidos"
     ],
-    correctAnswer: 2,
-    explanation: "Un algoritmo eficiente es aquel que resuelve un problema utilizando la menor cantidad de recursos (tiempo de ejecución y memoria) posible."
+    explanation: "La estructura switch es ideal cuando necesitamos ejecutar diferentes acciones basadas en el valor de una variable. Es más limpia que múltiples if-else."
   }
 ];
 
@@ -130,18 +363,72 @@ function Diagnostico() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [userCode, setUserCode] = useState('');
+  const [codeOutput, setCodeOutput] = useState('');
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [showHints, setShowHints] = useState(false);
+  const [currentHint, setCurrentHint] = useState(0);
 
   const progress = (userAnswers.length / questions.length) * 100;
   const correctAnswers = userAnswers.filter(answer => answer.isCorrect).length;
 
-  useEffect(() => {
-    const existingAnswer = userAnswers.find(answer => answer.questionId === questions[currentQuestion].id);
-    if (existingAnswer) {
-      setSelectedOption(existingAnswer.selectedAnswer);
-    } else {
-      setSelectedOption(null);
+  const executeCode = () => {
+    setIsExecuting(true);
+    setCodeOutput('');
+    
+    try {
+      const originalConsoleLog = console.log;
+      let output = '';
+      
+      console.log = (...args) => {
+        output += args.join(' ') + '\n';
+      };
+      
+      const func = new Function(userCode);
+      func();
+      
+      console.log = originalConsoleLog;
+      
+      setCodeOutput(output.trim());
+    } catch (error) {
+      setCodeOutput(`Error: ${error.message}`);
     }
+    
+    setTimeout(() => setIsExecuting(false), 500);
+  };
+
+  const checkCodeAnswer = () => {
+    const currentQ = questions[currentQuestion];
+    if (currentQ.type === 'coding') {
+      executeCode();
+      const isCorrect = codeOutput.trim() === currentQ.expectedOutput;
+      return isCorrect;
+    }
+    return false;
+  };
+
+  useEffect(() => {
+    const currentQ = questions[currentQuestion];
+    const existingAnswer = userAnswers.find(answer => answer.questionId === currentQ.id);
+    
+    if (existingAnswer) {
+      if (currentQ.type === 'coding') {
+        setUserCode(existingAnswer.userCode || currentQ.initialCode);
+      } else {
+        setSelectedOption(existingAnswer.selectedAnswer);
+      }
+    } else {
+      if (currentQ.type === 'coding') {
+        setUserCode(currentQ.initialCode);
+      } else {
+        setSelectedOption(null);
+      }
+    }
+    
     setShowExplanation(false);
+    setShowHints(false);
+    setCurrentHint(0);
+    setCodeOutput('');
   }, [currentQuestion, userAnswers]);
 
   const handleAnswerSelect = (optionIndex) => {
@@ -149,21 +436,49 @@ function Diagnostico() {
   };
 
   const handleNext = () => {
-    if (selectedOption !== null) {
-      const isCorrect = selectedOption === questions[currentQuestion].correctAnswer;
-      const newAnswer = {
-        questionId: questions[currentQuestion].id,
-        selectedAnswer: selectedOption,
-        isCorrect
-      };
+    const currentQ = questions[currentQuestion];
+    let isCorrect = false;
+    let newAnswer;
 
-      const updatedAnswers = userAnswers.filter(answer => answer.questionId !== questions[currentQuestion].id);
-      setUserAnswers([...updatedAnswers, newAnswer]);
+    if (currentQ.type === 'coding') {
+      executeCode();
+      setTimeout(() => {
+        const output = codeOutput.trim();
+        isCorrect = output === currentQ.expectedOutput;
+        
+        newAnswer = {
+          questionId: currentQ.id,
+          userCode: userCode,
+          codeOutput: output,
+          isCorrect
+        };
+        
+        const updatedAnswers = userAnswers.filter(answer => answer.questionId !== currentQ.id);
+        setUserAnswers([...updatedAnswers, newAnswer]);
+        
+        if (currentQuestion < questions.length - 1) {
+          setCurrentQuestion(currentQuestion + 1);
+        } else {
+          setShowResults(true);
+        }
+      }, 600);
+    } else {
+      if (selectedOption !== null) {
+        isCorrect = selectedOption === currentQ.correctAnswer;
+        newAnswer = {
+          questionId: currentQ.id,
+          selectedAnswer: selectedOption,
+          isCorrect
+        };
 
-      if (currentQuestion < questions.length - 1) {
-        setCurrentQuestion(currentQuestion + 1);
-      } else {
-        setShowResults(true);
+        const updatedAnswers = userAnswers.filter(answer => answer.questionId !== currentQ.id);
+        setUserAnswers([...updatedAnswers, newAnswer]);
+
+        if (currentQuestion < questions.length - 1) {
+          setCurrentQuestion(currentQuestion + 1);
+        } else {
+          setShowResults(true);
+        }
       }
     }
   };
@@ -244,17 +559,58 @@ function Diagnostico() {
                             <Circle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
                           )}
                           <div className="flex-1">
-                            <p className="font-medium text-slate-800 mb-2">
-                              {index + 1}. {question.question}
-                            </p>
-                            <p className="text-sm text-slate-600 mb-1">
-                              <span className="font-medium">Tu respuesta:</span> {question.options[userAnswer?.selectedAnswer || 0]}
-                            </p>
-                            {!userAnswer?.isCorrect && (
-                              <p className="text-sm text-green-700">
-                                <span className="font-medium">Respuesta correcta:</span> {question.options[question.correctAnswer]}
+                            <div className="flex items-center gap-2 mb-2">
+                              <p className="font-medium text-slate-800">
+                                {index + 1}. {question.question}
                               </p>
+                              {question.type === 'coding' && (
+                                <div className="flex items-center gap-1 bg-purple-100 px-2 py-1 rounded-full">
+                                  <Code className="w-3 h-3 text-purple-600" />
+                                  <span className="text-purple-700 text-xs font-medium">Código</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {question.type === 'coding' ? (
+                              <div className="space-y-2">
+                                <div className="text-sm text-slate-600">
+                                  <span className="font-medium">Salida esperada:</span> 
+                                  <code className="bg-slate-100 px-2 py-1 rounded text-xs ml-1">
+                                    {question.expectedOutput}
+                                  </code>
+                                </div>
+                                <div className="text-sm text-slate-600">
+                                  <span className="font-medium">Tu salida:</span> 
+                                  <code className={`px-2 py-1 rounded text-xs ml-1 ${
+                                    userAnswer?.isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {userAnswer?.codeOutput || 'Sin ejecutar'}
+                                  </code>
+                                </div>
+                                {userAnswer?.userCode && (
+                                  <details className="mt-2">
+                                    <summary className="text-sm font-medium text-slate-700 cursor-pointer hover:text-slate-900">
+                                      Ver tu código
+                                    </summary>
+                                    <pre className="mt-2 p-3 bg-slate-900 text-green-400 rounded-lg text-xs overflow-x-auto">
+                                      <code>{userAnswer.userCode}</code>
+                                    </pre>
+                                  </details>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="space-y-1">
+                                <p className="text-sm text-slate-600">
+                                  <span className="font-medium">Tu respuesta:</span> {question.options?.[userAnswer?.selectedAnswer] || 'Sin responder'}
+                                </p>
+                                {!userAnswer?.isCorrect && question.options && (
+                                  <p className="text-sm text-green-700">
+                                    <span className="font-medium">Respuesta correcta:</span> {question.options[question.correctAnswer]}
+                                  </p>
+                                )}
+                              </div>
                             )}
+                            
                             <p className="text-sm text-slate-600 mt-2 italic">
                               {question.explanation}
                             </p>
@@ -334,47 +690,131 @@ function Diagnostico() {
 
           <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
             <div className="mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="bg-[#155dfc] text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  Pregunta {currentQuestion + 1}
-                </span>
-                <span className="text-slate-500 text-sm">de {questions.length}</span>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="bg-[#155dfc] text-white px-3 py-1 rounded-full text-sm font-semibold">
+                    Pregunta {currentQuestion + 1}
+                  </span>
+                  <span className="text-slate-500 text-sm">de {questions.length}</span>
+                  {questions[currentQuestion].type === 'coding' && (
+                    <div className="flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 px-3 py-1 rounded-full">
+                      <Code className="w-4 h-4 text-purple-600" />
+                      <span className="text-purple-700 text-sm font-medium">Código Interactivo</span>
+                    </div>
+                  )}
+                </div>
+                {questions[currentQuestion].type === 'coding' && (
+                  <button
+                    onClick={() => setShowHints(!showHints)}
+                    className="flex items-center gap-2 text-amber-600 hover:text-amber-700 transition-colors"
+                  >
+                    <Lightbulb className="w-4 h-4" />
+                    <span className="text-sm font-medium">Pistas</span>
+                  </button>
+                )}
               </div>
-              <h2 className="text-xl font-semibold text-slate-800 leading-relaxed">
+              <h2 className="text-xl font-semibold text-slate-800 leading-relaxed mb-2">
                 {questions[currentQuestion].question}
               </h2>
+              {questions[currentQuestion].description && (
+                <p className="text-slate-600 text-sm">
+                  {questions[currentQuestion].description}
+                </p>
+              )}
             </div>
 
-            <div className="space-y-3">
-              {questions[currentQuestion].options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleAnswerSelect(index)}
-                  className={`w-full p-4 text-left rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
-                    selectedOption === index
-                      ? 'border-[#155dfc] bg-blue-50 shadow-md'
-                      : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-100'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+            {questions[currentQuestion].type === 'coding' && showHints && (
+              <div className="mb-6 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Lightbulb className="w-5 h-5 text-amber-600" />
+                  <span className="font-semibold text-amber-800">Pista {currentHint + 1} de {questions[currentQuestion].hints.length}</span>
+                </div>
+                <p className="text-amber-700 mb-3">
+                  {questions[currentQuestion].hints[currentHint]}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentHint(Math.max(0, currentHint - 1))}
+                    disabled={currentHint === 0}
+                    className="px-3 py-1 text-sm bg-amber-200 text-amber-800 rounded disabled:opacity-50"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    onClick={() => setCurrentHint(Math.min(questions[currentQuestion].hints.length - 1, currentHint + 1))}
+                    disabled={currentHint === questions[currentQuestion].hints.length - 1}
+                    className="px-3 py-1 text-sm bg-amber-200 text-amber-800 rounded disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {questions[currentQuestion].type === 'coding' ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-slate-700 flex items-center gap-2">
+                    <Terminal className="w-5 h-5" />
+                    Editor de Código
+                  </h3>
+                  <button
+                    onClick={executeCode}
+                    disabled={isExecuting}
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50"
+                  >
+                    {isExecuting ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
+                    {isExecuting ? 'Ejecutando...' : 'Ejecutar'}
+                  </button>
+                </div>
+                
+                <CodeEditor
+                  code={userCode}
+                  onChange={setUserCode}
+                  language="javascript"
+                />
+                
+                <CodeOutput
+                  output={codeOutput}
+                  isLoading={isExecuting}
+                />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {questions[currentQuestion].options.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswerSelect(index)}
+                    className={`w-full p-4 text-left rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
                       selectedOption === index
-                        ? 'border-[#155dfc] bg-[#155dfc]'
-                        : 'border-slate-300'
-                    }`}>
-                      {selectedOption === index && (
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      )}
+                        ? 'border-[#155dfc] bg-blue-50 shadow-md'
+                        : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        selectedOption === index
+                          ? 'border-[#155dfc] bg-[#155dfc]'
+                          : 'border-slate-300'
+                      }`}>
+                        {selectedOption === index && (
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                      <span className={`font-medium ${
+                        selectedOption === index ? 'text-[#155dfc]' : 'text-slate-700'
+                      }`}>
+                        {option}
+                      </span>
                     </div>
-                    <span className={`font-medium ${
-                      selectedOption === index ? 'text-[#155dfc]' : 'text-slate-700'
-                    }`}>
-                      {option}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-between items-center">
@@ -391,18 +831,30 @@ function Diagnostico() {
               Anterior
             </button>
 
-            <button
-              onClick={handleNext}
-              disabled={selectedOption === null}
-              className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                selectedOption === null
-                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                  : 'bg-[#155dfc] text-white hover:bg-blue-700 hover:scale-105 shadow-lg'
-              }`}
-            >
-              {currentQuestion === questions.length - 1 ? 'Finalizar' : 'Siguiente'}
-              <ChevronRight className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-3">
+              {questions[currentQuestion].type === 'coding' && (
+                <button
+                  onClick={() => setUserCode(questions[currentQuestion].solution)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105 shadow-md"
+                >
+                  <Target className="w-4 h-4" />
+                  Ver Solución
+                </button>
+              )}
+              
+              <button
+                onClick={handleNext}
+                disabled={questions[currentQuestion].type === 'multiple' ? selectedOption === null : userCode.trim() === ''}
+                className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                  (questions[currentQuestion].type === 'multiple' ? selectedOption === null : userCode.trim() === '')
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-[#155dfc] to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 shadow-lg'
+                }`}
+              >
+                {currentQuestion === questions.length - 1 ? 'Finalizar' : 'Siguiente'}
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
