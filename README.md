@@ -42,12 +42,18 @@ Aquí voy a documentarles toda la creación del proyecto.
     ```
     En caso de algún error, hacer "npm install vite"
 
-# **Dependencias que se vayan agregando**
+# **Dependencias Frontend que se vayan agregando**
     ```
     npm install react-router-dom
     npm install --save chart.js react-chartjs-2
     npm install lucide-react
     npm i react-google-recaptcha
+    ```
+
+# **Dependecias Backend que se vayan agregando**
+    ```
+    npm install express dotenv cors
+    npm install --save-dev nodemon
     ```
 
 # Recomendaciones
