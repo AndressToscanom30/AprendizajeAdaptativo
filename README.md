@@ -54,6 +54,7 @@ Aquí voy a documentarles toda la creación del proyecto.
     ```
     npm install express dotenv cors
     npm install --save-dev nodemon
+    npm install sequelize pg pg-hstore --> base de datos
     ```
 
 # Recomendaciones
