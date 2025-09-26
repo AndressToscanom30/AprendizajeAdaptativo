@@ -1,7 +1,7 @@
 import ReCAPTCHA from 'react-google-recaptcha';
 
 const Recaptcha = ({ onVerify, className = '' }) => {
-  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+  const siteKey = import.meta.env.VITE_RECAPTCHA_KEY;
 
   if (!siteKey) {
     return (

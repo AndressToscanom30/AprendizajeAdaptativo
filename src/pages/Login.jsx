@@ -1,30 +1,53 @@
 import { useState } from 'react';
 import { Mail, Lock, LogIn, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import Recaptcha from '../components/Recaptcha';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from "../context/AuthContext.jsx";
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const isFormValid = Boolean(email.trim()) && Boolean(password) && Boolean(captchaToken) && !loading;
+  const isFormValid = Boolean(email.trim()) && Boolean(password) && !loading;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isFormValid) {
-      setError('Completa el formulario y verifica el reCAPTCHA.');
+      setError('Completa el formulario.');
       return;
     }
     setLoading(true);
     setError('');
     try {
-      console.log('Iniciando sesión', { email, remember, captchaToken });
-    } catch {
-      setError('No se pudo iniciar sesión. Intenta nuevamente.');
+      const res = await fetch("http://localhost:4000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      if(!res.ok){
+        throw new Error("Error en el login");
+      }
+      
+      const data = await res.json();
+      console.log("Respuesta backend:", data);
+
+      if(data.token){
+        localStorage.setItem("token", data.token);
+        login(data.usuario);
+        navigate("/dashboard");
+      }
+      
+    } catch(err) {
+      setError("No se pudo iniciar sesión. Intenta nuevamente.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -97,8 +120,6 @@ function Login() {
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
-
-            <Recaptcha className="pt-2" onVerify={setCaptchaToken} />
 
             {error && (
               <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3">

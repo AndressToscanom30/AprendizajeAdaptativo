@@ -56,6 +56,7 @@ Aquí voy a documentarles toda la creación del proyecto.
     npm install --save-dev nodemon
     npm install sequelize pg pg-hstore --> base de datos
     npm install bcrypt
+    npm install jsonwebtoken
     ```
 
 # Recomendaciones
