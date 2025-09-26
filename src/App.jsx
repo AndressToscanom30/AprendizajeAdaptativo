@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
-import Dashboard from "./pages/Dashboard";
+import DashboardE from "./pages/DashboardEstudiante";
+import DashboardP from "./pages/DashboardProfesor";
 import Login from "./pages/Login"
 import Register from "./pages/Register";
 import AboutUs from "./pages/AboutUs";
@@ -21,7 +22,8 @@ function App() {
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
 
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboardE" element={<DashboardE />} />
+        <Route path="/dashboardP" element={<DashboardP />} />
         <Route path="/diagnostico" element={<Diagnostico />} />
 
         <Route path="*" element={<NotFound />} />

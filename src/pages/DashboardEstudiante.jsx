@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Trophy, Target, Clock, Zap, TrendingUp, Brain, Code, Star, ArrowLeft, RotateCcw, ChevronRight, Lightbulb, Award, BookOpen } from 'lucide-react';
 import LinesChart from "../components/LinesChart";
 import PiesChart from "../components/PiesChart";

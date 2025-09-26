@@ -42,7 +42,14 @@ function Login() {
       if(data.token){
         localStorage.setItem("token", data.token);
         login(data.usuario);
-        navigate("/dashboard");
+
+        console.log(data.usuario.rol);
+
+        if(data.usuario.rol === "estudiante"){
+          navigate("/dashboardE");
+        } else {
+          navigate("/dashboardP");
+        }
       }
       
     } catch(err) {
