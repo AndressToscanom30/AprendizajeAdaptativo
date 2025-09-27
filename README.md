@@ -48,6 +48,7 @@ Aquí voy a documentarles toda la creación del proyecto.
     npm install --save chart.js react-chartjs-2
     npm install lucide-react
     npm i react-google-recaptcha
+    npm install node-fetch
     ```
 
 # **Dependecias Backend que se vayan agregando**
@@ -57,6 +58,7 @@ Aquí voy a documentarles toda la creación del proyecto.
     npm install sequelize pg pg-hstore --> base de datos
     npm install bcrypt
     npm install jsonwebtoken
+    npm install node-fetch
     ```
 
 # Recomendaciones

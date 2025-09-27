@@ -1,15 +1,38 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import fetch from "node-fetch"; 
 import User from "../models/User.js";
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, turnstileToken } = req.body;
 
-    if (!email || !password) {
+    if (!email || !password || !turnstileToken) {
       return res
         .status(400)
-        .json({ error: "Email y contraseña obligatorios." });
+        .json({ error: "Email, contraseña y captcha son obligatorios." });
+    }
+
+    const turnstileResponse = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          secret: process.env.TURNSTILE_SECRET_KEY,
+          response: turnstileToken,
+          remoteip: req.ip, 
+        }),
+      }
+    );
+
+    const validation = await turnstileResponse.json();
+
+    if (!validation.success) {
+      return res.status(400).json({
+        error: "Captcha inválido",
+        codes: validation["error-codes"],
+      });
     }
 
     const usuario = await User.findOne({ where: { email } });
