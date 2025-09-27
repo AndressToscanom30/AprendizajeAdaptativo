@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Mail, Lock, LogIn, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext.jsx";
@@ -9,56 +9,83 @@ function Login() {
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const captchaRef = useRef(null);
+  const [captchaToken, setCaptchaToken] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
-
   const isFormValid = Boolean(email.trim()) && Boolean(password) && !loading;
+
+  useEffect(() => {
+    if (!window.turnstile || !captchaRef.current) return;
+    if (!captchaRef.current.hasChildNodes()) {
+      window.turnstile.render(captchaRef.current, {
+        sitekey: "0x4AAAAAAB3rAGBxsobQExgb",
+        theme: "light",
+        size: "normal",
+        language: "es",
+        callback: (token) => {
+          console.log("Captcha resuelto:", token);
+          setCaptchaToken(token);
+        },
+      });
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!isFormValid) {
-      setError('Completa el formulario.');
+      setError("Completa el formulario.");
       return;
     }
+
+    if (!captchaToken) { 
+      setError("Por favor completa el captcha.");
+      return;
+    }
+
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const res = await fetch("http://localhost:4000/api/auth/login", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({
+          email,
+          password,
+          captchaToken
+        }),
       });
 
-      if(!res.ok){
+      if (!res.ok) {
         throw new Error("Error en el login");
       }
-      
+
       const data = await res.json();
       console.log("Respuesta backend:", data);
 
-      if(data.token){
+      if (data.token) {
         localStorage.setItem("token", data.token);
         login(data.usuario);
 
         console.log(data.usuario.rol);
 
-        if(data.usuario.rol === "estudiante"){
+        if (data.usuario.rol === "estudiante") {
           navigate("/dashboardE");
         } else {
           navigate("/dashboardP");
         }
       }
-      
-    } catch(err) {
+    } catch (err) {
       setError("No se pudo iniciar sesión. Intenta nuevamente.");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4">
@@ -133,7 +160,7 @@ function Login() {
                 {error}
               </div>
             )}
-
+            <div className="justify-items-center" ref={captchaRef}></div>
             <button
               type="submit"
               disabled={!isFormValid}

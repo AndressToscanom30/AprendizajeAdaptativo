@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from "react";
 import { User, Mail, Lock, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Recaptcha from '../components/Recaptcha';
 
 function Register() {
   const [nombre, setNombre] = useState('');
@@ -11,10 +10,10 @@ function Register() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [terms, setTerms] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRef = useRef(null);
   const passwordsMatch = password === confirmPassword;
   const passwordValid = password.length >= 8;
   const isFormValid =
@@ -25,19 +24,37 @@ function Register() {
     passwordValid &&
     passwordsMatch &&
     terms &&
-    Boolean(captchaToken) &&
     !loading;
 
+  useEffect(() => {
+    if (!window.turnstile || !captchaRef.current) return;
+
+    if (!captchaRef.current.hasChildNodes()) {
+      window.turnstile.render(captchaRef.current, {
+        sitekey: "0x4AAAAAAB3rAGBxsobQExgb",
+        theme: "light",
+        size: "normal",
+        callback: (token) => {
+          console.log("Captcha resuelto:", token);
+          setCaptchaToken(token);
+        },
+      });
+    }
+  }, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isFormValid) {
-      setError('Completa el formulario, acepta los términos y verifica el reCAPTCHA.');
+      setError('Completa el formulario y acepta los términos.');
+      return;
+    }
+    if (!captchaToken) {
+      setError("Por favor completa el captcha.");
       return;
     }
     setLoading(true);
     setError('');
     try {
-      console.log('Registro', { nombre, apellidos, rol, email, captchaToken });
+      console.log('Registro', { nombre, apellidos, rol, email });
     } catch {
       setError('No se pudo crear la cuenta. Intenta nuevamente.');
     } finally {
@@ -179,9 +196,7 @@ function Register() {
               </label>
               <Link to="/login" className="text-blue-600 hover:underline text-sm">¿Ya tienes cuenta?</Link>
             </div>
-
-            <Recaptcha className="pt-2" onVerify={setCaptchaToken} />
-
+            <div className="justify-items-center" ref={captchaRef}></div>
             {error && (
               <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3">
                 {error}
