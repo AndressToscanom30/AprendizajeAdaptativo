@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { User, Mail, Lock, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function Register() {
   const [nombre, setNombre] = useState('');
@@ -25,6 +25,7 @@ function Register() {
     passwordsMatch &&
     terms &&
     !loading;
+    const navigate = useNavigate();
 
   useEffect(() => {
     if (!window.turnstile || !captchaRef.current) return;
@@ -43,6 +44,7 @@ function Register() {
   }, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!isFormValid) {
       setError('Completa el formulario y acepta los términos.');
       return;
@@ -51,16 +53,41 @@ function Register() {
       setError("Por favor completa el captcha.");
       return;
     }
+
     setLoading(true);
     setError('');
     try {
-      console.log('Registro', { nombre, apellidos, rol, email });
-    } catch {
-      setError('No se pudo crear la cuenta. Intenta nuevamente.');
+      const res = await fetch("http://localhost:4000/api/usuarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre,
+          email,
+          password,
+          rol,
+          turnstileToken: captchaToken,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.msg || "Error en el registro");
+      }
+
+      console.log("Usuario creado:", data);
+      navigate("/login");
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+      if (window.turnstile && captchaRef.current) {
+        window.turnstile.reset(captchaRef.current);
+      }
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4">
