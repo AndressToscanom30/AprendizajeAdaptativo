@@ -62,7 +62,7 @@ const SafeChartWrapper = ({ children, fallback, height = "200px" }) => {
                 {children}
             </div>
         );
-    } catch (error) {
+    } catch {
         setHasError(true);
         return fallback;
     }
@@ -92,11 +92,7 @@ function DashboardProfesor() {
         ]
     };
 
-    const getProgressColor = (progress) => {
-        if (progress >= 80) return 'bg-green-500';
-        if (progress >= 60) return 'bg-yellow-500';
-        return 'bg-red-500';
-    };
+    
 
     const getScoreColor = (score) => {
         if (score >= 80) return 'text-green-600';
