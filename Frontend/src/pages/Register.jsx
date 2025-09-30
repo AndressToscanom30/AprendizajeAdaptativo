@@ -150,8 +150,8 @@ function Register() {
               >
                 <option value="" disabled>Selecciona tu rol</option>
                 <option value="estudiante">Estudiante</option>
-                <option value="docente">Docente</option>
-                <option value="administrador">Administrador</option>
+                <option value="profesor">Docente</option>
+                <option value="admin">Administrador</option>
               </select>
             </div>
 
