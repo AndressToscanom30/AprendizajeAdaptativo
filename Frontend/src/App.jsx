@@ -24,19 +24,11 @@ function App() {
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
 
-        <Route path="/dashboardE" 
-          element={
-            <ProtectedRoute roles={["estudiante"]}>
-              <DashboardE />
-            </ProtectedRoute>} 
-          />
+        <Route path="/dashboardE" element={<DashboardE />} />
+          
 
-        <Route path="/dashboardP" 
-          element={
-            <ProtectedRoute roles={["profesor"]}>
-              <DashboardP />
-            </ProtectedRoute>} 
-          />
+        <Route path="/dashboardP" element={<DashboardP />} />
+          
 
         <Route path="/diagnostico" element={<Diagnostico />} />
 
