@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Trophy, Target, Clock, Zap, TrendingUp, Brain, Code, Star, ArrowLeft, RotateCcw, ChevronRight, Lightbulb, Award, BookOpen } from 'lucide-react';
 import LinesChart from "../components/LinesChart";
 import PiesChart from "../components/PiesChart";
 
 const AnimatedCounter = ({ value, duration = 2000, suffix = '' }) => {
   const [count, setCount] = useState(0);
-  
+
   useEffect(() => {
     let startTime;
     const animate = (timestamp) => {
@@ -104,6 +105,7 @@ const SafeChartWrapper = ({ children, fallback, height = "200px" }) => {
 };
 
 function Dashboard() {
+    const navigate = useNavigate();
     const testResults = {
         score: 75,
         totalQuestions: 10,
@@ -144,11 +146,17 @@ function Dashboard() {
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-6xl mx-auto">
                     <div className="flex justify-between items-center mb-8">
-                        <button className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors">
+                        <button 
+                            onClick={() => navigate('/')}
+                            className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors"
+                        >
                             <ArrowLeft className="w-4 h-4" />
                             <span className="font-medium">Volver al inicio</span>
                         </button>
-                        <button className="inline-flex items-center gap-2 bg-gradient-to-r from-[#155dfc] to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg">
+                        <button 
+                            onClick={() => navigate('/diagnostico')}
+                            className="inline-flex items-center gap-2 bg-gradient-to-r from-[#155dfc] to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg"
+                        >
                             <RotateCcw className="w-4 h-4" />
                             Repetir Test
                         </button>
@@ -383,11 +391,17 @@ function Dashboard() {
 
                     <div className="text-center">
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <button className="inline-flex items-center gap-2 bg-gradient-to-r from-[#155dfc] to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg">
+                            <button 
+                                onClick={() => navigate('/diagnostico')}
+                                className="inline-flex items-center gap-2 bg-gradient-to-r from-[#155dfc] to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
+                            >
                                 <RotateCcw className="w-5 h-5" />
                                 Repetir Test
                             </button>
-                            <button className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg">
+                            <button 
+                                onClick={() => navigate('/recursos')}
+                                className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
+                            >
                                 <BookOpen className="w-5 h-5" />
                                 Ver Recursos de Estudio
                                 <ChevronRight className="w-4 h-4" />

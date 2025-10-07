@@ -1,6 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext.jsx";
+import { SidebarProvider } from "./context/SidebarContext.jsx";
 import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
+import NavBarEstudiantes from "./components/navBarEstudiantes.jsx";
+import StudentLayout from "./components/StudentLayout.jsx";
 import DashboardE from "./pages/DashboardEstudiante";
 import DashboardP from "./pages/DashboardProfesor";
 import Login from "./pages/Login"
@@ -9,25 +13,39 @@ import AboutUs from "./pages/AboutUs";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import Diagnostico from "./pages/Diagnostico";
+import Perfil from "./pages/Perfil.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 
 
 function App() {
   return (
-    <BrowserRouter>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/about" element={<AboutUs />} />
-        <Route path="/contact" element={<Contact />} />
-
+    <AuthProvider>
+      <SidebarProvider>
+        <BrowserRouter>
+          <Navbar />
+          <NavBarEstudiantes />
+        <Routes>
+          <Route path="/" element={<StudentLayout><Home /></StudentLayout>} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/about" element={<StudentLayout><AboutUs /></StudentLayout>} />
+          <Route path="/contact" element={<StudentLayout><Contact /></StudentLayout>} />
+          <Route path="/recursos" element={
+            <StudentLayout>
+              <div className="p-8">
+                <h1 className="text-2xl font-bold">Recursos de Aprendizaje</h1>
+                <p>Página en construcción...</p>
+              </div>
+            </StudentLayout>
+          } />
+          
         <Route path="/dashboardE" 
           element={
             <ProtectedRoute roles={["estudiante"]}>
-              <DashboardE />
+              <StudentLayout>
+                <DashboardE />
+              </StudentLayout>
             </ProtectedRoute>} 
           />
 
@@ -38,12 +56,30 @@ function App() {
             </ProtectedRoute>} 
           />
 
-        <Route path="/diagnostico" element={<Diagnostico />} />
+        <Route path="/diagnostico" 
+          element={
+            <ProtectedRoute roles={["estudiante"]}>
+              <StudentLayout>
+                <Diagnostico />
+              </StudentLayout>
+            </ProtectedRoute>} 
+          />
+
+        <Route path="/perfil" 
+          element={
+            <ProtectedRoute roles={["estudiante"]}>
+              <StudentLayout>
+                <Perfil />
+              </StudentLayout>
+            </ProtectedRoute>} 
+          />
 
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </BrowserRouter>
+        </BrowserRouter>
+      </SidebarProvider>
+    </AuthProvider>
   )
 }
 
