@@ -94,7 +94,7 @@ function Login() {
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10" />
           <div className="relative p-8 h-full flex flex-col items-center justify-center text-center">
             <img
-              src="/AA-logo.png"
+              src="/finalaa.png"
               className="w-32 h-32 sm:w-40 sm:h-40 object-contain mb-6"
               alt="Logo Aprendizaje Adaptativo"
             />
