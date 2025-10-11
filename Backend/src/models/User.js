@@ -19,6 +19,14 @@ const User = sequelize.define("User", {
       isEmail: true,
     },
   },
+  resetCode: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  resetCodeExpires: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
   password: {
     type: DataTypes.STRING,
     allowNull: false,

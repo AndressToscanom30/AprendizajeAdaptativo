@@ -59,6 +59,7 @@ Aquí voy a documentarles toda la creación del proyecto.
     npm install bcrypt
     npm install jsonwebtoken
     npm install node-fetch
+    npm install nodemailer
     ```
 
 # Recomendaciones
