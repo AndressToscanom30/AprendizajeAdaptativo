@@ -16,6 +16,7 @@ import Diagnostico from "./pages/Diagnostico";
 import Perfil from "./pages/Perfil.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
+import RecuperarPassword from "./pages/RecuperarPassword.jsx";
 
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
               </div>
             </StudentLayout>
           } />
+          <Route path="/recuperarPass" element={<RecuperarPassword />} />
           
         <Route path="/dashboardE" 
           element={
