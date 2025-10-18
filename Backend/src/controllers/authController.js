@@ -66,3 +66,24 @@ export const login = async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
+
+export const refreshToken = async (req, res) => {
+  try{
+    const token = req. headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token no proporcionado" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secreto");
+
+    const newToken = jwt.sign(
+      {
+        id: decoded.id, email: decoded.email
+      },
+      process.env.JWT_SECRET || "secreto",
+      { expiresIn: "1h" }
+    );
+
+    res.json({ token: newToken });
+  } catch (error){
+    return res.status(401).json({ error: "Token inválido o expirado" });
+  }
+}

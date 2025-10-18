@@ -49,6 +49,9 @@ Aquí voy a documentarles toda la creación del proyecto.
     npm install lucide-react
     npm i react-google-recaptcha
     npm install node-fetch
+    npm i axios
+    npm install sweetalert2
+    npm install jwt-decode
     ```
 
 # **Dependecias Backend que se vayan agregando**

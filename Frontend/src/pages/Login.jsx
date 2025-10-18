@@ -67,10 +67,7 @@ function Login() {
       console.log("Respuesta backend:", data);
 
       if (data.token) {
-        localStorage.setItem("token", data.token);
-        login(data.usuario);
-
-        console.log(data.usuario.rol);
+        login(data.usuario, data.token);
 
         if (data.usuario.rol === "estudiante") {
           navigate("/dashboardE");

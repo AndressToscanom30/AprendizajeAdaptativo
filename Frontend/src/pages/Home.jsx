@@ -237,7 +237,7 @@ function Home() {
                 </div>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 @keyframes scaleIn {
                     to {
                         transform: scaleX(1);
