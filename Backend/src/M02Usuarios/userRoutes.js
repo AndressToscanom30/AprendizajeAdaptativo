@@ -3,7 +3,7 @@ import {
     registrarUsuario,
     recuperarPassword,
     resetPassword
-} from "../controllers/userController.js";
+} from "./userController.js";
 
 const router = Router();
 

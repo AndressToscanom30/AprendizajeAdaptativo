@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fetch from "node-fetch"; 
-import User from "../models/User.js";
+import User from "../M02Usuarios/User.js";
 
 export const login = async (req, res) => {
   try {
