@@ -77,3 +77,8 @@
         .animate-fade-in-up-delayed-4 {
           animation: fade-in-up 0.8s ease-out 1s both;
         }
+
+        /* Ensure global background matches navbar (white) */
+        html, body, #root {
+          background: #ffffff;
+        }

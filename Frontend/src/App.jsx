@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
 import NavBarEstudiantes from "./components/navBarEstudiantes.jsx";
 import StudentLayout from "./components/StudentLayout.jsx";
+import Footer from "./components/Footer";
 import DashboardE from "./pages/DashboardEstudiante";
 import DashboardP from "./pages/DashboardProfesor";
 import Login from "./pages/Login"
@@ -24,9 +25,10 @@ function App() {
     <AuthProvider>
       <SidebarProvider>
         <BrowserRouter>
-          <Navbar />
-          <NavBarEstudiantes />
-        <Routes>
+          <div className="min-h-screen bg-white">
+            <Navbar />
+            <NavBarEstudiantes />
+          <Routes>
           <Route path="/" element={<StudentLayout><Home /></StudentLayout>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -78,8 +80,10 @@ function App() {
 
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />
-      </Routes>
-        </BrowserRouter>
+  </Routes>
+  <Footer />
+  </div>
+  </BrowserRouter>
       </SidebarProvider>
     </AuthProvider>
   )

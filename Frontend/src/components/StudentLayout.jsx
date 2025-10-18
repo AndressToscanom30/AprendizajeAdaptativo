@@ -10,7 +10,7 @@ export default function StudentLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <main className={`transition-all duration-300 ${sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
         <div className="p-6 max-w-7xl mx-auto">
           {children}
