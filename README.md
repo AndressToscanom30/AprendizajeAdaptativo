@@ -63,7 +63,11 @@ Aquí voy a documentarles toda la creación del proyecto.
     npm install jsonwebtoken
     npm install node-fetch
     npm install nodemailer
+
+    sincronizar base de datos: npm run syn-db
     ```
+
+
 
 # Recomendaciones
 1. Instalar "Tailwind CSS IntelliSense" para VScode.
