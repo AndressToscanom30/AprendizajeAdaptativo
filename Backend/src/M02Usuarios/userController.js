@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import fetch from "node-fetch";
-import { User } from "../config/index.js";
+import { User } from "../config/relaciones.js";
 import { transporter } from "../config/mailer.js";
 
 export const registrarUsuario = async (req, res) => {
