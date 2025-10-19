@@ -5,13 +5,15 @@ import { transporter } from "../config/mailer.js";
 
 export const registrarUsuario = async (req, res) => {
   try {
-    const { nombre, email, password, rol, turnstileToken } = req.body;
+    const { nombre, email, password, rol /*turnstileToken */ } = req.body;
 
-    if (!nombre || !email || !password || !turnstileToken) {
-      return res.status(400).json({ msg: "Faltan campos obligatorios o captcha" });
+    if (!nombre || !email || !password /*|| !turnstileToken*/) {
+      return res
+        .status(400)
+        .json({ msg: "Faltan campos obligatorios o captcha" });
     }
 
-    const turnstileResponse = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    /*const turnstileResponse = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -28,7 +30,7 @@ export const registrarUsuario = async (req, res) => {
         msg: "Captcha inválido",
         codes: validation["error-codes"],
       });
-    }
+    }*/
 
     const existe = await User.findOne({ where: { email } });
     if (existe) {
@@ -60,7 +62,7 @@ export const registrarUsuario = async (req, res) => {
 };
 
 export const recuperarPassword = async (req, res) => {
-  try{
+  try {
     const { email } = req.body;
     const user = await User.findOne({ where: { email } });
 
@@ -82,12 +84,12 @@ export const recuperarPassword = async (req, res) => {
              <p>Este código expira en 15 minutos.</p>`,
     });
 
-    console.log(code) //quitar mas adelante
-    
+    console.log(code);
+
     res.json({ message: "Código de recuperación enviado al correo." });
-  } catch (error){
+  } catch (error) {
     res.status(500).json({ message: "Error al enviar el código." });
-    console.log(error)
+    console.log(error);
   }
 };
 
@@ -109,7 +111,7 @@ export const resetPassword = async (req, res) => {
     await user.save();
 
     res.json({ message: "Contraseña actualizada correctamente" });
-  } catch (error){
+  } catch (error) {
     res.status(500).json({ message: "Error al cambiar la contraseña" });
   }
-}
+};

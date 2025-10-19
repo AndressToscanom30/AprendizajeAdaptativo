@@ -5,15 +5,15 @@ import User from "../M02Usuarios/User.js";
 
 export const login = async (req, res) => {
   try {
-    const { email, password, turnstileToken } = req.body;
+    const { email, password, /*turnstileToken */} = req.body;
 
-    if (!email || !password || !turnstileToken) {
+    if (!email || !password /* || !turnstileToken*/) {
       return res
         .status(400)
         .json({ error: "Email, contraseña y captcha son obligatorios." });
     }
 
-    const turnstileResponse = await fetch(
+    /*const turnstileResponse = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
       {
         method: "POST",
@@ -33,7 +33,7 @@ export const login = async (req, res) => {
         error: "Captcha inválido",
         codes: validation["error-codes"],
       });
-    }
+    }*/
 
     const usuario = await User.findOne({ where: { email } });
     if (!usuario) {
