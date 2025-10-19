@@ -60,12 +60,12 @@ export const eliminarPregunta = async (req, res) => {
 export const crearOpcion = async (req, res) => {
     try {
         const { preguntaId } = req.params;
-        const { texto, es_correcto = false, metadata } = req.body;
+        const { texto, es_correcta = false, metadata } = req.body;
 
         const opcion = await OpcionPregunta.create({
             preguntaId,
             texto,
-            es_correcto,
+            es_correcta,
             metadata
         });
 

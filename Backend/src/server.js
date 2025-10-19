@@ -1,6 +1,7 @@
 import app from "./app.js";
 import dotenv from "dotenv";
 import sequelize from './config/db.js'
+import "./config/relaciones.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 4000;

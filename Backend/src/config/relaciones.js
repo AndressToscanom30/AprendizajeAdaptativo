@@ -44,7 +44,7 @@ Pregunta.hasMany(IntentoRespuesta, { foreignKey: "preguntaId", as: "respuestas" 
 IntentoRespuesta.belongsTo(Pregunta, { foreignKey: "preguntaId", as: "pregunta" });
 
 //Etiquetas <--> Preguntas
-Pregunta.belongsToMany(PreguntaEtiqueta, {
+Pregunta.belongsToMany(Etiqueta, {
   through: PreguntaEtiqueta,
   foreignKey: "preguntaId",
   otherKey: "etiquetaId",

@@ -2,9 +2,10 @@ import {
     Evaluacion,
     Pregunta,
     PreguntaEvaluacion,
-    Intento
+    Intento,
+    OpcionPregunta,
+    User
 } from "../config/relaciones.js";
-import { Op } from "sequelize";
 
 export const crearEvaluacion = async (req, res) => {
     try {
@@ -69,93 +70,109 @@ export const borrarEvaluacion = async (req, res) => {
 
 export const obtenerEvaluaciones = async (req, res) => {
     try {
-        const {
-            creador,
-            q,
-            disponible
-        } = req.query;
-        const where = {};
+        const rol = req.user.rol;
 
-        if (creador) where.creado_por = creador;
-        if (q) where.titulo = { [Op.iLike]: `%${q}%` };
-        if (disponible === "true") {
-            const now = new Date();
-            where[Op.and] = [
-                { [Op.or]: [{ comineza_en: null }, { comineza_en: { [Op.lte]: now } }] },
-                { [Op.or]: [{ termina_en: null }, { termina_en: { [Op.gte]: now } }] }
-            ];
+        if (rol === "profesor" || rol === "ia") {
+            const evaluaciones = await Evaluacion.findAll();
+            return res.json(evaluaciones);
         }
-        const list = await Evaluacion.findAll({ where });
-        return res.json(list);
+
+        if (rol === "estudiante") {
+            const evaluaciones = await Evaluacion.findAll({
+                attributes: [
+                    "id",
+                    "titulo",
+                    "descripcion",
+                    "duracion_minutos",
+                    "comienza_en",
+                    "termina_en",
+                    "preguntas_revueltas"
+                ],
+            });
+            return res.json(evaluaciones);
+        }
+
+        return res.status(403).json({ message: "Rol no permitido" });
+
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Error al obtener evaluaciones", error: error.message });
+        console.error("Error al obtener evaluaciones:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
     }
 };
 
 export const obtenerEvaluacionPorId = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const userId = req.user.id;
-        const userRole = req.user.role;
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const userRole = req.user.rol;
 
-        const evaluacion = await Evaluacion.findByPk(id, {
-            include: [
-                {
-                    model: Pregunta,
-                    as: "Preguntas",
-                    include: [
-                        {
-                            model: OpcionPregunta,
-                            as: "opciones",
-                            attributes: ["id", "texto", "es_correcto"]
-                        }
-                    ],
-                    through: {
-                        model: PreguntaEvaluacion,
-                        attributes: ["puntos", "orden"]
-                    }
-                }
-            ]
-        });
-
-        if (!evaluacion) {
-            return res.status(404).json({ message: "Evaluación no encontrada" });
-        }
-
-        if (userRole === "profesor" || userRole === "ia") {
-            return res.json(evaluacion);
-        }
-
-        if (userRole === "estudiante") {
-            const intentos = await Intento.count({
-                where: { userId, evaluacionId: id }
-            });
-
-            const haAlcanzadoMax = intentos >= evaluacion.max_intentos;
-
-            if (!haAlcanzadoMax) {
-                evaluacion.Preguntas.forEach((pregunta) => {
-                    pregunta.opciones = pregunta.opciones.map((op) => ({
-                        id: op.id,
-                        texto: op.texto
-                    }));
-                });
+    const evaluacion = await Evaluacion.findByPk(id, {
+      include: [
+        {
+          model: Pregunta,
+          as: "Preguntas",
+          include: [
+            {
+              model: OpcionPregunta,
+              as: "opciones",
+              attributes: ["id", "texto", "es_correcta"]
             }
-
-            return res.json({
-                ...evaluacion.toJSON(),
-                intentosRealizados: intentos,
-                puedeVerRespuestas: haAlcanzadoMax
-            });
+          ],
+          through: {
+            model: PreguntaEvaluacion,
+            attributes: ["puntos", "orden"]
+          }
+        },
+        {
+          model: User,
+          as: "UsuariosAsignados",
+          attributes: ["id", "nombre"],
+          through: { attributes: ["estado", "puntaje"] }
         }
+      ]
+    });
 
-        return res.status(403).json({ message: "No tienes permiso para ver esta evaluación." });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Error al obtener la evaluación." });
+    if (!evaluacion) {
+      return res.status(404).json({ message: "Evaluación no encontrada" });
     }
+
+    if (userRole === "profesor" || userRole === "ia") {
+      return res.json(evaluacion);
+    }
+
+    if (userRole === "estudiante") {
+      const asignado = evaluacion.UsuariosAsignados.find(u => u.id === userId);
+      if (!asignado) {
+        return res.status(403).json({ message: "No tienes permiso para ver esta evaluación." });
+      }
+
+      const intentos = await Intento.count({
+        where: { userId, evaluacionId: id }
+      });
+
+      const haAlcanzadoMax = intentos >= evaluacion.max_intentos;
+
+      evaluacion.Preguntas.forEach((pregunta) => {
+        pregunta.opciones = pregunta.opciones.map((op) => ({
+          id: op.id,
+          texto: op.texto,
+          ...(userRole !== "estudiante" || haAlcanzadoMax ? { es_correcta: op.es_correcta } : {})
+        }));
+      });
+
+      return res.json({
+        ...evaluacion.toJSON(),
+        intentosRealizados: intentos,
+        puedeVerRespuestas: haAlcanzadoMax
+      });
+    }
+
+    return res.status(403).json({ message: "No tienes permiso para ver esta evaluación." });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener la evaluación." });
+  }
 };
 
 export const agregarPreguntaAEvaluacion = async (req, res) => {

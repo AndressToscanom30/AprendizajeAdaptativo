@@ -6,6 +6,7 @@ import diagnosticoRoutes from "./M03Diagnostico/DiagnosticRoutes.js";
 import evaluacionRoutes from "./M05Evaluacion/evaluacionRoutes.js";
 import preguntaRoutes from "./M05Evaluacion/preguntaRoutes.js";
 import intentoRoutes from "./M05Evaluacion/intentoRoutes.js";
+import evaluacionUsuarioRoutes from "./M05Evaluacion/evaluacionUsuarioRoutes.js";
 
 const app = express()
 
@@ -34,5 +35,6 @@ app.use("/api/diagnostico", diagnosticoRoutes);
 app.use("/api/evaluaciones", evaluacionRoutes);
 app.use("/api/preguntas", preguntaRoutes);
 app.use("/api/intentos", intentoRoutes);
+app.use("/api/evaluaciones-usuarios", evaluacionUsuarioRoutes);
 
 export default app;

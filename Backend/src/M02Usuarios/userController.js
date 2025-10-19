@@ -82,7 +82,7 @@ export const recuperarPassword = async (req, res) => {
              <p>Este código expira en 15 minutos.</p>`,
     });
 
-    console.log(code)
+    console.log(code) //quitar mas adelante
     
     res.json({ message: "Código de recuperación enviado al correo." });
   } catch (error){
