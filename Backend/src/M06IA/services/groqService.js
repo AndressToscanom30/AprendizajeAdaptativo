@@ -1,10 +1,11 @@
-import axios from 'axios';
+import axios from "axios";
 
 class GroqService {
   constructor() {
     this.apiKey = process.env.GROQ_API_KEY;
     this.baseURL = "https://api.groq.com/openai/v1/chat/completions";
-    this.model = "llama-3.1-70b-versatile";
+    // ✅ ACTUALIZADO: Modelo nuevo
+    this.model = "llama-3.3-70b-versatile"; // Era: 'llama-3.1-70b-versatile'
   }
 
   async generateCompletion(prompt, options = {}) {
@@ -26,7 +27,7 @@ class GroqService {
           ],
           temperature: options.temperature || 0.7,
           max_tokens: options.maxTokens || 2000,
-          response_format: { type: "json_object" }, 
+          response_format: { type: "json_object" },
         },
         {
           headers: {
@@ -50,6 +51,7 @@ class GroqService {
     const prompt = this.construirPromptAnalisis(resultados, preguntas);
     return await this.generateCompletion(prompt);
   }
+
   async generarTestAdaptativo(analisis) {
     const prompt = this.construirPromptTestAdaptativo(analisis);
     return await this.generateCompletion(prompt);

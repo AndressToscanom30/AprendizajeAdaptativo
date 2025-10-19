@@ -8,16 +8,11 @@ import Pregunta from "../M05Evaluacion/Pregunta.js";
 import OpcionPregunta from "../M05Evaluacion/OpcionPregunta.js";
 
 class IAController {
-  /**
-   * POST /api/ia/analizar-intento/:intentoId
-   * Analiza un intento finalizado y genera recomendaciones
-   */
   async analizarIntento(req, res) {
     try {
       const { intentoId } = req.params;
       const userId = req.user.id;
 
-      // 1. Verificar que el intento existe y pertenece al usuario
       const intento = await Intento.findByPk(intentoId, {
         include: [
           {
@@ -53,61 +48,81 @@ class IAController {
         });
       }
 
-      if (intento.usuarioId !== userId) {
+      if (String(intento.userId) !== String(userId)) {
         return res.status(403).json({
           success: false,
           error: "No tienes permiso para acceder a este intento",
         });
       }
 
-      if (intento.estado !== "finalizado") {
+      const estadosValidos = ["calificado", "revisado"];
+      if (!estadosValidos.includes(intento.status)) {
         return res.status(400).json({
           success: false,
-          error: "El intento debe estar finalizado para analizarlo",
+          error: "El intento debe estar calificado o revisado para analizarlo",
+          estadoActual: intento.status,
+          estadosValidos: estadosValidos,
         });
       }
 
-      // 2. Verificar si ya existe un análisis
       const analisisExistente = await AnalisisIA.findOne({
-        where: { intento_id: intentoId },
+        where: { intentoId: intentoId },
       });
 
       if (analisisExistente) {
-        return res.json({
-          success: true,
-          mensaje: "Ya existe un análisis para este intento",
-          analisis: analisisExistente,
-        });
+        // ✅ Si está en error, lo borramos y reintentamos
+        if (analisisExistente.estado === "error") {
+          console.log("⚠️  Análisis anterior falló, reintentando...");
+          await analisisExistente.destroy();
+          // Continúa con el flujo normal
+        }
+        // Si está completado, lo devolvemos
+        else if (analisisExistente.estado === "completado") {
+          return res.json({
+            success: true,
+            mensaje: "Ya existe un análisis completado para este intento",
+            analisis: analisisExistente,
+          });
+        }
+        // Si está procesando, informamos
+        else {
+          return res.json({
+            success: true,
+            mensaje: "El análisis está siendo procesado",
+            analisis: analisisExistente,
+          });
+        }
       }
 
-      // 3. Preparar datos para la IA
-      const datosAnalisis = this.prepararDatosParaIA(intento);
+      // ✅ CAMBIADO: this.prepararDatosParaIA → IAController.prepararDatosParaIA
+      const datosAnalisis = IAController.prepararDatosParaIA(intento);
 
-      // 4. Crear registro de análisis (estado: procesando)
       const analisis = await AnalisisIA.create({
-        usuario_id: userId,
-        intento_id: intentoId,
-        puntuacion_global: 0,
-        porcentaje_total: 0,
+        usuarioId: userId,
+        intentoId: intentoId,
+        puntuacionGlobal: 0,
+        porcentajeTotal: 0,
         estado: "procesando",
       });
 
-      // 5. Llamar a Groq API (asíncrono)
       try {
+        console.log("🤖 Llamando a Groq API...");
+
         const resultadoIA = await groqService.analizarDiagnostico(
           datosAnalisis.resultados,
           datosAnalisis.preguntas
         );
 
-        // 6. Actualizar análisis con resultados
+        console.log("✅ Respuesta de Groq recibida");
+
         await analisis.update({
-          puntuacion_global: resultadoIA.puntuacion_global,
-          porcentaje_total: resultadoIA.porcentaje_total,
+          puntuacionGlobal: resultadoIA.puntuacion_global,
+          porcentajeTotal: resultadoIA.porcentaje_total,
           debilidades: resultadoIA.debilidades,
           fortalezas: resultadoIA.fortalezas,
-          categorias_analisis: resultadoIA.categorias,
+          categoriasAnalisis: resultadoIA.categorias,
           recomendaciones: resultadoIA.recomendaciones,
-          tiempo_estudio_sugerido: resultadoIA.tiempo_estudio_sugerido,
+          tiempoEstudioSugerido: resultadoIA.tiempo_estudio_sugerido,
           estado: "completado",
         });
 
@@ -126,13 +141,12 @@ class IAController {
           },
         });
       } catch (errorIA) {
-        // Error en la IA - marcar análisis como error
+        console.error("❌ Error en Groq API:", errorIA);
         await analisis.update({ estado: "error" });
-
         throw errorIA;
       }
     } catch (error) {
-      console.error("Error al analizar intento:", error);
+      console.error("❌ Error al analizar intento:", error);
       return res.status(500).json({
         success: false,
         error: "Error al analizar el intento",
@@ -142,22 +156,22 @@ class IAController {
     }
   }
 
-  /**
-   * POST /api/ia/generar-test-adaptativo/:analisisId
-   * Genera preguntas adaptativas basadas en el análisis
-   */
   async generarTestAdaptativo(req, res) {
     try {
       const { analisisId } = req.params;
       const userId = req.user.id;
 
-      // 1. Obtener el análisis
       const analisis = await AnalisisIA.findByPk(analisisId, {
         include: [
           {
             model: Intento,
             as: "intento",
-            include: [{ model: Evaluacion }],
+            include: [
+              {
+                model: Evaluacion,
+                as: "evaluacion",
+              },
+            ],
           },
         ],
       });
@@ -169,7 +183,7 @@ class IAController {
         });
       }
 
-      if (analisis.usuario_id !== userId) {
+      if (String(analisis.usuarioId) !== String(userId)) {
         return res.status(403).json({
           success: false,
           error: "No tienes permiso para acceder a este análisis",
@@ -183,9 +197,8 @@ class IAController {
         });
       }
 
-      // 2. Verificar si ya existe test adaptativo
       const testExistente = await TestAdaptativo.findOne({
-        where: { analisis_id: analisisId },
+        where: { analisisId: analisisId },
       });
 
       if (testExistente) {
@@ -196,18 +209,16 @@ class IAController {
         });
       }
 
-      // 3. Generar test con IA
       const testGenerado = await groqService.generarTestAdaptativo({
         debilidades: analisis.debilidades,
         fortalezas: analisis.fortalezas,
-        categorias: analisis.categorias_analisis,
-        evaluacion_original: analisis.intento.Evaluacion.titulo,
+        categorias: analisis.categoriasAnalisis,
+        evaluacion_original: analisis.intento.evaluacion.titulo,
       });
 
-      // 4. Guardar test adaptativo
       const testAdaptativo = await TestAdaptativo.create({
-        usuario_id: userId,
-        analisis_id: analisisId,
+        usuarioId: userId,
+        analisisId: analisisId,
         preguntas: testGenerado.preguntas,
         enfoque: testGenerado.enfoque,
         estado: "generado",
@@ -234,16 +245,12 @@ class IAController {
     }
   }
 
-  /**
-   * GET /api/ia/mis-analisis
-   * Obtiene todos los análisis del usuario autenticado
-   */
   async obtenerMisAnalisis(req, res) {
     try {
       const userId = req.user.id;
 
       const analisis = await AnalisisIA.findAll({
-        where: { usuario_id: userId },
+        where: { usuarioId: userId },
         include: [
           {
             model: Intento,
@@ -251,6 +258,7 @@ class IAController {
             include: [
               {
                 model: Evaluacion,
+                as: "evaluacion",
                 attributes: ["id", "titulo", "descripcion"],
               },
             ],
@@ -274,10 +282,6 @@ class IAController {
     }
   }
 
-  /**
-   * GET /api/ia/analisis/:analisisId
-   * Obtiene un análisis específico con detalles completos
-   */
   async obtenerAnalisisDetallado(req, res) {
     try {
       const { analisisId } = req.params;
@@ -291,6 +295,7 @@ class IAController {
             include: [
               {
                 model: Evaluacion,
+                as: "evaluacion",
                 attributes: ["id", "titulo", "descripcion", "duracion_minutos"],
               },
             ],
@@ -305,7 +310,7 @@ class IAController {
         });
       }
 
-      if (analisis.usuario_id !== userId) {
+      if (String(analisis.usuarioId) !== String(userId)) {
         return res.status(403).json({
           success: false,
           error: "No tienes permiso para ver este análisis",
@@ -325,10 +330,6 @@ class IAController {
     }
   }
 
-  /**
-   * GET /api/ia/test-adaptativo/:testId
-   * Obtiene un test adaptativo específico
-   */
   async obtenerTestAdaptativo(req, res) {
     try {
       const { testId } = req.params;
@@ -346,6 +347,7 @@ class IAController {
                 include: [
                   {
                     model: Evaluacion,
+                    as: "evaluacion",
                     attributes: ["titulo"],
                   },
                 ],
@@ -362,7 +364,7 @@ class IAController {
         });
       }
 
-      if (test.usuario_id !== userId) {
+      if (String(test.usuarioId) !== String(userId)) {
         return res.status(403).json({
           success: false,
           error: "No tienes permiso para ver este test",
@@ -382,16 +384,31 @@ class IAController {
     }
   }
 
-  /**
-   * Método auxiliar: Preparar datos del intento para enviar a la IA
-   */
-  prepararDatosParaIA(intento) {
+  // ✅ Método estático (se llama con IAController.prepararDatosParaIA)
+  static prepararDatosParaIA(intento) {
+    // ✅ Calcular puntaje si no existe
+    const respuestasCorrectas = (intento.respuestas || []).filter(
+      (r) => r.es_correcta
+    ).length;
+    const puntaje =
+      intento.puntajeTotal || intento.total_puntaje || respuestasCorrectas;
+
+    console.log("🔍 Debug intento:", {
+      puntaje_calculado: puntaje,
+      respuestas_correctas: respuestasCorrectas,
+      total_respuestas: intento.respuestas?.length,
+    });
+
     const resultados = {
-      puntuacion: intento.puntaje_total,
-      total_preguntas: intento.IntentoRespuestas.length,
-      respuestas: intento.IntentoRespuestas.map((respuesta) => {
-        const pregunta = respuesta.Pregunta;
-        const esCorrecta = this.evaluarRespuesta(respuesta, pregunta);
+      puntuacion: puntaje,
+      total_preguntas: intento.respuestas?.length || 0,
+      respuestas: (intento.respuestas || []).map((respuesta) => {
+        const pregunta = respuesta.pregunta;
+
+        const esCorrecta =
+          respuesta.es_correcta !== undefined
+            ? respuesta.es_correcta
+            : IAController.evaluarRespuesta(respuesta, pregunta);
 
         return {
           pregunta_id: pregunta.id,
@@ -399,51 +416,69 @@ class IAController {
           tipo: pregunta.tipo,
           dificultad: pregunta.dificultad,
           es_correcta: esCorrecta,
-          respuesta_usuario: respuesta.respuesta,
+          respuesta_usuario: {
+            opcionSeleccionadaId: respuesta.opcionSeleccionadaId,
+            opcion_seleccionadaIds: respuesta.opcion_seleccionadaIds,
+            texto_respuesta: respuesta.texto_respuesta,
+          },
         };
       }),
     };
 
-    const preguntas = intento.IntentoRespuestas.map((respuesta) => ({
-      id: respuesta.Pregunta.id,
-      categoria: respuesta.Pregunta.categoria || "General",
-      tipo: respuesta.Pregunta.tipo,
-      dificultad: respuesta.Pregunta.dificultad,
-      texto: respuesta.Pregunta.text,
+    const preguntas = (intento.respuestas || []).map((respuesta) => ({
+      id: respuesta.pregunta.id,
+      categoria: respuesta.pregunta.categoria || "General",
+      tipo: respuesta.pregunta.tipo,
+      dificultad: respuesta.pregunta.dificultad,
+      texto: respuesta.pregunta.text,
     }));
 
     return { resultados, preguntas };
   }
-
-  /**
-   * Método auxiliar: Evaluar si una respuesta es correcta
-   */
-  evaluarRespuesta(intentoRespuesta, pregunta) {
-    const respuesta = intentoRespuesta.respuesta;
+  // ✅ Método estático
+  static evaluarRespuesta(intentoRespuesta, pregunta) {
+    // ✅ ACTUALIZADO: Usar los nombres de campo correctos
+    console.log("🔍 Debug respuesta:", {
+      opcionSeleccionadaId: intentoRespuesta.opcionSeleccionadaId,
+      opcion_seleccionadaIds: intentoRespuesta.opcion_seleccionadaIds,
+      texto_respuesta: intentoRespuesta.texto_respuesta,
+      es_correcta: intentoRespuesta.es_correcta,
+      tipo_pregunta: pregunta.tipo,
+    });
 
     switch (pregunta.tipo) {
       case "opcion_multiple":
       case "verdadero_falso":
-        const opcionCorrecta = pregunta.opciones.find((o) => o.es_correcta);
-        return respuesta.opcionSeleccionada === opcionCorrecta?.id;
+        // ✅ Usar opcionSeleccionadaId
+        const opcionCorrecta = pregunta.opciones?.find(
+          (o) => o.esCorrecta || o.es_correcta
+        );
+        return intentoRespuesta.opcionSeleccionadaId === opcionCorrecta?.id;
 
       case "seleccion_multiple":
-        const correctas = pregunta.opciones
-          .filter((o) => o.es_correcta)
-          .map((o) => o.id)
-          .sort();
-        const seleccionadas = (respuesta.opcionesSeleccionadas || []).sort();
+        // ✅ Usar opcion_seleccionadaIds (es un array)
+        const correctas =
+          pregunta.opciones
+            ?.filter((o) => o.esCorrecta || o.es_correcta)
+            .map((o) => o.id)
+            .sort() || [];
+
+        const seleccionadas = (
+          intentoRespuesta.opcion_seleccionadaIds || []
+        ).sort();
         return JSON.stringify(correctas) === JSON.stringify(seleccionadas);
 
       case "respuesta_corta":
       case "completar_blanco":
+        // ✅ Usar texto_respuesta
         return (
-          respuesta.texto?.trim().toLowerCase() ===
-          pregunta.respuesta_correcta?.trim().toLowerCase()
+          intentoRespuesta.texto_respuesta?.trim().toLowerCase() ===
+          pregunta.respuestaCorrecta?.trim().toLowerCase()
         );
 
       default:
-        return false; // Por defecto
+        // Si ya viene evaluado desde la BD
+        return intentoRespuesta.es_correcta || false;
     }
   }
 }

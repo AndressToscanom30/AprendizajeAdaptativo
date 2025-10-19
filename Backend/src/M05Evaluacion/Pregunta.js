@@ -8,7 +8,7 @@ const Pregunta = sequelize.define("Pregunta", {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
     },
-    texto: {
+    text: {
         type: DataTypes.TEXT,
         allowNull: false
     },
