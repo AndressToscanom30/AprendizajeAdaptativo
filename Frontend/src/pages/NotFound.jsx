@@ -36,7 +36,7 @@ const handleSearch = (e) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 overflow-hidden relative">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4 overflow-hidden relative">
 
       <div className="absolute inset-0 pointer-events-none">
 

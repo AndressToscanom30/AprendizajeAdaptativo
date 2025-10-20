@@ -49,7 +49,7 @@ function Home() {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 relative">
+        <div className="min-h-screen bg-white relative">
             <div className="fixed inset-0 -z-10 overflow-hidden">
                 <div
                     className="absolute -top-40 -right-40 w-96 h-96 bg-blue-100 rounded-full opacity-30 blur-3xl"

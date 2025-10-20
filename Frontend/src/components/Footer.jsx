@@ -13,7 +13,7 @@ export default function Footer() {
   const offsetClass = (user && user.rol === 'estudiante') ? (sidebarCollapsed ? 'md:ml-16' : 'md:ml-64') : '';
 
   return (
-    <footer className={`mt-8 bg-white border-t border-gray-200 text-gray-700 transition-all duration-300 ${offsetClass}`}>
+    <footer className={`mt-8 transition-all duration-300 ${offsetClass}`} style={{ background: '#EAF4FF', color: '#0f172a' }}>
       <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="flex items-center gap-3 justify-center md:justify-start">
           <img
@@ -23,7 +23,7 @@ export default function Footer() {
           />
           <div className="text-center md:text-left">
             <h3 className="font-bold text-lg">Aprendizaje Adaptativo</h3>
-            <p className="text-sm text-gray-500">Plataforma educativa para aprendizaje personalizado</p>
+            <p className="text-sm" style={{ color: '#64748B' }}>Plataforma educativa para aprendizaje personalizado</p>
           </div>
         </div>
 
@@ -49,22 +49,21 @@ export default function Footer() {
 
         <div>
           <h4 className="font-semibold mb-2">Contacto</h4>
-          <p className="text-sm text-gray-500">Correo: soporte@aprendizajeadap.com</p>
-          <p className="text-sm text-gray-500">Tel: +57 300 000 0000</p>
+          <p className="text-sm" style={{ color: '#64748B' }}>Correo: keivercito@gmail.com</p>
+          <p className="text-sm" style={{ color: '#64748B' }}>Tel: +57 320 3722941</p>
 
           <div className="mt-4">
             <h4 className="font-semibold mb-2">Síguenos</h4>
             <div className="flex items-center gap-3">
-              <a className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-600" href="#">FB</a>
-              <a className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-600" href="#">TW</a>
-              <a className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-600" href="#">IG</a>
+              <a className="h-8 w-8 rounded-full" style={{ background: '#D7EAFB', color: '#0f172a' }} href="#">FB</a>
+              <a className="h-8 w-8 rounded-full" style={{ background: '#D7EAFB', color: '#0f172a' }} href="#">TW</a>
+              <a className="h-8 w-8 rounded-full" style={{ background: '#D7EAFB', color: '#0f172a' }} href="#">IG</a>
             </div>
           </div>
         </div>
       </div>
-
-      <div className="border-t border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:justify-between items-center text-sm text-gray-500">
+      <div style={{ borderTop: '1px solid #D7EAFB' }}>
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:justify-between items-center text-sm" style={{ color: '#64748B' }}>
           <span>© {new Date().getFullYear()} Aprendizaje Adaptativo. Todos los derechos reservados.</span>
           <div className="flex items-center gap-4 mt-2 md:mt-0">
             {user ? (

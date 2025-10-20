@@ -85,7 +85,7 @@ function Login() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 items-stretch">
         <div className="relative overflow-hidden rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none bg-white shadow-lg">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10" />

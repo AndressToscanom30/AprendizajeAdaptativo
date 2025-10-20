@@ -57,15 +57,16 @@ export default function NavBarEstudiantes() {
       )}
 
       <aside
-        className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 shadow-xl z-40 
+        className={`fixed top-16 left-0 h-[calc(100vh-4rem)] border-r z-40 
         transform transition-all duration-300 ease-in-out
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
         md:translate-x-0
         ${sidebarCollapsed ? "md:w-16" : "md:w-64"} w-64`}
+        style={{ background: '#EAF4FF', borderColor: '#D7EAFB' }}
       >
         <div className={`p-4 border-b border-gray-200 ${sidebarCollapsed ? 'px-2' : ''}`}>
-          <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#93c5fd,#60a5fa)' }}>
               <UserCircle className="w-6 h-6 text-white" />
             </div>
             {!sidebarCollapsed && (

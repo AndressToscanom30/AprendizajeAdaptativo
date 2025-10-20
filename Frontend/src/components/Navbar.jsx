@@ -6,7 +6,7 @@ const Navbar = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
 
     // role-based nav was removed for the simplified navbar; keep `user` available for personalization later
     const currentPath = location.pathname;
@@ -19,7 +19,7 @@ const Navbar = () => {
     ];
 
     return (
-    <nav className="sticky top-0 z-50 bg-white text-gray-800 shadow-sm">
+        <nav className="sticky top-0 z-50 text-gray-800" style={{ background: '#EAF4FF', borderBottom: '1px solid #D7EAFB' }}>
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
                     <div className="flex items-center gap-4">
@@ -34,7 +34,7 @@ const Navbar = () => {
                             alt="AA Logo"
                             className="mr-3 transition-transform duration-300 group-hover:scale-105"
                         />
-                        <span className="text-lg md:text-xl font-bold text-gray-800">
+                            <span className="text-lg md:text-xl font-bold text-[#0f172a]">
                             Aprendizaje Adaptativo
                         </span>
                     </div>
@@ -60,12 +60,6 @@ const Navbar = () => {
                             <span className="px-4 py-2 text-sm font-medium text-gray-700">
                                 Hola, {user.nombre || user.email}
                             </span>
-                            <button
-                                onClick={() => { logout(); navigate('/'); }}
-                                className="px-4 py-2 text-sm font-medium rounded-lg border bg-white text-gray-700 hover:bg-gray-100"
-                            >
-                                Cerrar sesión
-                            </button>
                         </>
                     ) : (
                         <>
@@ -108,7 +102,7 @@ const Navbar = () => {
                 </div>
                 </div>
                 {isMenuOpen && (
-                    <div className="md:hidden py-3 space-y-3 bg-white/95 backdrop-blur-sm rounded-b-md shadow-sm">
+                        <div className="md:hidden py-3 space-y-3 backdrop-blur-sm rounded-b-md" style={{ background: 'rgba(234,244,255,0.98)', borderTop: '1px solid #D7EAFB' }}>
                         <div className="flex flex-col px-2 space-y-2 text-gray-800">
                             {[...primaryNav].map((item) => (
                                 <button
@@ -128,16 +122,6 @@ const Navbar = () => {
                             {user ? (
                                 <>
                                     <span className="px-3 py-2 text-sm font-medium text-gray-700">Hola, {user.nombre || user.email}</span>
-                                    <button
-                                        onClick={() => {
-                                            logout();
-                                            setIsMenuOpen(false);
-                                            navigate('/');
-                                        }}
-                                        className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300"
-                                    >
-                                        Cerrar sesión
-                                    </button>
                                 </>
                             ) : (
                                 <>
