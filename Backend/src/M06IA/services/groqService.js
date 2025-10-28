@@ -4,8 +4,7 @@ class GroqService {
   constructor() {
     this.apiKey = process.env.GROQ_API_KEY;
     this.baseURL = "https://api.groq.com/openai/v1/chat/completions";
-    // ✅ ACTUALIZADO: Modelo nuevo
-    this.model = "llama-3.3-70b-versatile"; // Era: 'llama-3.1-70b-versatile'
+    this.model = "llama-3.3-70b-versatile"; 
   }
 
   async generateCompletion(prompt, options = {}) {
