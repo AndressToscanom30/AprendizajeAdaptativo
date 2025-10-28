@@ -216,3 +216,24 @@ export const removerPreguntaDeEvaluacion = async (req, res) => {
         return res.status(500).json({ message: "Error al remover pregunta", error: error.message });
     }
 };
+
+export const obtenerEvaluacionesProfesor = async (req, res) => {
+    try {
+        console.log('Usuario autenticado:', req.user);
+        const profesorId = req.params.id;
+
+        if (req.user.rol !== "profesor" && req.user.rol !== "ia") {
+            return res.status(403).json({ message: "No tienes permisos para ver estas evaluaciones." });
+        }
+
+        const evaluaciones = await Evaluacion.findAll({
+            where: { creado_por: profesorId },
+            order: [['created_at', 'DESC']]
+        });
+
+        res.json(evaluaciones);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Error al obtener evaluaciones' });
+    }
+};

@@ -56,7 +56,7 @@ function Contact() {
         {
             icon: "📱",
             title: "Teléfono",
-            detail: "+57 319 4333554",
+            detail: "+57 320 3722941",
             description: "Disponible de 9AM a 6PM",
             delay: "150ms"
         },

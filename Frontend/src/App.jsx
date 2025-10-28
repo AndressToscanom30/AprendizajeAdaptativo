@@ -18,6 +18,7 @@ import Perfil from "./pages/Perfil.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import RecuperarPassword from "./pages/RecuperarPassword.jsx";
+import Evaluaciones from "./pages/Evaluciones.jsx";
 
 
 function App() {
@@ -28,62 +29,71 @@ function App() {
           <div className="min-h-screen bg-white">
             <Navbar />
             <NavBarEstudiantes />
-          <Routes>
-          <Route path="/" element={<StudentLayout><Home /></StudentLayout>} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/about" element={<StudentLayout><AboutUs /></StudentLayout>} />
-          <Route path="/contact" element={<StudentLayout><Contact /></StudentLayout>} />
-          <Route path="/recursos" element={
-            <StudentLayout>
-              <div className="p-8">
-                <h1 className="text-2xl font-bold">Recursos de Aprendizaje</h1>
-                <p>Página en construcción...</p>
-              </div>
-            </StudentLayout>
-          } />
-          <Route path="/recuperarPass" element={<RecuperarPassword />} />
-          
-        <Route path="/dashboardE" 
-          element={
-            <ProtectedRoute roles={["estudiante"]}>
-              <StudentLayout>
-                <DashboardE />
-              </StudentLayout>
-            </ProtectedRoute>} 
-          />
+            <Routes>
+              <Route path="/" element={<StudentLayout><Home /></StudentLayout>} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/about" element={<StudentLayout><AboutUs /></StudentLayout>} />
+              <Route path="/contact" element={<StudentLayout><Contact /></StudentLayout>} />
+              <Route path="/recursos" element={
+                <StudentLayout>
+                  <div className="p-8">
+                    <h1 className="text-2xl font-bold">Recursos de Aprendizaje</h1>
+                    <p>Página en construcción...</p>
+                  </div>
+                </StudentLayout>
+              } />
+              <Route path="/recuperarPass" element={<RecuperarPassword />} />
 
-        <Route path="/dashboardP" 
-          element={
-            <ProtectedRoute roles={["profesor"]}>
-              <DashboardP />
-            </ProtectedRoute>} 
-          />
+              <Route path="/dashboardE"
+                element={
+                  <ProtectedRoute roles={["estudiante"]}>
+                    <StudentLayout>
+                      <DashboardE />
+                    </StudentLayout>
+                  </ProtectedRoute>}
+              />
 
-        <Route path="/diagnostico" 
-          element={
-            <ProtectedRoute roles={["estudiante"]}>
-              <StudentLayout>
-                <Diagnostico />
-              </StudentLayout>
-            </ProtectedRoute>} 
-          />
+              <Route path="/dashboardP"
+                element={
+                  <ProtectedRoute roles={["profesor"]}>
+                    <DashboardP />
+                  </ProtectedRoute>}
+              />
 
-        <Route path="/perfil" 
-          element={
-            <ProtectedRoute roles={["estudiante"]}>
-              <StudentLayout>
-                <Perfil />
-              </StudentLayout>
-            </ProtectedRoute>} 
-          />
+              <Route path="/diagnostico"
+                element={
+                  <ProtectedRoute roles={["estudiante"]}>
+                    <StudentLayout>
+                      <Diagnostico />
+                    </StudentLayout>
+                  </ProtectedRoute>}
+              />
 
-        <Route path="/unauthorized" element={<Unauthorized />} />
-        <Route path="*" element={<NotFound />} />
-  </Routes>
-  <Footer />
-  </div>
-  </BrowserRouter>
+              <Route path="/evaluaciones"
+                element={
+                  <ProtectedRoute roles={["profesor"]}>
+                    <StudentLayout>
+                      <Evaluaciones />
+                    </StudentLayout>
+                  </ProtectedRoute>}
+              />
+
+              <Route path="/perfil"
+                element={
+                  <ProtectedRoute roles={["estudiante"]}>
+                    <StudentLayout>
+                      <Perfil />
+                    </StudentLayout>
+                  </ProtectedRoute>}
+              />
+
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Footer />
+          </div>
+        </BrowserRouter>
       </SidebarProvider>
     </AuthProvider>
   )
