@@ -10,7 +10,7 @@ const TestAdaptativo = sequelize.define(
       autoIncrement: true,
     },
     usuarioId: {
-      type: DataTypes.UUID, // ✅ UUID
+      type: DataTypes.UUID, 
       allowNull: false,
       field: "usuario_id",
     },
@@ -30,7 +30,7 @@ const TestAdaptativo = sequelize.define(
       defaultValue: {},
     },
     evaluacionId: {
-      type: DataTypes.UUID, // ✅ Cambiado a UUID
+      type: DataTypes.UUID, 
       allowNull: true,
       field: "evaluacion_id",
     },
