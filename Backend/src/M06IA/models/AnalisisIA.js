@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../../config/db.js';  // ✅ Ajusta esta ruta según donde esté tu db.js
+import sequelize from '../../config/db.js'; 
 
 const AnalisisIA = sequelize.define('AnalisisIA', {
   id: {
@@ -8,12 +8,12 @@ const AnalisisIA = sequelize.define('AnalisisIA', {
     autoIncrement: true
   },
   usuarioId: {
-    type: DataTypes.UUID,  // ✅ UUID
+    type: DataTypes.UUID,  
     allowNull: false,
     field: 'usuario_id'
   },
   intentoId: {
-    type: DataTypes.UUID,  // ✅ Cambiado a UUID (verifica si Intento es UUID o INTEGER)
+    type: DataTypes.UUID,  
     allowNull: false,
     field: 'intento_id'
   },
