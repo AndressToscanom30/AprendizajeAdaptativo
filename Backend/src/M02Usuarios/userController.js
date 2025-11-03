@@ -304,3 +304,87 @@ export const verificarRelacionEstudianteProfesor = async (req, res) => {
   }
 };
 
+// Actualizar perfil de usuario
+export const actualizarPerfil = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, email } = req.body;
+
+    // Verificar que el usuario solo pueda actualizar su propio perfil (a menos que sea admin)
+    if (req.user.id !== id && req.user.rol !== 'admin') {
+      return res.status(403).json({ message: "No tienes permiso para actualizar este perfil" });
+    }
+
+    const usuario = await User.findByPk(id);
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    // Verificar si el email ya está en uso por otro usuario
+    if (email && email !== usuario.email) {
+      const emailExiste = await User.findOne({ where: { email } });
+      if (emailExiste) {
+        return res.status(400).json({ message: "El email ya está en uso" });
+      }
+    }
+
+    // Actualizar
+    await usuario.update({
+      nombre: nombre || usuario.nombre,
+      email: email || usuario.email
+    });
+
+    res.json({
+      message: "Perfil actualizado correctamente",
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        rol: usuario.rol
+      }
+    });
+  } catch (error) {
+    console.error("Error al actualizar perfil:", error);
+    res.status(500).json({ message: "Error al actualizar perfil" });
+  }
+};
+
+// Cambiar contraseña
+export const cambiarPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Faltan campos obligatorios" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "La nueva contraseña debe tener al menos 6 caracteres" });
+    }
+
+    const usuario = await User.findByPk(userId);
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    // Verificar contraseña actual
+    const passwordValido = await bcrypt.compare(currentPassword, usuario.password);
+    if (!passwordValido) {
+      return res.status(401).json({ message: "Contraseña actual incorrecta" });
+    }
+
+    // Encriptar nueva contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Actualizar
+    await usuario.update({ password: hashedPassword });
+
+    res.json({ message: "Contraseña actualizada correctamente" });
+  } catch (error) {
+    console.error("Error al cambiar contraseña:", error);
+    res.status(500).json({ message: "Error al cambiar contraseña" });
+  }
+};
+

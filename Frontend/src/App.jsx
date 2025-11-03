@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import NavigationWrapper from "./components/NavigationWrapper.jsx";
 import StudentLayout from "./components/StudentLayout.jsx";
 import ProfessorLayout from "./components/ProfessorLayout.jsx";
+import AdminLayout from "./components/AdminLayout.jsx";
 import Footer from "./components/Footer";
 import DashboardE from "./pages/DashboardEstudiante";
 import DashboardP from "./pages/DashboardProfesor";
@@ -36,14 +37,15 @@ function App() {
     <AuthProvider>
       <SidebarProvider>
         <BrowserRouter>
-          <div className="min-h-screen bg-white">
+          <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
             <NavigationWrapper />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/contact" element={<Contact />} />
+            <div className="flex-1 w-full overflow-x-hidden">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/contact" element={<Contact />} />
 
               <Route path="/recursos" element={
                 <ProtectedRoute roles={["estudiante", "profesor"]}>
@@ -114,17 +116,17 @@ function App() {
                 </ProtectedRoute>
               }/>
               <Route path="/admin/relaciones" element={
-                <ProtectedRoute roles={["profesor"]}>
-                  <ProfessorLayout>
+                <ProtectedRoute roles={["admin"]}>
+                  <AdminLayout>
                     <GestionRelaciones />
-                  </ProfessorLayout>
+                  </AdminLayout>
                 </ProtectedRoute>
               }/>
               <Route path="/admin/verificar" element={
-                <ProtectedRoute roles={["profesor"]}>
-                  <ProfessorLayout>
+                <ProtectedRoute roles={["admin"]}>
+                  <AdminLayout>
                     <VerificarRelacion />
-                  </ProfessorLayout>
+                  </AdminLayout>
                 </ProtectedRoute>
               }/>
               <Route path="/evaluaciones" element={
@@ -204,6 +206,7 @@ function App() {
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </div>
             <Footer />
           </div>
         </BrowserRouter>

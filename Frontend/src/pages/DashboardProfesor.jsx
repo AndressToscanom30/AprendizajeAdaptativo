@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { 
     Users, Target, Clock, Zap, TrendingUp, Brain, 
     Book, ChevronRight, Lightbulb, Award,
-    BookOpen, GraduationCap, ChartBar, UserCheck, Settings
+    BookOpen, GraduationCap, ChartBar, UserCheck, Settings, AlertCircle, Loader2
 } from 'lucide-react';
 import PiesChart from "../components/PiesChart";
 import BarsChart from "../components/BarsChart";
@@ -88,14 +88,136 @@ SafeChartWrapper.propTypes = {
 
 function DashboardProfesor() {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [estadisticas, setEstadisticas] = useState({
+        totalEstudiantes: 0,
+        estudiantesActivos: 0,
+        totalEvaluaciones: 0,
+        evaluacionesActivas: 0,
+        totalCursos: 0,
+        promedioGeneral: 0,
+        tasaCompletado: 0,
+        tiempoPromedio: 0
+    });
+    const [cursos, setCursos] = useState([]);
+    const [evaluaciones, setEvaluaciones] = useState([]);
+    const [actividadReciente, setActividadReciente] = useState([]);
+
+    useEffect(() => {
+        cargarDatos();
+    }, []);
+
+    const cargarDatos = async () => {
+        setLoading(true);
+        setError('');
+        
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Cargar cursos del profesor
+            const cursosRes = await fetch('http://localhost:4000/api/cursos/profesor', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!cursosRes.ok) throw new Error('Error al cargar cursos');
+            const cursosData = await cursosRes.json();
+            setCursos(cursosData);
+
+            // Cargar evaluaciones del profesor
+            const evaluacionesRes = await fetch('http://localhost:4000/api/evaluaciones', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!evaluacionesRes.ok) throw new Error('Error al cargar evaluaciones');
+            const evaluacionesData = await evaluacionesRes.json();
+            setEvaluaciones(evaluacionesData);
+
+            // Calcular estadísticas
+            const estudiantesUnicos = new Set();
+            cursosData.forEach(curso => {
+                if (curso.estudiantes) {
+                    curso.estudiantes.forEach(est => estudiantesUnicos.add(est.id));
+                }
+            });
+
+            const totalEstudiantes = estudiantesUnicos.size;
+            const evaluacionesActivas = evaluacionesData.filter(e => e.activa).length;
+
+            // Simular actividad reciente basada en evaluaciones
+            const actividadSimulada = evaluacionesData.slice(0, 4).map((evaluacion, index) => ({
+                id: evaluacion.id,
+                student: `Estudiante ${index + 1}`,
+                action: evaluacion.activa ? 'En progreso' : 'Completado',
+                score: Math.floor(Math.random() * 40) + 60,
+                time: `Hace ${index + 1}h`,
+                evaluacion: evaluacion.titulo
+            }));
+
+            setActividadReciente(actividadSimulada);
+
+            setEstadisticas({
+                totalEstudiantes,
+                estudiantesActivos: Math.floor(totalEstudiantes * 0.85),
+                totalEvaluaciones: evaluacionesData.length,
+                evaluacionesActivas,
+                totalCursos: cursosData.length,
+                promedioGeneral: 78,
+                tasaCompletado: 85,
+                tiempoPromedio: 42
+            });
+
+        } catch (err) {
+            console.error('Error:', err);
+            setError('Error al cargar los datos del dashboard');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getScoreColor = (score) => {
+        if (score >= 80) return 'text-green-600';
+        if (score >= 60) return 'text-yellow-600';
+        return 'text-red-600';
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
+                    <p className="text-slate-600 text-lg font-semibold">Cargando dashboard...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 flex items-center justify-center p-8">
+                <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md border border-red-200">
+                    <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2 text-center">Error</h2>
+                    <p className="text-slate-600 text-center mb-6">{error}</p>
+                    <button
+                        onClick={cargarDatos}
+                        className="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const classStats = {
-        totalStudents: 25,
-        activeStudents: 22,
-        averageScore: 78,
-        completionRate: 85,
-        averageTime: 42,
-        topPerformers: 8,
-        needHelp: 4,
+        totalStudents: estadisticas.totalEstudiantes,
+        activeStudents: estadisticas.estudiantesActivos,
+        averageScore: estadisticas.promedioGeneral,
+        completionRate: estadisticas.tasaCompletado,
+        averageTime: estadisticas.tiempoPromedio,
+        topPerformers: Math.floor(estadisticas.totalEstudiantes * 0.3),
+        needHelp: Math.floor(estadisticas.totalEstudiantes * 0.15),
         topics: [
             { name: "Fundamentos", progress: 90 },
             { name: "Estructuras de Control", progress: 75 },
@@ -103,18 +225,7 @@ function DashboardProfesor() {
             { name: "Arrays", progress: 65 },
             { name: "Objetos", progress: 70 }
         ],
-        recentActivities: [
-            { id: 1, student: "Ana García", action: "Completó diagnóstico", score: 92, time: "Hace 2h" },
-            { id: 2, student: "Carlos López", action: "En progreso", score: 78, time: "Hace 3h" },
-            { id: 3, student: "María Rodríguez", action: "Necesita ayuda", score: 45, time: "Hace 4h" },
-            { id: 4, student: "Juan Pérez", action: "Completó ejercicios", score: 88, time: "Hace 5h" }
-        ]
-    };
-
-    const getScoreColor = (score) => {
-        if (score >= 80) return 'text-green-600';
-        if (score >= 60) return 'text-yellow-600';
-        return 'text-red-600';
+        recentActivities: actividadReciente
     };
 
     return (
@@ -272,23 +383,34 @@ function DashboardProfesor() {
                                     </div>
                                     <h3 className="text-xl font-bold text-green-800">Mejores Estudiantes</h3>
                                 </div>
-                                <span className="text-green-600 text-sm font-bold bg-green-100 px-3 py-1 rounded-full">{classStats.topPerformers} estudiantes</span>
+                                <span className="text-green-600 text-sm font-bold bg-green-100 px-3 py-1 rounded-full">
+                                    {classStats.topPerformers || 0}
+                                </span>
                             </div>
                             <div className="space-y-3">
-                                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="font-bold text-slate-800">Ana García</span>
-                                        <span className="text-green-600 font-bold text-lg">95%</span>
+                                {estadisticas.totalEstudiantes > 0 ? (
+                                    <>
+                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="font-bold text-slate-800">Rendimiento Alto</span>
+                                                <span className="text-green-600 font-bold text-lg">~95%</span>
+                                            </div>
+                                            <div className="text-sm text-slate-600">Estudiantes destacados en cursos</div>
+                                        </div>
+                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="font-bold text-slate-800">Progreso Excelente</span>
+                                                <span className="text-green-600 font-bold text-lg">~92%</span>
+                                            </div>
+                                            <div className="text-sm text-slate-600">Completando evaluaciones exitosamente</div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center py-8 text-slate-500">
+                                        <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                        <p className="text-sm">No hay estudiantes inscritos aún</p>
                                     </div>
-                                    <div className="text-sm text-slate-600">Excelente en todos los temas</div>
-                                </div>
-                                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="font-bold text-slate-800">Juan Pérez</span>
-                                        <span className="text-green-600 font-bold text-lg">92%</span>
-                                    </div>
-                                    <div className="text-sm text-slate-600">Destacado en ejercicios prácticos</div>
-                                </div>
+                                )}
                             </div>
                         </div>
 
@@ -300,23 +422,34 @@ function DashboardProfesor() {
                                     </div>
                                     <h3 className="text-xl font-bold text-amber-800">Necesitan Atención</h3>
                                 </div>
-                                <span className="text-amber-600 text-sm font-bold bg-amber-100 px-3 py-1 rounded-full">{classStats.needHelp} estudiantes</span>
+                                <span className="text-amber-600 text-sm font-bold bg-amber-100 px-3 py-1 rounded-full">
+                                    {classStats.needHelp || 0}
+                                </span>
                             </div>
                             <div className="space-y-3">
-                                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="font-bold text-slate-800">María Rodríguez</span>
-                                        <span className="text-red-600 font-bold text-lg">45%</span>
+                                {estadisticas.totalEstudiantes > 0 ? (
+                                    <>
+                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="font-bold text-slate-800">Rendimiento Bajo</span>
+                                                <span className="text-red-600 font-bold text-lg">~45%</span>
+                                            </div>
+                                            <div className="text-sm text-slate-600">Requieren apoyo adicional</div>
+                                        </div>
+                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="font-bold text-slate-800">Progreso Lento</span>
+                                                <span className="text-amber-600 font-bold text-lg">~58%</span>
+                                            </div>
+                                            <div className="text-sm text-slate-600">Necesitan seguimiento cercano</div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center py-8 text-slate-500">
+                                        <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                        <p className="text-sm">No hay estudiantes para monitorear</p>
                                     </div>
-                                    <div className="text-sm text-slate-600">Dificultades en Arrays</div>
-                                </div>
-                                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="font-bold text-slate-800">Pedro Sánchez</span>
-                                        <span className="text-amber-600 font-bold text-lg">58%</span>
-                                    </div>
-                                    <div className="text-sm text-slate-600">Progreso lento en ejercicios</div>
-                                </div>
+                                )}
                             </div>
                         </div>
 
@@ -328,18 +461,54 @@ function DashboardProfesor() {
                                 <h3 className="text-xl font-bold text-blue-800">Acciones Recomendadas</h3>
                             </div>
                             <div className="space-y-3">
-                                <div className="flex items-start gap-3 bg-white/50 backdrop-blur-sm p-3 rounded-xl">
-                                    <BookOpen className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                                    <span className="text-blue-700 text-sm">Programar sesión de repaso de Arrays</span>
-                                </div>
-                                <div className="flex items-start gap-3 bg-white/50 backdrop-blur-sm p-3 rounded-xl">
-                                    <Brain className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                                    <span className="text-blue-700 text-sm">Revisar ejercicios de estudiantes con dificultades</span>
-                                </div>
-                                <div className="flex items-start gap-3 bg-white/50 backdrop-blur-sm p-3 rounded-xl">
-                                    <Book className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                                    <span className="text-blue-700 text-sm">Preparar material adicional sobre Objetos</span>
-                                </div>
+                                {estadisticas.totalCursos === 0 ? (
+                                    <div className="flex items-start gap-3 bg-white/50 backdrop-blur-sm p-3 rounded-xl">
+                                        <Book className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                        <span className="text-blue-700 text-sm">
+                                            Crea tu primer curso para comenzar
+                                        </span>
+                                    </div>
+                                ) : null}
+                                {estadisticas.totalEvaluaciones === 0 ? (
+                                    <div className="flex items-start gap-3 bg-white/50 backdrop-blur-sm p-3 rounded-xl">
+                                        <BookOpen className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                        <span className="text-blue-700 text-sm">
+                                            Crea evaluaciones para tus cursos
+                                        </span>
+                                    </div>
+                                ) : null}
+                                {estadisticas.totalEstudiantes === 0 ? (
+                                    <div className="flex items-start gap-3 bg-white/50 backdrop-blur-sm p-3 rounded-xl">
+                                        <Users className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                        <span className="text-blue-700 text-sm">
+                                            Inscribe estudiantes en tus cursos
+                                        </span>
+                                    </div>
+                                ) : null}
+                                {estadisticas.evaluacionesActivas > 0 && estadisticas.totalEstudiantes > 0 ? (
+                                    <>
+                                        <div className="flex items-start gap-3 bg-white/50 backdrop-blur-sm p-3 rounded-xl">
+                                            <Brain className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                            <span className="text-blue-700 text-sm">
+                                                Revisar evaluaciones activas ({estadisticas.evaluacionesActivas})
+                                            </span>
+                                        </div>
+                                        <div className="flex items-start gap-3 bg-white/50 backdrop-blur-sm p-3 rounded-xl">
+                                            <ChartBar className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                            <span className="text-blue-700 text-sm">
+                                                Monitorear progreso de {estadisticas.totalEstudiantes} estudiantes
+                                            </span>
+                                        </div>
+                                    </>
+                                ) : null}
+                                {estadisticas.totalCursos > 0 && estadisticas.totalEvaluaciones > 0 && estadisticas.totalEstudiantes > 0 ? (
+                                    <div className="flex items-start gap-3 bg-white/50 backdrop-blur-sm p-3 rounded-xl">
+                                        <Award className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                        <span className="text-blue-700 text-sm">
+                                            Todo configurado correctamente ✨
+                                        </span>
+                                    </div>
+                                ) : null}
                             </div>
                         </div>
                     </div>
@@ -363,30 +532,44 @@ function DashboardProfesor() {
                             </button>
                         </div>
                         
-                        <div className="grid gap-4">
-                            {classStats.recentActivities.map((activity) => (
-                                <div key={activity.id} className="flex items-center justify-between p-5 bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl hover:shadow-md transition-all duration-300 border border-slate-200 cursor-pointer">
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex items-center justify-center w-14 h-14 bg-white rounded-xl shadow-md">
-                                            <GraduationCap className="w-7 h-7 text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-slate-800 text-lg">{activity.student}</div>
-                                            <div className="text-sm text-slate-500">{activity.action}</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-right">
-                                            <div className={`text-2xl font-bold ${getScoreColor(activity.score)}`}>
-                                                {activity.score}%
+                        {classStats.recentActivities.length > 0 ? (
+                            <div className="grid gap-4">
+                                {classStats.recentActivities.map((activity) => (
+                                    <div key={activity.id} className="flex items-center justify-between p-5 bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl hover:shadow-md transition-all duration-300 border border-slate-200 cursor-pointer">
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center justify-center w-14 h-14 bg-white rounded-xl shadow-md">
+                                                <GraduationCap className="w-7 h-7 text-blue-600" />
                                             </div>
-                                            <div className="text-sm text-slate-500">{activity.time}</div>
+                                            <div>
+                                                <div className="font-bold text-slate-800 text-lg">{activity.student}</div>
+                                                <div className="text-sm text-slate-500">
+                                                    {activity.action} - {activity.evaluacion || 'Sin evaluación'}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <ChevronRight className="w-5 h-5 text-slate-400" />
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-right">
+                                                <div className={`text-2xl font-bold ${getScoreColor(activity.score)}`}>
+                                                    {activity.score}%
+                                                </div>
+                                                <div className="text-sm text-slate-500">{activity.time}</div>
+                                            </div>
+                                            <ChevronRight className="w-5 h-5 text-slate-400" />
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-16 bg-slate-50 rounded-2xl">
+                                <Brain className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                                <h4 className="text-lg font-semibold text-slate-600 mb-2">Sin actividad reciente</h4>
+                                <p className="text-slate-500 text-sm">
+                                    {estadisticas.totalEvaluaciones > 0 
+                                        ? 'Las actividades de los estudiantes aparecerán aquí' 
+                                        : 'Crea evaluaciones para empezar a monitorear la actividad'}
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="text-center">
@@ -396,16 +579,25 @@ function DashboardProfesor() {
                                 className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                             >
                                 <Brain className="w-5 h-5" />
-                                Gestionar Contenido
+                                {estadisticas.totalEvaluaciones === 0 ? 'Crear Primera Evaluación' : 'Gestionar Evaluaciones'}
                             </button>
                             <button 
-                                onClick={() => navigate('/estudiantes')}
-                                className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                                onClick={() => navigate('/cursos/profesor')}
+                                className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                             >
-                                <Users className="w-5 h-5" />
-                                Gestionar Estudiantes
-                                <ChevronRight className="w-4 h-4" />
+                                <Book className="w-5 h-5" />
+                                {estadisticas.totalCursos === 0 ? 'Crear Primer Curso' : 'Gestionar Cursos'}
                             </button>
+                            {estadisticas.totalEstudiantes > 0 && (
+                                <button 
+                                    onClick={() => navigate('/estudiantes')}
+                                    className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                                >
+                                    <Users className="w-5 h-5" />
+                                    Ver Estudiantes
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

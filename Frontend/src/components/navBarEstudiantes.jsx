@@ -53,8 +53,8 @@ export default function NavBarEstudiantes() {
 
   return (
     <>
-      <nav className={`sticky top-0 z-50 bg-white border-b transition-all duration-300 ${scrolled ? 'shadow-lg border-slate-200' : 'border-slate-100'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className={`sticky top-0 z-50 bg-white border-b transition-all duration-300 overflow-x-hidden ${scrolled ? 'shadow-lg border-slate-200' : 'border-slate-100'}`}>
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center gap-4">
               <button 
@@ -110,18 +110,18 @@ export default function NavBarEstudiantes() {
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm mt-20"
           onClick={closeSidebar}
         />
       )}
 
       <aside
-        className={`fixed top-20 left-0 h-[calc(100vh-5rem)] bg-white border-r border-slate-200 z-40 
-        transform transition-all duration-300 ease-in-out shadow-xl
+        className={`fixed top-0 left-0 h-screen bg-white border-r border-slate-200 z-30 
+        transform transition-all duration-300 ease-in-out shadow-xl pt-20
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
         lg:translate-x-0 ${sidebarCollapsed ? 'lg:w-20' : 'w-72'}`}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-[calc(100vh-5rem)] overflow-y-auto">
           <div className={`p-6 border-b border-slate-200 ${sidebarCollapsed ? 'lg:p-4' : ''}`}>
             <div className={`flex items-center ${sidebarCollapsed ? 'lg:justify-center' : 'gap-3'}`}>
               <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">

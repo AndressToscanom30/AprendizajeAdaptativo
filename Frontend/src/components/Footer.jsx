@@ -9,13 +9,15 @@ export default function Footer() {
   const user = auth?.user;
   const logout = auth?.logout;
   const { sidebarCollapsed } = useSidebar();
-  // apply left offset only when the student sidebar is actually present
-  const offsetClass = (user && user.rol === 'estudiante') ? (sidebarCollapsed ? 'md:ml-16' : 'md:ml-64') : '';
+  
+  // Aplicar offset para TODOS los roles con sidebar (estudiante, profesor, admin)
+  const hasSidebar = user && (user.rol === 'estudiante' || user.rol === 'profesor' || user.rol === 'admin');
+  const offsetClass = hasSidebar ? (sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72') : '';
 
   return (
-    <footer className={`mt-auto transition-all duration-300 ${offsetClass}`} style={{ background: '#1a1a2e', color: '#e0e0e0' }}>
+    <footer className={`transition-all duration-300 ${offsetClass} w-full`} style={{ background: '#1a1a2e', color: '#e0e0e0' }}>
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         {/* Logo and Slogan Section */}
         <div className="mb-12 md:mb-16 text-center md:text-left">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-6">
@@ -229,7 +231,7 @@ export default function Footer() {
 
       {/* Copyright Bar */}
       <div style={{ borderTop: '1px solid #374151' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-center items-center gap-2 text-xs md:text-sm" style={{ color: '#9ca3af' }}>
             <span>©Copyright. All rights reserved.</span>
             {user && (

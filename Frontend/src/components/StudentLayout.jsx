@@ -6,15 +6,13 @@ export default function StudentLayout({ children }) {
   const { sidebarCollapsed } = useSidebar();
 
   if (!user || user.rol !== "estudiante") {
-    return <div className="min-h-screen">{children}</div>;
+    return <div>{children}</div>;
   }
 
   return (
-    <div className="min-h-screen">
+    <div>
       <main className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'}`}>
-        <div className="p-6 max-w-7xl mx-auto">
-          {children}
-        </div>
+        {children}
       </main>
     </div>
   );

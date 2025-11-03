@@ -18,8 +18,8 @@ const Navbar = () => {
     ];
 
     return (
-        <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-slate-200 shadow-sm">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-slate-200 shadow-sm overflow-x-hidden">
+            <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-20">
                     <div
                         className="flex items-center gap-3 group cursor-pointer"
@@ -113,7 +113,7 @@ const Navbar = () => {
                         onClick={() => setIsMenuOpen(false)}
                     />
 
-                    <div className="fixed top-0 right-0 h-full w-80 bg-white z-50 md:hidden shadow-2xl transform transition-transform duration-300">
+                    <div className="fixed top-0 right-0 h-full w-[85vw] max-w-sm bg-white z-50 md:hidden shadow-2xl transform transition-transform duration-300 overflow-y-auto">
                         <div className="flex justify-between items-center p-6 border-b border-slate-200">
                             <div className="flex items-center gap-2">
                                 <img src="/finalaa.png" width={40} height={40} alt="Logo" className="rounded-lg" />

@@ -160,7 +160,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, extendSession }}>
+    <AuthContext.Provider value={{ user, setUser, login, logout, loading, extendSession }}>
       {loading ? (
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
