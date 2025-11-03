@@ -1,11 +1,11 @@
 import { useAuth } from "../context/AuthContext.jsx";
 import { useSidebar } from "../context/SidebarContext.jsx";
 
-export default function StudentLayout({ children }) {
+export default function ProfessorLayout({ children }) {
   const { user } = useAuth();
   const { sidebarCollapsed } = useSidebar();
 
-  if (!user || user.rol !== "estudiante") {
+  if (!user || user.rol !== "profesor") {
     return <div className="min-h-screen">{children}</div>;
   }
 

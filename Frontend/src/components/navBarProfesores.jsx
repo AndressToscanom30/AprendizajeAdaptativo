@@ -6,18 +6,20 @@ import {
   Menu, 
   LayoutDashboard, 
   UserCircle, 
-  ClipboardList,
-  Home,
   BookOpen,
+  Home,
   LogOut,
-  GraduationCap,
+  Briefcase,
+  Users,
+  BarChart3,
+  FileText,
   ChevronLeft,
   ChevronRight,
   Info,
   Mail
 } from "lucide-react";
 
-export default function NavBarEstudiantes() {
+export default function NavBarProfesores() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -36,11 +38,13 @@ export default function NavBarEstudiantes() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (!user || user.rol !== "estudiante") return null;
+  if (!user || user.rol !== "profesor") return null;
 
-  const studentMenuItems = [
-    { name: "Dashboard", href: "/dashboardE", icon: LayoutDashboard },
-    { name: "Evaluaciones", href: "/diagnostico", icon: ClipboardList },
+  const profesorMenuItems = [
+    { name: "Dashboard", href: "/dashboardP", icon: LayoutDashboard },
+    { name: "Evaluaciones", href: "/evaluaciones/profesor", icon: FileText },
+    { name: "Estudiantes", href: "/estudiantes", icon: Users },
+    { name: "Reportes", href: "/reportes", icon: BarChart3 },
     { name: "Perfil", href: "/perfil", icon: UserCircle },
   ];
 
@@ -88,10 +92,10 @@ export default function NavBarEstudiantes() {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-slate-50 rounded-xl border border-blue-100">
-                <GraduationCap className="w-5 h-5 text-blue-600" />
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                <Briefcase className="w-5 h-5 text-blue-600" />
                 <div>
-                  <p className="text-xs text-slate-500">Estudiante</p>
+                  <p className="text-xs text-slate-500">Profesor</p>
                   <p className="text-sm font-semibold text-slate-800">{user?.nombre || user?.email}</p>
                 </div>
               </div>
@@ -124,12 +128,12 @@ export default function NavBarEstudiantes() {
         <div className="flex flex-col h-full">
           <div className={`p-6 border-b border-slate-200 ${sidebarCollapsed ? 'lg:p-4' : ''}`}>
             <div className={`flex items-center ${sidebarCollapsed ? 'lg:justify-center' : 'gap-3'}`}>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
-                <GraduationCap className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                <Briefcase className="w-6 h-6 text-white" />
               </div>
               {!sidebarCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Estudiante</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Profesor</p>
                   <p className="text-sm font-semibold text-slate-800 truncate">
                     {user?.nombre || user?.email}
                   </p>
@@ -142,11 +146,11 @@ export default function NavBarEstudiantes() {
             <div>
               {!sidebarCollapsed && (
                 <h3 className="text-xs font-bold uppercase tracking-wide mb-3 px-3 text-slate-500">
-                  Panel Principal
+                  Panel de Profesor
                 </h3>
               )}
               <nav className="space-y-1">
-                {studentMenuItems.map((item) => {
+                {profesorMenuItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = location.pathname === item.href;
                   return (
@@ -156,7 +160,7 @@ export default function NavBarEstudiantes() {
                       onClick={closeSidebar}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${
                         isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-200'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200'
                           : 'text-slate-600 hover:bg-blue-50 hover:text-blue-600'
                       } ${sidebarCollapsed ? 'lg:justify-center' : ''}`}
                     >
@@ -197,8 +201,8 @@ export default function NavBarEstudiantes() {
                       onClick={closeSidebar}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${
                         isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-200'
-                          : 'text-slate-600 hover:bg-blue-50 hover:text-blue-600'
+                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-200'
+                          : 'text-slate-600 hover:bg-purple-50 hover:text-purple-600'
                       } ${sidebarCollapsed ? 'lg:justify-center' : ''}`}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
@@ -250,4 +254,3 @@ export default function NavBarEstudiantes() {
     </>
   );
 }
-

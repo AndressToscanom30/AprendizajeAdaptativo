@@ -12,6 +12,10 @@ function ProtectedRoute({ children, roles }) {
     return <Navigate to="/unauthorized" replace />;
   }
 
+  if (typeof children === 'function') {
+    return children(user);
+  }
+
   return children;
 }
 

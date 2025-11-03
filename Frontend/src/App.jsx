@@ -2,9 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { SidebarProvider } from "./context/SidebarContext.jsx";
 import Home from "./pages/Home";
-import Navbar from "./components/Navbar";
-import NavBarEstudiantes from "./components/navBarEstudiantes.jsx";
+import NavigationWrapper from "./components/NavigationWrapper.jsx";
 import StudentLayout from "./components/StudentLayout.jsx";
+import ProfessorLayout from "./components/ProfessorLayout.jsx";
 import Footer from "./components/Footer";
 import DashboardE from "./pages/DashboardEstudiante";
 import DashboardP from "./pages/DashboardProfesor";
@@ -15,6 +15,8 @@ import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import Diagnostico from "./pages/Diagnostico";
 import Perfil from "./pages/Perfil.jsx";
+import Estudiantes from "./pages/Estudiantes.jsx";
+import Reportes from "./pages/Reportes.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import RecuperarPassword from "./pages/RecuperarPassword.jsx";
@@ -29,29 +31,54 @@ function App() {
       <SidebarProvider>
         <BrowserRouter>
           <div className="min-h-screen bg-white">
-            <Navbar />
-            <NavBarEstudiantes />
+            <NavigationWrapper />
             <Routes>
-              <Route path="/" element={<StudentLayout><Home /></StudentLayout>} />
+              <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/about" element={<StudentLayout><AboutUs /></StudentLayout>} />
-              <Route path="/contact" element={<StudentLayout><Contact /></StudentLayout>} />
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/contact" element={<Contact />} />
 
               <Route path="/recursos" element={
-                <StudentLayout>
-                  <div className="p-8">
-                    <h1 className="text-2xl font-bold">Recursos de Aprendizaje</h1>
-                    <p>Página en construcción...</p>
-                  </div>
-                </StudentLayout>
+                <ProtectedRoute roles={["estudiante", "profesor"]}>
+                  {(user) => {
+                    const content = (
+                      <div className="p-8">
+                        <h1 className="text-2xl font-bold">Recursos de Aprendizaje</h1>
+                        <p>Página en construcción...</p>
+                      </div>
+                    );
+                    return user.rol === "profesor" ? (
+                      <ProfessorLayout>{content}</ProfessorLayout>
+                    ) : (
+                      <StudentLayout>{content}</StudentLayout>
+                    );
+                  }}
+                </ProtectedRoute>
               } />
               <Route path="/recuperarPass" element={<RecuperarPassword />} />
 
-              {/*A partir de aquí ponemos las rutas protegidas nada más */}
-              <Route path="/evaluaciones/profesor" element={<EvaluacionesProfesor />}/>
-              <Route path="/evaluaciones" element={<Evaluacion />} />
-              <Route path="/crearEvaluacion" element={<CrearEvaluacionForm />}/>
+              <Route path="/evaluaciones/profesor" element={
+                <ProtectedRoute roles={["profesor"]}>
+                  <ProfessorLayout>
+                    <EvaluacionesProfesor />
+                  </ProfessorLayout>
+                </ProtectedRoute>
+              }/>
+              <Route path="/evaluaciones" element={
+                <ProtectedRoute roles={["estudiante"]}>
+                  <StudentLayout>
+                    <Evaluacion />
+                  </StudentLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/crearEvaluacion" element={
+                <ProtectedRoute roles={["profesor"]}>
+                  <ProfessorLayout>
+                    <CrearEvaluacionForm />
+                  </ProfessorLayout>
+                </ProtectedRoute>
+              }/>
               <Route path="/dashboardE"
                 element={
                   <ProtectedRoute roles={["estudiante"]}>
@@ -64,7 +91,27 @@ function App() {
               <Route path="/dashboardP"
                 element={
                   <ProtectedRoute roles={["profesor"]}>
-                    <DashboardP />
+                    <ProfessorLayout>
+                      <DashboardP />
+                    </ProfessorLayout>
+                  </ProtectedRoute>}
+              />
+
+              <Route path="/estudiantes"
+                element={
+                  <ProtectedRoute roles={["profesor"]}>
+                    <ProfessorLayout>
+                      <Estudiantes />
+                    </ProfessorLayout>
+                  </ProtectedRoute>}
+              />
+
+              <Route path="/reportes"
+                element={
+                  <ProtectedRoute roles={["profesor"]}>
+                    <ProfessorLayout>
+                      <Reportes />
+                    </ProfessorLayout>
                   </ProtectedRoute>}
               />
 
@@ -79,10 +126,16 @@ function App() {
 
               <Route path="/perfil"
                 element={
-                  <ProtectedRoute roles={["estudiante"]}>
-                    <StudentLayout>
-                      <Perfil />
-                    </StudentLayout>
+                  <ProtectedRoute roles={["estudiante", "profesor"]}>
+                    {(user) => user.rol === "profesor" ? (
+                      <ProfessorLayout>
+                        <Perfil />
+                      </ProfessorLayout>
+                    ) : (
+                      <StudentLayout>
+                        <Perfil />
+                      </StudentLayout>
+                    )}
                   </ProtectedRoute>}
               />
 

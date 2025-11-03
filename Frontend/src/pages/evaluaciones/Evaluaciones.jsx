@@ -35,7 +35,7 @@ function Evaluaciones() {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json'
                         },
-                        credentials: 'include' // Incluir cookies si las usas
+                        credentials: 'include'
                     }
                 );
 

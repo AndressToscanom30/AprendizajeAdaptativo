@@ -140,14 +140,27 @@ function CrearEvaluacionForm() {
     };
 
     return (
-        <div className="flex flex-col w-full px-4 sm:px-8 py-10 bg-gray-50 min-h-screen transition-all duration-300">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">
-                ✏️ Crear nueva evaluación
-            </h1>
+        <div className="flex flex-col w-full px-4 sm:px-8 py-10 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 min-h-screen transition-all duration-300">
+            {/* Header con icono */}
+            <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-8 mb-8 transform transition-all duration-300 hover:shadow-2xl">
+                <div className="flex items-center gap-4 mb-2">
+                    <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-4 shadow-lg">
+                        <PlusCircle className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                            Crear nueva evaluación
+                        </h1>
+                        <p className="text-slate-600 mt-1 text-lg">
+                            Completa la información general y agrega preguntas
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             <form
                 onSubmit={handleSubmit}
-                className="bg-white shadow-md rounded-2xl p-6 space-y-6 border border-gray-100"
+                className="bg-white shadow-xl rounded-3xl p-8 space-y-8 border border-slate-200 transform transition-all duration-300 hover:shadow-2xl"
             >
                 <div>
                     <label className="block text-gray-700 font-semibold mb-1">
