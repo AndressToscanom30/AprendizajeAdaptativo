@@ -1,8 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PlusCircle, Clock, Calendar, Shuffle, Save } from "lucide-react";
 import PreguntaEditor from "../../../components/evaluaciones/PreguntaEditor.jsx";
+import { useAuth } from "../../../context/AuthContext.jsx";
 
 function CrearEvaluacionForm() {
+    const navigate = useNavigate();
+    const { user } = useAuth();
     const [preguntas, setPreguntas] = useState([]);
     const [evaluacion, setEvaluacion] = useState({
         titulo: "",
@@ -11,7 +15,9 @@ function CrearEvaluacionForm() {
         comienza_en: "",
         termina_en: "",
         preguntas_revueltas: false,
-        max_intentos: "",
+        max_intentos: 3,
+        curso_id: null,
+        activa: true
     });
     const [loading, setLoading] = useState(false);
     const [mensaje, setMensaje] = useState("");
@@ -29,11 +35,11 @@ function CrearEvaluacionForm() {
             ...prev,
             {
                 id: Date.now(),
-                titulo: "Pregunta sin título",
-                descripcion: "",
+                texto: "",
                 tipo: "opcion_multiple",
                 opciones: [],
-                obligatoria: false,
+                respuesta_correcta: "",
+                puntaje: 1,
             },
         ]);
     };
@@ -56,84 +62,89 @@ function CrearEvaluacionForm() {
         try {
             const token = localStorage.getItem("token");
 
-            if (preguntas.length === 0) {
-                setMensaje("❌ Debes agregar al menos una pregunta antes de guardar");
-                return;
+            if (!token) {
+                throw new Error('No hay token de autenticación');
             }
+
+            // Crear evaluación
+            const evaluacionData = {
+                ...evaluacion,
+                profesor_id: user?.id,
+                duracion_minutos: parseInt(evaluacion.duracion_minutos),
+                max_intentos: parseInt(evaluacion.max_intentos),
+            };
 
             const resEval = await fetch("http://localhost:4000/api/evaluaciones", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    "Authorization": `Bearer ${token}`,
                 },
-                body: JSON.stringify(evaluacion),
+                body: JSON.stringify(evaluacionData),
             });
 
-            if (!resEval.ok) throw new Error("Error al crear la evaluación");
+            if (!resEval.ok) {
+                const errorData = await resEval.json();
+                throw new Error(errorData.error || "Error al crear la evaluación");
+            }
+
             const nuevaEval = await resEval.json();
 
-            for (const pregunta of preguntas) {
-                const preguntaData = {
-                    texto: pregunta.titulo || "Pregunta sin título",
-                    tipo: pregunta.tipo || "opcion_multiple",
-                    dificultad: pregunta.dificultad || "media",
-                    metadata: JSON.stringify({
-                        opciones: pregunta.opciones || [],
-                        obligatoria: pregunta.obligatoria || false,
-                    }),
-                    explicacion: pregunta.descripcion || "",
-                };
+            // Crear preguntas si hay
+            if (preguntas.length > 0) {
+                for (const pregunta of preguntas) {
+                    const preguntaData = {
+                        texto: pregunta.texto || pregunta.titulo || "Pregunta sin título",
+                        tipo: pregunta.tipo || "opcion_multiple",
+                        dificultad: pregunta.dificultad || "media",
+                        metadata: JSON.stringify({
+                            opciones: pregunta.opciones || [],
+                            respuesta_correcta: pregunta.respuesta_correcta || "",
+                        }),
+                        explicacion: pregunta.descripcion || "",
+                    };
 
-                const resCrearPregunta = await fetch("http://localhost:4000/api/preguntas", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
-                    body: JSON.stringify(preguntaData),
-                });
-
-                if (!resCrearPregunta.ok) {
-                    console.warn("❌ Error al crear una pregunta:", pregunta.titulo);
-                    continue;
-                }
-
-                const nuevaPregunta = await resCrearPregunta.json();
-
-                // 2️⃣ Asociarla a la evaluación
-                const resAsociar = await fetch(
-                    `http://localhost:4000/api/evaluaciones/${nuevaEval.id}/preguntas`,
-                    {
+                    const resCrearPregunta = await fetch("http://localhost:4000/api/preguntas", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                            "Authorization": `Bearer ${token}`,
                         },
-                        body: JSON.stringify({ preguntaId: nuevaPregunta.id }),
-                    }
-                );
+                        body: JSON.stringify(preguntaData),
+                    });
 
-                if (!resAsociar.ok) {
-                    console.warn("⚠️ No se pudo asociar la pregunta:", nuevaPregunta.texto);
+                    if (!resCrearPregunta.ok) {
+                        console.warn("Error al crear una pregunta");
+                        continue;
+                    }
+
+                    const nuevaPregunta = await resCrearPregunta.json();
+
+                    // Asociar pregunta a evaluación
+                    await fetch(
+                        `http://localhost:4000/api/evaluaciones/${nuevaEval.id}/preguntas`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({ preguntaId: nuevaPregunta.id }),
+                        }
+                    );
                 }
             }
 
-            setMensaje("✅ Evaluación y preguntas creadas correctamente");
-            setEvaluacion({
-                titulo: "",
-                descripcion: "",
-                duracion_minutos: "",
-                comienza_en: "",
-                termina_en: "",
-                preguntas_revueltas: false,
-                max_intentos: "",
-            });
-            setPreguntas([]);
+            setMensaje("✅ Evaluación creada exitosamente");
+            
+            // Redirigir después de 1.5 segundos
+            setTimeout(() => {
+                navigate('/profesor/evaluaciones');
+            }, 1500);
 
         } catch (error) {
             console.error(error);
-            setMensaje("❌ Error al crear la evaluación");
+            setMensaje(`❌ ${error.message || 'Error al crear la evaluación'}`);
         } finally {
             setLoading(false);
         }
@@ -162,8 +173,10 @@ function CrearEvaluacionForm() {
                 onSubmit={handleSubmit}
                 className="bg-white shadow-xl rounded-3xl p-8 space-y-8 border border-slate-200 transform transition-all duration-300 hover:shadow-2xl"
             >
+                {/* Título */}
                 <div>
-                    <label className="block text-gray-700 font-semibold mb-1">
+                    <label className="flex items-center gap-2 text-slate-700 font-semibold mb-2 text-lg">
+                        <PlusCircle className="w-5 h-5 text-blue-600" /> 
                         Título de la evaluación
                     </label>
                     <input
@@ -172,27 +185,30 @@ function CrearEvaluacionForm() {
                         onChange={handleChange}
                         type="text"
                         placeholder="Ej: Evaluación de Lógica y Programación"
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                        className="w-full border-2 border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 hover:border-blue-400"
                     />
                 </div>
 
+                {/* Descripción */}
                 <div>
-                    <label className="block text-gray-700 font-semibold mb-1">
-                        Descripción
+                    <label className="flex items-center gap-2 text-slate-700 font-semibold mb-2 text-lg">
+                        📝 Descripción
                     </label>
                     <textarea
                         name="descripcion"
                         value={evaluacion.descripcion}
                         onChange={handleChange}
                         placeholder="Describe el propósito o los temas de la evaluación..."
-                        className="w-full border border-gray-300 rounded-lg p-3 min-h-[120px] focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none"
+                        className="w-full border-2 border-slate-300 rounded-xl p-3 min-h-[120px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none resize-none transition-all duration-200 hover:border-blue-400"
                     ></textarea>
                 </div>
 
+                {/* Duración e Intentos */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-gray-700 font-semibold mb-1 flex items-center gap-2">
-                            <Clock className="w-4 h-4" /> Duración (minutos)
+                        <label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
+                            <Clock className="w-5 h-5 text-blue-600" /> 
+                            Duración (minutos)
                         </label>
                         <input
                             name="duracion_minutos"
@@ -200,13 +216,13 @@ function CrearEvaluacionForm() {
                             onChange={handleChange}
                             type="number"
                             min="1"
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                            className="w-full border-2 border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 hover:border-blue-400"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-gray-700 font-semibold mb-1 flex items-center gap-2">
-                            Intentos máximos permitidos
+                        <label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
+                            🔄 Intentos máximos permitidos
                         </label>
                         <input
                             name="max_intentos"
@@ -214,27 +230,30 @@ function CrearEvaluacionForm() {
                             onChange={handleChange}
                             type="number"
                             min="1"
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                            className="w-full border-2 border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 hover:border-blue-400"
                         />
                     </div>
                 </div>
 
+                {/* Fechas */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-gray-700 font-semibold mb-1 flex items-center gap-2">
-                            <Calendar className="w-4 h-4" /> Fecha de inicio
+                        <label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
+                            <Calendar className="w-5 h-5 text-blue-600" /> 
+                            Fecha de inicio
                         </label>
                         <input
                             name="comienza_en"
                             value={evaluacion.comienza_en}
                             onChange={handleChange}
                             type="date"
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                            className="w-full border-2 border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 hover:border-blue-400"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-gray-700 font-semibold mb-1 flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
+                            <Calendar className="w-5 h-5 text-blue-600" /> 
                             Fecha de finalización
                         </label>
                         <input
@@ -242,14 +261,15 @@ function CrearEvaluacionForm() {
                             value={evaluacion.termina_en}
                             onChange={handleChange}
                             type="date"
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                            className="w-full border-2 border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 hover:border-blue-400"
                         />
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Shuffle className="text-gray-600 w-5 h-5" />
-                    <label className="text-gray-700 font-medium">
+                {/* Checkbox Revolver Preguntas */}
+                <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-xl border-2 border-slate-200">
+                    <Shuffle className="text-blue-600 w-6 h-6" />
+                    <label className="text-slate-700 font-medium text-lg flex-1">
                         ¿Revolver preguntas?
                     </label>
                     <input
@@ -257,40 +277,48 @@ function CrearEvaluacionForm() {
                         checked={evaluacion.preguntas_revueltas}
                         onChange={handleChange}
                         type="checkbox"
-                        className="w-5 h-5 accent-purple-600"
+                        className="w-6 h-6 accent-blue-600 cursor-pointer transition-transform duration-200 hover:scale-110"
                     />
                 </div>
 
-                <div className="flex justify-end">
+                {/* Botón Guardar */}
+                <div className="flex justify-end pt-4">
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold transition-all duration-200 shadow-md ${loading
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-green-600 hover:bg-green-700 hover:shadow-lg"
+                        className={`flex items-center gap-3 px-8 py-4 rounded-xl text-white font-semibold text-lg transition-all duration-300 shadow-lg transform ${loading
+                            ? "bg-slate-400 cursor-not-allowed"
+                            : "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:shadow-xl hover:-translate-y-1"
                             }`}
                     >
-                        <Save className="w-5 h-5" />
+                        <Save className="w-6 h-6" />
                         {loading ? "Guardando..." : "Guardar evaluación"}
                     </button>
                 </div>
             </form>
 
+            {/* Mensaje de éxito/error */}
             {mensaje && (
-                <p
-                    className={`mt-4 text-center font-medium ${mensaje.includes("✅")
-                        ? "text-green-600"
-                        : "text-red-600"
+                <div
+                    className={`mt-6 p-4 rounded-xl text-center font-semibold text-lg shadow-lg ${mensaje.includes("✅")
+                        ? "bg-green-50 text-green-700 border-2 border-green-300"
+                        : "bg-red-50 text-red-700 border-2 border-red-300"
                         }`}
                 >
                     {mensaje}
-                </p>
+                </div>
             )}
 
-            <div className="max-w-4xl mx-auto mt-10">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                    Preguntas de la evaluación
-                </h2>
+            {/* Sección de Preguntas */}
+            <div className="mt-10 bg-white rounded-3xl shadow-xl border border-slate-200 p-8">
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl p-3 shadow-lg">
+                        <PlusCircle className="w-7 h-7 text-white" />
+                    </div>
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
+                        Preguntas de la evaluación
+                    </h2>
+                </div>
 
                 {preguntas.map((p) => (
                     <PreguntaEditor
@@ -301,13 +329,14 @@ function CrearEvaluacionForm() {
                     />
                 ))}
 
-                <div className="flex justify-center mt-6">
+                {/* Botón Agregar Pregunta */}
+                <div className="flex justify-center mt-8">
                     <button
                         type="button"
                         onClick={agregarPregunta}
-                        className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition-all duration-200 shadow-md hover:shadow-lg"
+                        className="flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 font-semibold text-lg"
                     >
-                        <PlusCircle className="w-5 h-5" />
+                        <PlusCircle className="w-6 h-6" />
                         Agregar pregunta
                     </button>
                 </div>

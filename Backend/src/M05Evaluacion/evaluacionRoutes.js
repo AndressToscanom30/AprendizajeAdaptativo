@@ -18,9 +18,13 @@ const router = Router();
 router.post('/', verifyToken, rolRequerido("profesor"), crearEvaluacion);
 router.put('/:id', verifyToken, rolRequerido("profesor"), editarEvaluacion);
 router.delete('/:id', verifyToken, rolRequerido("profesor"), borrarEvaluacion);
+
+// Rutas específicas ANTES de las genéricas
+router.get('/profesor/:id', verifyToken, obtenerEvaluacionesProfesor);
+
+// Rutas genéricas
 router.get('/', verifyToken, obtenerEvaluaciones);
 router.get('/:id', verifyToken, obtenerEvaluacionPorId);
-router.get('/profesor/:id', verifyToken, obtenerEvaluacionesProfesor);
 
 // Rutas para manejar preguntas
 router.post("/:evaluacionId/preguntas", verifyToken, rolRequerido("profesor"), agregarPreguntaAEvaluacion);

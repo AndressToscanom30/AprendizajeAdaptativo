@@ -22,6 +22,8 @@ import Unauthorized from "./pages/Unauthorized";
 import RecuperarPassword from "./pages/RecuperarPassword.jsx";
 import EvaluacionesProfesor from "./pages/evaluaciones/profesor/EvaluacionesProfesor.jsx";
 import CrearEvaluacionForm from "./pages/evaluaciones/profesor/CrearEvaluacionForm.jsx";
+import DetalleEvaluacion from "./pages/evaluaciones/profesor/DetalleEvaluacion.jsx";
+import EditarEvaluacionForm from "./pages/evaluaciones/profesor/EditarEvaluacionForm.jsx";
 import Evaluacion from "./pages/evaluaciones/Evaluaciones.jsx";
 
 
@@ -62,6 +64,34 @@ function App() {
                 <ProtectedRoute roles={["profesor"]}>
                   <ProfessorLayout>
                     <EvaluacionesProfesor />
+                  </ProfessorLayout>
+                </ProtectedRoute>
+              }/>
+              <Route path="/profesor/evaluaciones" element={
+                <ProtectedRoute roles={["profesor"]}>
+                  <ProfessorLayout>
+                    <EvaluacionesProfesor />
+                  </ProfessorLayout>
+                </ProtectedRoute>
+              }/>
+              <Route path="/profesor/evaluaciones/crear" element={
+                <ProtectedRoute roles={["profesor"]}>
+                  <ProfessorLayout>
+                    <CrearEvaluacionForm />
+                  </ProfessorLayout>
+                </ProtectedRoute>
+              }/>
+              <Route path="/profesor/evaluaciones/detalle/:id" element={
+                <ProtectedRoute roles={["profesor"]}>
+                  <ProfessorLayout>
+                    <DetalleEvaluacion />
+                  </ProfessorLayout>
+                </ProtectedRoute>
+              }/>
+              <Route path="/profesor/evaluaciones/editar/:id" element={
+                <ProtectedRoute roles={["profesor"]}>
+                  <ProfessorLayout>
+                    <EditarEvaluacionForm />
                   </ProfessorLayout>
                 </ProtectedRoute>
               }/>

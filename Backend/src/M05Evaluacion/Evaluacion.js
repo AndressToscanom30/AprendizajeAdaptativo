@@ -39,6 +39,14 @@ const Evaluacion = sequelize.define('Evaluacion', {
         type: DataTypes.UUID,
         allowNull: false
     },
+    curso_id: {
+        type: DataTypes.UUID,
+        allowNull: true
+    },
+    activa: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
+    },
     configuracion: {
         type: DataTypes.JSONB,
         allowNull: true

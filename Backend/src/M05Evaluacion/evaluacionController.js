@@ -6,6 +6,7 @@ import {
     OpcionPregunta,
     User
 } from "../config/relaciones.js";
+import EvaluacionUsuario from "./EvaluacionUsuario.js";
 
 export const crearEvaluacion = async (req, res) => {
     try {
@@ -13,23 +14,35 @@ export const crearEvaluacion = async (req, res) => {
             titulo,
             descripcion,
             duracion_minutos,
-            comineza_en,
+            comienza_en,
             termina_en,
             preguntas_revueltas,
             max_intentos,
-            configuracion
+            configuracion,
+            profesor_id,
+            curso_id,
+            activa
         } = req.body;
-        const creado_por = req.user.id;
+        const creado_por = req.body.profesor_id || req.user.id;
 
         const nueva = await Evaluacion.create({
-            titulo, descripcion, duracion_minutos, comineza_en, termina_en,
-            preguntas_revueltas, max_intentos, creado_por, configuracion
+            titulo, 
+            descripcion, 
+            duracion_minutos, 
+            comienza_en, 
+            termina_en,
+            preguntas_revueltas, 
+            max_intentos, 
+            creado_por, 
+            configuracion,
+            curso_id,
+            activa: activa !== undefined ? activa : true
         });
 
         return res.status(201).json(nueva);
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ messsage: "Error al crear la evaluación", error: error.messsage });
+        return res.status(500).json({ message: "Error al crear la evaluación", error: error.message });
     }
 }
 
@@ -122,12 +135,6 @@ export const obtenerEvaluacionPorId = async (req, res) => {
             model: PreguntaEvaluacion,
             attributes: ["puntos", "orden"]
           }
-        },
-        {
-          model: User,
-          as: "UsuariosAsignados",
-          attributes: ["id", "nombre"],
-          through: { attributes: ["estado", "puntaje"] }
         }
       ]
     });
@@ -141,8 +148,15 @@ export const obtenerEvaluacionPorId = async (req, res) => {
     }
 
     if (userRole === "estudiante") {
-      const asignado = evaluacion.UsuariosAsignados.find(u => u.id === userId);
-      if (!asignado) {
+      // Verificar si el estudiante tiene asignada esta evaluación
+      const asignacion = await EvaluacionUsuario.findOne({
+        where: { 
+          usuarioId: userId,
+          evaluacionId: id
+        }
+      });
+      
+      if (!asignacion) {
         return res.status(403).json({ message: "No tienes permiso para ver esta evaluación." });
       }
 

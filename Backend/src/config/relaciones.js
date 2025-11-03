@@ -2,7 +2,7 @@ import User from "../M02Usuarios/User.js";
 import Course from "../M04Curso/Curso.js";
 import Etiqueta from "../M05Evaluacion/Etiqueta.js";
 import Evaluacion from "../M05Evaluacion/Evaluacion.js";
-import Intento from "../M05Evaluacion/intento.js";
+import Intento from "../M05Evaluacion/Intento.js";
 import IntentoRespuesta from "../M05Evaluacion/IntentoRespuesta.js";
 import OpcionPregunta from "../M05Evaluacion/OpcionPregunta.js";
 import Pregunta from "../M05Evaluacion/Pregunta.js";
