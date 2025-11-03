@@ -9,7 +9,10 @@ import {
     obtenerEvaluacionPorId,
     obtenerEvaluacionesProfesor,
     agregarPreguntaAEvaluacion,
-    removerPreguntaDeEvaluacion
+    removerPreguntaDeEvaluacion,
+    asignarEvaluacion,
+    obtenerEvaluacionesEstudiante,
+    obtenerEstudiantesConEvaluacion
 } from './evaluacionController.js';
 
 const router = Router();
@@ -21,6 +24,9 @@ router.delete('/:id', verifyToken, rolRequerido("profesor"), borrarEvaluacion);
 
 // Rutas específicas ANTES de las genéricas
 router.get('/profesor/:id', verifyToken, obtenerEvaluacionesProfesor);
+router.get('/estudiante/asignadas', verifyToken, rolRequerido("estudiante"), obtenerEvaluacionesEstudiante);
+router.get('/:id/estudiantes', verifyToken, rolRequerido("profesor"), obtenerEstudiantesConEvaluacion);
+router.post('/asignar', verifyToken, rolRequerido("profesor"), asignarEvaluacion);
 
 // Rutas genéricas
 router.get('/', verifyToken, obtenerEvaluaciones);

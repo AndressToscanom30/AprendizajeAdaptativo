@@ -25,6 +25,10 @@ import CrearEvaluacionForm from "./pages/evaluaciones/profesor/CrearEvaluacionFo
 import DetalleEvaluacion from "./pages/evaluaciones/profesor/DetalleEvaluacion.jsx";
 import EditarEvaluacionForm from "./pages/evaluaciones/profesor/EditarEvaluacionForm.jsx";
 import Evaluacion from "./pages/evaluaciones/Evaluaciones.jsx";
+import CursosProfesor from "./pages/cursos/profesor/CursosProfesor.jsx";
+import DetalleCurso from "./pages/cursos/profesor/DetalleCurso.jsx";
+import GestionRelaciones from "./pages/admin/GestionRelaciones.jsx";
+import VerificarRelacion from "./pages/admin/VerificarRelacion.jsx";
 
 
 function App() {
@@ -92,6 +96,34 @@ function App() {
                 <ProtectedRoute roles={["profesor"]}>
                   <ProfessorLayout>
                     <EditarEvaluacionForm />
+                  </ProfessorLayout>
+                </ProtectedRoute>
+              }/>
+              <Route path="/profesor/cursos" element={
+                <ProtectedRoute roles={["profesor"]}>
+                  <ProfessorLayout>
+                    <CursosProfesor />
+                  </ProfessorLayout>
+                </ProtectedRoute>
+              }/>
+              <Route path="/profesor/cursos/:id" element={
+                <ProtectedRoute roles={["profesor"]}>
+                  <ProfessorLayout>
+                    <DetalleCurso />
+                  </ProfessorLayout>
+                </ProtectedRoute>
+              }/>
+              <Route path="/admin/relaciones" element={
+                <ProtectedRoute roles={["profesor"]}>
+                  <ProfessorLayout>
+                    <GestionRelaciones />
+                  </ProfessorLayout>
+                </ProtectedRoute>
+              }/>
+              <Route path="/admin/verificar" element={
+                <ProtectedRoute roles={["profesor"]}>
+                  <ProfessorLayout>
+                    <VerificarRelacion />
                   </ProfessorLayout>
                 </ProtectedRoute>
               }/>

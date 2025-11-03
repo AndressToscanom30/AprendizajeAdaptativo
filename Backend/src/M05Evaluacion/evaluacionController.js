@@ -251,3 +251,105 @@ export const obtenerEvaluacionesProfesor = async (req, res) => {
         res.status(500).json({ message: 'Error al obtener evaluaciones' });
     }
 };
+
+// Asignar evaluación a estudiantes
+export const asignarEvaluacion = async (req, res) => {
+    try {
+        const { evaluacionId, estudiantesIds } = req.body;
+        const profesorId = req.user.id;
+
+        // Verificar que la evaluación pertenece al profesor
+        const evaluacion = await Evaluacion.findOne({
+            where: { id: evaluacionId, creado_por: profesorId }
+        });
+
+        if (!evaluacion) {
+            return res.status(404).json({ message: "Evaluación no encontrada o no tienes permiso" });
+        }
+
+        // Asignar a cada estudiante
+        const asignaciones = await Promise.all(
+            estudiantesIds.map(estudianteId =>
+                EvaluacionUsuario.findOrCreate({
+                    where: { evaluacionId, usuarioId: estudianteId },
+                    defaults: { estado: "pendiente" }
+                })
+            )
+        );
+
+        return res.json({ 
+            message: "Evaluación asignada exitosamente",
+            asignaciones: asignaciones.length
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error al asignar evaluación", error: error.message });
+    }
+};
+
+// Obtener evaluaciones asignadas a un estudiante
+export const obtenerEvaluacionesEstudiante = async (req, res) => {
+    try {
+        const estudianteId = req.user.id;
+
+        const evaluacionesAsignadas = await EvaluacionUsuario.findAll({
+            where: { usuarioId: estudianteId },
+            include: [
+                {
+                    model: Evaluacion,
+                    as: "evaluacion",
+                    where: { activa: true },
+                    required: true
+                }
+            ]
+        });
+
+        const evaluaciones = evaluacionesAsignadas.map(ea => ({
+            ...ea.evaluacion.toJSON(),
+            asignacion: {
+                estado: ea.estado,
+                puntaje: ea.puntaje,
+                iniciado_en: ea.iniciado_en,
+                terminado_en: ea.terminado_en
+            }
+        }));
+
+        return res.json(evaluaciones);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error al obtener evaluaciones", error: error.message });
+    }
+};
+
+// Obtener estudiantes con una evaluación asignada
+export const obtenerEstudiantesConEvaluacion = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const profesorId = req.user.id;
+
+        // Verificar que la evaluación pertenece al profesor
+        const evaluacion = await Evaluacion.findOne({
+            where: { id, creado_por: profesorId }
+        });
+
+        if (!evaluacion) {
+            return res.status(404).json({ message: "Evaluación no encontrada" });
+        }
+
+        const asignaciones = await EvaluacionUsuario.findAll({
+            where: { evaluacionId: id },
+            include: [
+                {
+                    model: User,
+                    as: "usuario",
+                    attributes: ["id", "nombre", "email"]
+                }
+            ]
+        });
+
+        return res.json(asignaciones);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error al obtener estudiantes", error: error.message });
+    }
+};

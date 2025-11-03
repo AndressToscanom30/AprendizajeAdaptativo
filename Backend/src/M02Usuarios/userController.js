@@ -1,7 +1,21 @@
 import bcrypt from "bcrypt";
 import fetch from "node-fetch";
-import { User } from "../config/relaciones.js";
+import { User, Course, CourseStudent } from "../config/relaciones.js";
 import { transporter } from "../config/mailer.js";
+
+// Obtener todos los usuarios (para admin/profesor)
+export const obtenerUsuarios = async (req, res) => {
+  try {
+    const usuarios = await User.findAll({
+      attributes: ["id", "nombre", "email", "rol", "createdAt"],
+      order: [["nombre", "ASC"]]
+    });
+    res.json(usuarios);
+  } catch (error) {
+    console.error("Error al obtener usuarios:", error);
+    res.status(500).json({ message: "Error al obtener usuarios" });
+  }
+};
 
 export const registrarUsuario = async (req, res) => {
   try {
@@ -115,3 +129,178 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ message: "Error al cambiar la contraseña" });
   }
 };
+
+// ===== GESTIÓN DE RELACIONES ESTUDIANTE-PROFESOR =====
+
+// Obtener todos los estudiantes con sus profesores asignados
+export const obtenerEstudiantesConProfesores = async (req, res) => {
+  try {
+    const estudiantes = await User.findAll({
+      where: { rol: "estudiante" },
+      attributes: ["id", "nombre", "email", "createdAt"],
+      include: [
+        {
+          model: Course,
+          as: "cursosInscritos",
+          attributes: ["id", "titulo"],
+          include: [
+            {
+              model: User,
+              as: "profesor",
+              attributes: ["id", "nombre", "email"]
+            }
+          ],
+          through: { attributes: ["estado", "inscrito_en"] }
+        }
+      ]
+    });
+
+    // Formatear respuesta para mostrar qué profesores tiene cada estudiante
+    const estudiantesFormateados = estudiantes.map(est => {
+      const profesoresUnicos = new Map();
+      
+      est.cursosInscritos.forEach(curso => {
+        if (curso.profesor) {
+          profesoresUnicos.set(curso.profesor.id, {
+            id: curso.profesor.id,
+            nombre: curso.profesor.nombre,
+            email: curso.profesor.email,
+            cursos: []
+          });
+        }
+      });
+
+      est.cursosInscritos.forEach(curso => {
+        if (curso.profesor && profesoresUnicos.has(curso.profesor.id)) {
+          profesoresUnicos.get(curso.profesor.id).cursos.push({
+            id: curso.id,
+            titulo: curso.titulo,
+            estado: curso.CourseStudent.estado,
+            inscrito_en: curso.CourseStudent.inscrito_en
+          });
+        }
+      });
+
+      return {
+        id: est.id,
+        nombre: est.nombre,
+        email: est.email,
+        createdAt: est.createdAt,
+        profesores: Array.from(profesoresUnicos.values())
+      };
+    });
+
+    res.json(estudiantesFormateados);
+  } catch (error) {
+    console.error("Error al obtener estudiantes con profesores:", error);
+    res.status(500).json({ message: "Error al obtener estudiantes" });
+  }
+};
+
+// Obtener todos los profesores con sus estudiantes
+export const obtenerProfesoresConEstudiantes = async (req, res) => {
+  try {
+    const profesores = await User.findAll({
+      where: { rol: "profesor" },
+      attributes: ["id", "nombre", "email", "createdAt"],
+      include: [
+        {
+          model: Course,
+          as: "cursosCreados",
+          attributes: ["id", "titulo", "codigo"],
+          include: [
+            {
+              model: User,
+              as: "estudiantes",
+              attributes: ["id", "nombre", "email"],
+              through: { attributes: ["estado", "inscrito_en"] }
+            }
+          ]
+        }
+      ]
+    });
+
+    // Formatear para mostrar estudiantes únicos por profesor
+    const profesoresFormateados = profesores.map(prof => {
+      const estudiantesUnicos = new Map();
+      
+      prof.cursosCreados.forEach(curso => {
+        curso.estudiantes.forEach(est => {
+          if (!estudiantesUnicos.has(est.id)) {
+            estudiantesUnicos.set(est.id, {
+              id: est.id,
+              nombre: est.nombre,
+              email: est.email,
+              cursos: []
+            });
+          }
+          estudiantesUnicos.get(est.id).cursos.push({
+            id: curso.id,
+            titulo: curso.titulo,
+            codigo: curso.codigo,
+            estado: est.CourseStudent.estado,
+            inscrito_en: est.CourseStudent.inscrito_en
+          });
+        });
+      });
+
+      return {
+        id: prof.id,
+        nombre: prof.nombre,
+        email: prof.email,
+        createdAt: prof.createdAt,
+        totalCursos: prof.cursosCreados.length,
+        estudiantes: Array.from(estudiantesUnicos.values())
+      };
+    });
+
+    res.json(profesoresFormateados);
+  } catch (error) {
+    console.error("Error al obtener profesores con estudiantes:", error);
+    res.status(500).json({ message: "Error al obtener profesores" });
+  }
+};
+
+// Verificar si un estudiante está asignado a un profesor
+export const verificarRelacionEstudianteProfesor = async (req, res) => {
+  try {
+    const { estudianteId, profesorId } = req.query;
+
+    if (!estudianteId || !profesorId) {
+      return res.status(400).json({ 
+        message: "Se requieren estudianteId y profesorId" 
+      });
+    }
+
+    // Buscar cursos del profesor donde esté inscrito el estudiante
+    const cursosCompartidos = await Course.findAll({
+      where: { profesorId },
+      include: [
+        {
+          model: User,
+          as: "estudiantes",
+          where: { id: estudianteId },
+          attributes: ["id", "nombre", "email"],
+          through: { attributes: ["estado", "inscrito_en"] }
+        }
+      ]
+    });
+
+    const estaRelacionado = cursosCompartidos.length > 0;
+
+    res.json({
+      estaRelacionado,
+      cursos: cursosCompartidos.map(c => ({
+        id: c.id,
+        titulo: c.titulo,
+        codigo: c.codigo,
+        estado: c.estudiantes[0].CourseStudent.estado,
+        inscrito_en: c.estudiantes[0].CourseStudent.inscrito_en
+      }))
+    });
+  } catch (error) {
+    console.error("Error al verificar relación:", error);
+    res.status(500).json({ message: "Error al verificar relación" });
+  }
+};
+

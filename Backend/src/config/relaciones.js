@@ -1,5 +1,6 @@
 import User from "../M02Usuarios/User.js";
 import Course from "../M04Curso/Curso.js";
+import CourseStudent from "../M04Curso/CourseStudent.js";
 import Etiqueta from "../M05Evaluacion/Etiqueta.js";
 import Evaluacion from "../M05Evaluacion/Evaluacion.js";
 import Intento from "../M05Evaluacion/Intento.js";
@@ -15,8 +16,21 @@ import TestAdaptativo from "../M06IA/models/TestAdaptativo.js";
 
 // ===== RELACIONES EXISTENTES =====
 
-User.hasMany(Course, { foreignKey: "profesorId" });
+// Profesor <--> Cursos (uno a muchos)
+User.hasMany(Course, { foreignKey: "profesorId", as: "cursosCreados" });
 Course.belongsTo(User, { as: "profesor", foreignKey: "profesorId" });
+
+// Estudiante <--> Cursos (many-to-many)
+User.belongsToMany(Course, { 
+  through: CourseStudent, 
+  foreignKey: "studentId",
+  as: "cursosInscritos" 
+});
+Course.belongsToMany(User, { 
+  through: CourseStudent, 
+  foreignKey: "courseId",
+  as: "estudiantes" 
+});
 
 Evaluacion.belongsToMany(Pregunta, {
     through: PreguntaEvaluacion,
@@ -110,7 +124,8 @@ Evaluacion.hasMany(TestAdaptativo, {
 // Exportar todos los modelos
 export { 
   User, 
-  Course, 
+  Course,
+  CourseStudent,
   Etiqueta, 
   Evaluacion, 
   Intento, 

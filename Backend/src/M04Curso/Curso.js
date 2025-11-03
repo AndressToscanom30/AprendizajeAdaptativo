@@ -13,6 +13,23 @@ const Course = sequelize.define("Course", {
   },
   descripcion: {
     type: DataTypes.TEXT,
+  },
+  profesorId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id"
+    }
+  },
+  codigo: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: true
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
 }, {
   timestamps: true,

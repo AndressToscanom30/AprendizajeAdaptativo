@@ -27,6 +27,10 @@ const EvaluacionUsuario = sequelize.define("EvaluacionUsuario", {
   },
 });
 
+// Relaciones belongsTo para poder hacer includes
+EvaluacionUsuario.belongsTo(User, { foreignKey: "usuarioId", as: "usuario" });
+EvaluacionUsuario.belongsTo(Evaluacion, { foreignKey: "evaluacionId", as: "evaluacion" });
+
 User.belongsToMany(Evaluacion, {
   through: EvaluacionUsuario,
   as: "EvaluacionesAsignadas",

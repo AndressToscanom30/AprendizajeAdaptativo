@@ -3,6 +3,7 @@ import cors from "cors";
 import userRoutes from "./M02Usuarios/userRoutes.js";
 import authRoutes from "./M01Auth/authRoutes.js";
 import diagnosticoRoutes from "./M03Diagnostico/DiagnosticRoutes.js";
+import cursoRoutes from "./M04Curso/cursoRoutes.js";
 import evaluacionRoutes from "./M05Evaluacion/evaluacionRoutes.js";
 import preguntaRoutes from "./M05Evaluacion/preguntaRoutes.js";
 import intentoRoutes from "./M05Evaluacion/intentoRoutes.js";
@@ -25,13 +26,16 @@ app.get("/", (req, res) => {
 });
 
 //Rutas Usuarios
-app.use("/api", userRoutes);
+app.use("/api/users", userRoutes);
 
 //Ruta para Login
 app.use("/api/auth", authRoutes);
 
 //Rutas Diagnostico
 app.use("/api/diagnostico", diagnosticoRoutes);
+
+//Rutas cursos
+app.use("/api/cursos", cursoRoutes);
 
 //Rutas evaluaciones
 app.use("/api/evaluaciones", evaluacionRoutes);

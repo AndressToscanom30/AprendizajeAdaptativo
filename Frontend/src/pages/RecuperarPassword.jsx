@@ -18,7 +18,7 @@ function RecuperarPassword() {
     setError("");
     setMessage("");
     try {
-      const res = await fetch("http://localhost:4000/api/recover", {
+      const res = await fetch("http://localhost:4000/api/users/recover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -49,7 +49,7 @@ function RecuperarPassword() {
     setError("");
     setMessage("");
     try {
-      const res = await fetch("http://localhost:4000/api/reset-password", {
+      const res = await fetch("http://localhost:4000/api/users/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code, newPassword }),

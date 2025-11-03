@@ -16,7 +16,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
-  Mail
+  Mail,
+  Search
 } from "lucide-react";
 
 export default function NavBarProfesores() {
@@ -43,8 +44,11 @@ export default function NavBarProfesores() {
   const profesorMenuItems = [
     { name: "Dashboard", href: "/dashboardP", icon: LayoutDashboard },
     { name: "Evaluaciones", href: "/evaluaciones/profesor", icon: FileText },
+    { name: "Cursos", href: "/profesor/cursos", icon: BookOpen },
     { name: "Estudiantes", href: "/estudiantes", icon: Users },
     { name: "Reportes", href: "/reportes", icon: BarChart3 },
+    { name: "Relaciones", href: "/admin/relaciones", icon: Users },
+    { name: "Verificar", href: "/admin/verificar", icon: Search },
     { name: "Perfil", href: "/perfil", icon: UserCircle },
   ];
 
