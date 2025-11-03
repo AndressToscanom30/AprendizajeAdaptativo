@@ -24,7 +24,6 @@ function CrearEvaluacionForm() {
         });
     };
 
-    // 🧩 Agregar nueva pregunta
     const agregarPregunta = () => {
         setPreguntas((prev) => [
             ...prev,
@@ -39,19 +38,16 @@ function CrearEvaluacionForm() {
         ]);
     };
 
-    // ❌ Eliminar pregunta
     const eliminarPregunta = (id) => {
         setPreguntas((prev) => prev.filter((p) => p.id !== id));
     };
 
-    // 🧠 Actualizar pregunta desde el hijo (PreguntaEditor)
     const actualizarPregunta = (id, nuevosDatos) => {
         setPreguntas((prev) =>
             prev.map((p) => (p.id === id ? { ...p, ...nuevosDatos } : p))
         );
     };
 
-    // 💾 Guardar evaluación completa
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -59,21 +55,71 @@ function CrearEvaluacionForm() {
 
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch("http://localhost:4000/api/evaluaciones", {
+
+            if (preguntas.length === 0) {
+                setMensaje("❌ Debes agregar al menos una pregunta antes de guardar");
+                return;
+            }
+
+            const resEval = await fetch("http://localhost:4000/api/evaluaciones", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({
-                    ...evaluacion,
-                    configuracion: { preguntas },
-                }),
+                body: JSON.stringify(evaluacion),
             });
 
-            if (!res.ok) throw new Error("Error al crear la evaluación");
+            if (!resEval.ok) throw new Error("Error al crear la evaluación");
+            const nuevaEval = await resEval.json();
 
-            setMensaje("✅ Evaluación creada correctamente");
+            for (const pregunta of preguntas) {
+                const preguntaData = {
+                    texto: pregunta.titulo || "Pregunta sin título",
+                    tipo: pregunta.tipo || "opcion_multiple",
+                    dificultad: pregunta.dificultad || "media",
+                    metadata: JSON.stringify({
+                        opciones: pregunta.opciones || [],
+                        obligatoria: pregunta.obligatoria || false,
+                    }),
+                    explicacion: pregunta.descripcion || "",
+                };
+
+                const resCrearPregunta = await fetch("http://localhost:4000/api/preguntas", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    body: JSON.stringify(preguntaData),
+                });
+
+                if (!resCrearPregunta.ok) {
+                    console.warn("❌ Error al crear una pregunta:", pregunta.titulo);
+                    continue;
+                }
+
+                const nuevaPregunta = await resCrearPregunta.json();
+
+                // 2️⃣ Asociarla a la evaluación
+                const resAsociar = await fetch(
+                    `http://localhost:4000/api/evaluaciones/${nuevaEval.id}/preguntas`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                        body: JSON.stringify({ preguntaId: nuevaPregunta.id }),
+                    }
+                );
+
+                if (!resAsociar.ok) {
+                    console.warn("⚠️ No se pudo asociar la pregunta:", nuevaPregunta.texto);
+                }
+            }
+
+            setMensaje("✅ Evaluación y preguntas creadas correctamente");
             setEvaluacion({
                 titulo: "",
                 descripcion: "",
@@ -84,6 +130,7 @@ function CrearEvaluacionForm() {
                 max_intentos: "",
             });
             setPreguntas([]);
+
         } catch (error) {
             console.error(error);
             setMensaje("❌ Error al crear la evaluación");
@@ -102,7 +149,6 @@ function CrearEvaluacionForm() {
                 onSubmit={handleSubmit}
                 className="bg-white shadow-md rounded-2xl p-6 space-y-6 border border-gray-100"
             >
-                {/* ------------------ DATOS GENERALES ------------------ */}
                 <div>
                     <label className="block text-gray-700 font-semibold mb-1">
                         Título de la evaluación
@@ -217,7 +263,6 @@ function CrearEvaluacionForm() {
                 </div>
             </form>
 
-            {/* MENSAJE */}
             {mensaje && (
                 <p
                     className={`mt-4 text-center font-medium ${mensaje.includes("✅")
@@ -229,7 +274,6 @@ function CrearEvaluacionForm() {
                 </p>
             )}
 
-            {/* ------------------ PREGUNTAS ------------------ */}
             <div className="max-w-4xl mx-auto mt-10">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-6">
                     Preguntas de la evaluación

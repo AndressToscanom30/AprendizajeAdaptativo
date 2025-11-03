@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 
 function Evaluaciones() {
@@ -18,7 +18,6 @@ function Evaluaciones() {
             try {
                 console.log('Usuario autenticado:', user);
                 
-                // Obtener el token del localStorage
                 const token = localStorage.getItem('token');
                 
                 if (!token) {

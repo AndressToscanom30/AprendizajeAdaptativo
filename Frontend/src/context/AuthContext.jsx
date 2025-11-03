@@ -9,7 +9,6 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // refs para timers para poder limpiarlos
   const logoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
 
@@ -29,7 +28,6 @@ export const AuthProvider = ({ children }) => {
       const decoded = jwtDecode(token);
       const nowSec = Date.now() / 1000;
       const timeLeftSec = decoded.exp - nowSec;
-      console.log(decoded.exp)
 
       if (!timeLeftSec) {
         logout();

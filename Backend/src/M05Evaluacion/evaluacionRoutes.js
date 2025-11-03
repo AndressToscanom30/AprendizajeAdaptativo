@@ -8,7 +8,7 @@ import {
     obtenerEvaluaciones,
     obtenerEvaluacionPorId,
     obtenerEvaluacionesProfesor,
-    agregarPreguntaAEvaluacion,  // Añadimos esta importación
+    agregarPreguntaAEvaluacion,
     removerPreguntaDeEvaluacion
 } from './evaluacionController.js';
 

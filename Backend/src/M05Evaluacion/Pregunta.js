@@ -25,7 +25,7 @@ const Pregunta = sequelize.define("Pregunta", {
         allowNull: false
     },
     dificultad: {
-        type: DataTypes.ENUM("facil", "medio", "hard"),
+        type: DataTypes.ENUM("facil", "media", "dificil"),
         allowNull: true
     },
     explicacion: {
