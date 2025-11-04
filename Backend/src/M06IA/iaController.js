@@ -1,3 +1,7 @@
+/**
+ * Controlador de Inteligencia Artificial
+ * Gestiona análisis de intentos de evaluación y generación de tests adaptativos
+ */
 import groqService from "./services/groqService.js";
 import AnalisisIA from "./models/AnalisisIA.js";
 import TestAdaptativo from "./models/TestAdaptativo.js";
@@ -12,7 +16,22 @@ import Etiqueta from "../M05Evaluacion/Etiqueta.js";
 import sequelize from "../config/db.js";
 import { Op } from "sequelize";
 
+// Constantes
+const ESTADOS_VALIDOS_ANALISIS = ["enviado", "calificado", "revisado"];
+const ESTADO_PROCESANDO = "procesando";
+const ESTADO_COMPLETADO = "completado";
+const ESTADO_ERROR = "error";
+
+/**
+ * Controlador para funcionalidades de IA educativa
+ */
 class IAController {
+  /**
+   * Analiza un intento de evaluación usando IA
+   * @param {Object} req - Request con intentoId en params
+   * @param {Object} res - Response object
+   * @returns {Promise<Object>} Análisis de IA generado
+   */
   async analizarIntento(req, res) {
     try {
       const { intentoId } = req.params;
@@ -60,14 +79,13 @@ class IAController {
         });
       }
 
-      // Permitir analizar intentos ya enviados (aunque no calificados manualmente)
-      const estadosValidos = ["enviado", "calificado", "revisado"];
-      if (!estadosValidos.includes(intento.status)) {
+      // Verificar estados válidos del intento
+      if (!ESTADOS_VALIDOS_ANALISIS.includes(intento.status)) {
         return res.status(400).json({
           success: false,
           error: "El intento debe estar calificado o revisado para analizarlo",
           estadoActual: intento.status,
-          estadosValidos: estadosValidos,
+          estadosValidos: ESTADOS_VALIDOS_ANALISIS,
         });
       }
 
@@ -76,14 +94,12 @@ class IAController {
       });
 
       if (analisisExistente) {
-        // ✅ Si está en error, lo borramos y reintentamos
-        if (analisisExistente.estado === "error") {
-          
+        // Si está en error, lo borramos y reintentamos
+        if (analisisExistente.estado === ESTADO_ERROR) {
           await analisisExistente.destroy();
-          // Continúa con el flujo normal
         }
         // Si está completado, lo devolvemos
-        else if (analisisExistente.estado === "completado") {
+        else if (analisisExistente.estado === ESTADO_COMPLETADO) {
           return res.json({
             success: true,
             mensaje: "Ya existe un análisis completado para este intento",
@@ -100,7 +116,6 @@ class IAController {
         }
       }
 
-      // ✅ CAMBIADO: this.prepararDatosParaIA → IAController.prepararDatosParaIA
       const datosAnalisis = IAController.prepararDatosParaIA(intento);
 
       const analisis = await AnalisisIA.create({
@@ -108,18 +123,14 @@ class IAController {
         intentoId: intentoId,
         puntuacionGlobal: 0,
         porcentajeTotal: 0,
-        estado: "procesando",
+        estado: ESTADO_PROCESANDO,
       });
 
       try {
-        
-
         const resultadoIA = await groqService.analizarDiagnostico(
           datosAnalisis.resultados,
           datosAnalisis.preguntas
         );
-
-        
 
         await analisis.update({
           puntuacionGlobal: resultadoIA.puntuacion_global,
@@ -129,7 +140,7 @@ class IAController {
           categoriasAnalisis: resultadoIA.categorias,
           recomendaciones: resultadoIA.recomendaciones,
           tiempoEstudioSugerido: resultadoIA.tiempo_estudio_sugerido,
-          estado: "completado",
+          estado: ESTADO_COMPLETADO,
         });
 
         return res.json({
@@ -148,7 +159,7 @@ class IAController {
         });
       } catch (error_) {
         console.error("❌ Error en Groq API:", error_);
-        await analisis.update({ estado: "error" });
+        await analisis.update({ estado: ESTADO_ERROR });
         throw error_;
       }
     } catch (error) {
@@ -162,6 +173,12 @@ class IAController {
     }
   }
 
+  /**
+   * Genera un test adaptativo basado en el análisis de IA
+   * @param {Object} req - Request con analisisId en params
+   * @param {Object} res - Response object
+   * @returns {Promise<Object>} Test adaptativo generado
+   */
   async generarTestAdaptativo(req, res) {
     try {
       const { analisisId } = req.params;
@@ -705,19 +722,22 @@ class IAController {
             dificultad: this.mapearDificultad(preguntaIA.dificultad),
             explicacion: preguntaIA.explicacion || "",
             codigo: preguntaIA.codigo || null, // ✅ Agregar código si existe
+            respuesta_esperada: preguntaIA.respuesta_esperada || null, // ✅ Para preguntas de respuesta_corta
             creado_por: userId,
           },
           { transaction: t }
         );
 
-        // Crear opciones
-        const opcionesData = preguntaIA.opciones.map((op) => ({
-          preguntaId: pregunta.id,
-          texto: op.texto,
-          es_correcta: op.es_correcta || false,
-        }));
+        // Crear opciones SOLO si existen (no para respuesta_corta)
+        if (preguntaIA.opciones && Array.isArray(preguntaIA.opciones)) {
+          const opcionesData = preguntaIA.opciones.map((op) => ({
+            preguntaId: pregunta.id,
+            texto: op.texto,
+            es_correcta: op.es_correcta || false,
+          }));
 
-        await OpcionPregunta.bulkCreate(opcionesData, { transaction: t });
+          await OpcionPregunta.bulkCreate(opcionesData, { transaction: t });
+        }
 
         // ✅ Crear etiqueta con la categoría de la pregunta
         if (preguntaIA.categoria) {

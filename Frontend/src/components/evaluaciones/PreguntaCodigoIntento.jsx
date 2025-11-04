@@ -1,9 +1,12 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Play, Terminal, RotateCcw, Lightbulb, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 
+/**
+ * Componente para preguntas de tipo código durante un intento de evaluación
+ * Permite ejecutar código JavaScript y verificar la salida
+ */
 function PreguntaCodigoIntento({ pregunta, respuesta, onChange }) {
-  // Obtener datos del metadata
-  const dataPregunta = pregunta.opciones[0]?.metadata || {};
+  const dataPregunta = pregunta.opciones?.[0]?.metadata || {};
   const codigoInicial = dataPregunta.codigo_inicial || '// Escribe tu código aquí\n';
   
   const [codigo, setCodigo] = useState(respuesta?.codigo || codigoInicial);
@@ -18,36 +21,48 @@ function PreguntaCodigoIntento({ pregunta, respuesta, onChange }) {
   const solucion = dataPregunta.solucion || '';
   const salidaEsperada = dataPregunta.salida_esperada || '';
   const lenguaje = dataPregunta.lenguaje || 'javascript';
+  const codigoPregunta = pregunta.codigo;
 
-  const handleKeyDown = (e) => {
+  /**
+   * Maneja el tabulador para indentación en el editor
+   */
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Tab') {
       e.preventDefault();
-      const start = e.target.selectionStart;
-      const end = e.target.selectionEnd;
-      const value = e.target.value;
+      const { selectionStart: start, selectionEnd: end, value } = e.target;
       const newValue = value.substring(0, start) + '  ' + value.substring(end);
+      
       setCodigo(newValue);
       onChange({ codigo: newValue });
+      
       setTimeout(() => {
-        textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 2;
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 2;
+        }
       }, 0);
     }
-  };
+  }, [onChange]);
 
-  const ejecutarCodigo = () => {
+  /**
+   * Ejecuta el código JavaScript y captura la salida
+   */
+  const ejecutarCodigo = useCallback(() => {
     setEjecutando(true);
     setError(false);
     setOutput('');
 
     setTimeout(() => {
       try {
-        // Capturar console.log
         const logs = [];
         const originalLog = console.log;
+        
+        // Capturar console.log
         console.log = (...args) => {
-          logs.push(args.map(arg => 
-            typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-          ).join(' '));
+          logs.push(
+            args.map(arg => 
+              typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ')
+          );
         };
 
         // Ejecutar código
@@ -60,9 +75,9 @@ function PreguntaCodigoIntento({ pregunta, respuesta, onChange }) {
         const resultado = logs.join('\n');
         setOutput(resultado);
         
-        // Actualizar respuesta con el código y output
+        // Actualizar respuesta
         onChange({ 
-          codigo: codigo,
+          codigo,
           output: resultado,
           es_correcta: resultado.trim() === salidaEsperada.trim()
         });
@@ -71,7 +86,7 @@ function PreguntaCodigoIntento({ pregunta, respuesta, onChange }) {
         setError(true);
         setOutput(`Error: ${err.message}`);
         onChange({ 
-          codigo: codigo,
+          codigo,
           output: `Error: ${err.message}`,
           es_correcta: false
         });
@@ -79,32 +94,38 @@ function PreguntaCodigoIntento({ pregunta, respuesta, onChange }) {
         setEjecutando(false);
       }
     }, 300);
-  };
+  }, [codigo, onChange, salidaEsperada]);
 
-  const reiniciarCodigo = () => {
-    const codigoInicial = dataPregunta.codigo_inicial || '';
-    setCodigo(codigoInicial);
+  /**
+   * Reinicia el código al estado inicial
+   */
+  const reiniciarCodigo = useCallback(() => {
+    const inicial = dataPregunta.codigo_inicial || '';
+    setCodigo(inicial);
     setOutput('');
     setError(false);
-    onChange({ codigo: codigoInicial });
-  };
+    onChange({ codigo: inicial });
+  }, [dataPregunta.codigo_inicial, onChange]);
 
-  const siguientePista = () => {
+  /**
+   * Muestra la siguiente pista disponible
+   */
+  const siguientePista = useCallback(() => {
     if (pistaActual < pistas.length - 1) {
-      setPistaActual(pistaActual + 1);
+      setPistaActual(prev => prev + 1);
     }
-  };
+  }, [pistaActual, pistas.length]);
 
-  const handleCodigoChange = (e) => {
+  /**
+   * Maneja cambios en el código
+   */
+  const handleCodigoChange = useCallback((e) => {
     const newCodigo = e.target.value;
     setCodigo(newCodigo);
     onChange({ codigo: newCodigo });
-  };
+  }, [onChange]);
 
   const outputCoincide = output.trim() === salidaEsperada.trim();
-  
-  // Código de la pregunta (para análisis)
-  const codigoPregunta = pregunta.codigo;
 
   return (
     <div className="space-y-4">

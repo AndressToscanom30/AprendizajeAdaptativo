@@ -1,23 +1,27 @@
 import axios from "axios";
 
+/**
+ * Servicio para interactuar con la API de Groq para análisis educativo con IA
+ */
 class GroqService {
   constructor() {
-    // Trim para evitar espacios invisibles del .env
     this.apiKey = process.env.GROQ_API_KEY?.trim();
     this.baseURL = "https://api.groq.com/openai/v1/chat/completions";
     this.model = "llama-3.3-70b-versatile";
-    
-    // 🔍 LOG PARA DEBUG
-    
-    console.log('   - API Key presente:', !!this.apiKey);
-    console.log('   - API Key (primeros 15 chars):', this.apiKey?.substring(0, 15) + '...');
-    console.log('   - Longitud:', this.apiKey?.length);
+    this.defaultTemperature = 0.5;
+    this.defaultMaxTokens = 3000;
     
     if (!this.apiKey) {
-      console.warn("⚠️ GROQ_API_KEY no configurada - los servicios de IA no funcionarán");
+      console.warn("⚠️  GROQ_API_KEY no configurada - los servicios de IA no funcionarán");
     }
   }
 
+  /**
+   * Genera una respuesta de IA usando el modelo de Groq
+   * @param {string} prompt - El prompt para la IA
+   * @param {Object} options - Opciones adicionales (temperature, maxTokens)
+   * @returns {Promise<Object>} Respuesta parseada como JSON
+   */
   async generateCompletion(prompt, options = {}) {
     if (!this.apiKey) {
       throw new Error('GROQ_API_KEY no configurada en el archivo .env');
@@ -31,15 +35,15 @@ class GroqService {
           messages: [
             {
               role: "system",
-              content: "Eres un asistente educativo. Siempre respondes con JSON válido, sin texto adicional antes o después del JSON.",
+              content: "Eres un asistente educativo experto en análisis de aprendizaje. Respondes ÚNICAMENTE con JSON válido, sin texto adicional.",
             },
             {
               role: "user",
               content: prompt,
             },
           ],
-          temperature: options.temperature || 0.5,
-          max_tokens: options.maxTokens || 3000,
+          temperature: options.temperature ?? this.defaultTemperature,
+          max_tokens: options.maxTokens ?? this.defaultMaxTokens,
           response_format: { type: "json_object" },
         },
         {
@@ -50,30 +54,40 @@ class GroqService {
         }
       );
 
-      
       return JSON.parse(response.data.choices[0].message.content);
     } catch (error) {
-      const status = error.response?.status;
-      const apiMsg = error.response?.data?.error?.message || error.response?.data || error.message;
-      
-      console.error('\n❌ ERROR EN GROQ API:');
-      console.error('   Status HTTP:', status);
-      console.error('   Mensaje:', apiMsg);
-      console.error('   API Key (primeros 15 chars):', this.apiKey?.substring(0, 15) + '...');
-      console.error('   Longitud de la key:', this.apiKey?.length);
-      
-      // Propagar error con información útil
-      const msg = typeof apiMsg === 'string' ? apiMsg : JSON.stringify(apiMsg);
-      const statusText = status ? ` (HTTP ${status})` : '';
-      throw new Error('Error al comunicarse con el servicio de IA' + statusText + ': ' + msg);
+      this._handleError(error);
     }
   }
 
+  /**
+   * Maneja errores de la API de Groq
+   * @private
+   */
+  _handleError(error) {
+    const status = error.response?.status;
+    const apiMsg = error.response?.data?.error?.message || error.response?.data || error.message;
+    
+    console.error('\n❌ ERROR EN GROQ API:');
+    console.error('   Status HTTP:', status);
+    console.error('   Mensaje:', apiMsg);
+    
+    const msg = typeof apiMsg === 'string' ? apiMsg : JSON.stringify(apiMsg);
+    const statusText = status ? ` (HTTP ${status})` : '';
+    throw new Error(`Error al comunicarse con el servicio de IA${statusText}: ${msg}`);
+  }
+
+  /**
+   * Analiza los resultados de un diagnóstico/evaluación
+   */
   async analizarDiagnostico(resultados, preguntas) {
     const prompt = this.construirPromptAnalisis(resultados, preguntas);
     return await this.generateCompletion(prompt);
   }
 
+  /**
+   * Genera un test adaptativo basado en el análisis previo
+   */
   async generarTestAdaptativo(analisis) {
     const prompt = this.construirPromptTestAdaptativo(analisis);
     return await this.generateCompletion(prompt);
@@ -197,69 +211,105 @@ Responde SOLO JSON válido:
     const debilidadesText = debilidades.length > 0 ? debilidades.join(', ') : 'Conceptos básicos de programación';
     const fortalezasText = fortalezas.length > 0 ? fortalezas.join(', ') : 'Ninguna identificada';
     
-    return `Genera un test de 10 preguntas VARIADAS de programación.
+    return `Genera un test de 10 preguntas VARIADAS de programación adaptadas al nivel del estudiante.
 
-DEBILIDADES: ${debilidadesText}
-FORTALEZAS: ${fortalezasText}
+DEBILIDADES DETECTADAS: ${debilidadesText}
+FORTALEZAS DETECTADAS: ${fortalezasText}
 
-DISTRIBUCIÓN (10 preguntas):
-- 5 preguntas FÁCILES (dificultad 1-3) sobre DEBILIDADES
-- 2 preguntas MEDIAS (dificultad 3) mixtas
-- 3 preguntas DIFÍCILES (dificultad 4-5) sobre FORTALEZAS
+DISTRIBUCIÓN OBLIGATORIA (10 preguntas totales):
+- 5 preguntas FÁCILES (dificultad 1-3) enfocadas en DEBILIDADES para reforzar
+- 2 preguntas MEDIAS (dificultad 3-4) mixtas 
+- 3 preguntas DIFÍCILES (dificultad 4-5) sobre FORTALEZAS para desafiar
 
-TIPOS DE PREGUNTAS (USA SOLO ESTOS VALORES):
-1. "opcion_multiple" - Pregunta con 4 opciones, solo 1 correcta
-2. "codigo" - Mostrar código y preguntar qué hace o encontrar error (4 opciones)
-3. "verdadero_falso" - Afirmación verdadera o falsa (2 opciones: "Verdadero", "Falso")
-4. "completar_blanco" - Código incompleto, elegir qué va en el espacio (4 opciones)
+TIPOS DE PREGUNTAS VÁLIDOS (USA EXACTAMENTE ESTOS NOMBRES):
+1. "opcion_multiple" - Pregunta teórica con 4 opciones, una correcta
+   * Campo "codigo": DEBE SER null
+   * Campo "opciones": Array de 4 objetos {texto, es_correcta}
+   
+2. "codigo" - Mostrar código y preguntar qué hace/imprime/retorna
+   * Campo "codigo": OBLIGATORIO - String con el código a MOSTRAR al estudiante
+   * Campo "opciones": Array de 4 objetos {texto, es_correcta} con posibles respuestas
+   * La pregunta debe ser sobre ANALIZAR el código mostrado
+   
+3. "verdadero_falso" - Afirmación que es verdadera o falsa
+   * Campo "codigo": DEBE SER null
+   * Campo "opciones": Array de EXACTAMENTE 2 objetos: [{"texto": "Verdadero", ...}, {"texto": "Falso", ...}]
+   
+4. "respuesta_corta" - Pregunta de completar o respuesta breve
+   * Campo "codigo": PUEDE tener código de referencia SI la pregunta es sobre código, null si es teórica
+   * Campo "opciones": DEBE SER null
+   * Campo "respuesta_esperada": String con la respuesta correcta esperada
+   * Pregunta clara que requiere respuesta de 1-3 palabras
 
-IMPORTANTE:
-- USA AL MENOS 3 TIPOS DIFERENTES en las 10 preguntas
-- INCLUYE código real en preguntas tipo "codigo" y "completar_blanco"
-- El código debe estar en el campo "codigo" (null para otros tipos)
-- El campo "tipo_pregunta" DEBE ser uno de: opcion_multiple, codigo, verdadero_falso, completar_blanco
+REGLAS CRÍTICAS DE FORMATO:
+✓ OBLIGATORIO: Usa AL MENOS 3 tipos diferentes de pregunta en las 10
+✓ OBLIGATORIO: En preguntas tipo "codigo", el campo "codigo" NUNCA debe ser null
+✓ OBLIGATORIO: En preguntas tipo "respuesta_corta", incluir campo "respuesta_esperada"
+✓ OBLIGATORIO: Campo "tipo_pregunta" debe ser EXACTAMENTE uno de los 4 tipos listados arriba
+✓ OBLIGATORIO: El código en campo "codigo" debe ser sintácticamente correcto y ejecutable
+✓ IMPORTANTE: Varía la dificultad según lo especificado (fácil, media, difícil)
 
-Responde SOLO JSON válido:
+RESPONDE ÚNICAMENTE CON JSON VÁLIDO (sin comentarios, sin texto adicional):
 {
   "preguntas": [
     {
-      "categoria": "tema específico",
+      "categoria": "Variables y Tipos de Datos",
       "tipo_pregunta": "codigo",
       "tipo": "refuerzo",
       "dificultad": 2,
-      "pregunta": "¿Qué imprime este código?",
-      "codigo": "for(let i=0; i<3; i++) { console.log(i); }",
+      "pregunta": "¿Qué valor se imprime en la consola al ejecutar este código?",
+      "codigo": "let x = 5;\\nlet y = x + 3;\\nconsole.log(y);",
       "opciones": [
-        {"texto": "0 1 2", "es_correcta": true},
-        {"texto": "1 2 3", "es_correcta": false},
-        {"texto": "0 0 0", "es_correcta": false},
-        {"texto": "Error de sintaxis", "es_correcta": false}
+        {"texto": "8", "es_correcta": true},
+        {"texto": "5", "es_correcta": false},
+        {"texto": "3", "es_correcta": false},
+        {"texto": "53", "es_correcta": false}
       ],
-      "explicacion": "El bucle imprime i desde 0 hasta 2"
+      "explicacion": "La variable y almacena la suma de x (5) + 3, que es 8"
     },
     {
-      "categoria": "tema específico",
+      "categoria": "Conceptos Básicos",
       "tipo_pregunta": "verdadero_falso",
       "tipo": "refuerzo",
       "dificultad": 1,
-      "pregunta": "En JavaScript, 'var' tiene alcance de bloque",
+      "pregunta": "En JavaScript, el operador === compara valor y tipo de dato",
       "codigo": null,
       "opciones": [
-        {"texto": "Verdadero", "es_correcta": false},
-        {"texto": "Falso", "es_correcta": true}
+        {"texto": "Verdadero", "es_correcta": true},
+        {"texto": "Falso", "es_correcta": false}
       ],
-      "explicacion": "var tiene alcance de función, no de bloque. let y const sí tienen alcance de bloque"
-    }
-  ],
-        {"texto": "opción C", "es_correcta": false},
-        {"texto": "opción D", "es_correcta": false}
+      "explicacion": "El operador === es estricto y compara tanto el valor como el tipo de dato, a diferencia de =="
+    },
+    {
+      "categoria": "Sintaxis Básica",
+      "tipo_pregunta": "respuesta_corta",
+      "tipo": "refuerzo",
+      "dificultad": 1,
+      "pregunta": "¿Qué palabra clave se usa para declarar una constante en JavaScript?",
+      "codigo": null,
+      "opciones": null,
+      "respuesta_esperada": "const",
+      "explicacion": "La palabra clave 'const' se usa para declarar constantes que no pueden ser reasignadas"
+    },
+    {
+      "categoria": "Arrays",
+      "tipo_pregunta": "opcion_multiple",
+      "tipo": "desafio",
+      "dificultad": 3,
+      "pregunta": "¿Cuál es la forma correcta de agregar un elemento al final de un array?",
+      "codigo": null,
+      "opciones": [
+        {"texto": "array.push(elemento)", "es_correcta": true},
+        {"texto": "array.add(elemento)", "es_correcta": false},
+        {"texto": "array.append(elemento)", "es_correcta": false},
+        {"texto": "array.insert(elemento)", "es_correcta": false}
       ],
-      "explicacion": "por qué la respuesta A es correcta"
+      "explicacion": "El método push() agrega uno o más elementos al final del array y retorna la nueva longitud"
     }
   ],
   "enfoque": {
-    "areas_reforzar": ["${debilidades[0] || 'conceptos básicos'}"],
-    "areas_desafiar": ["${fortalezas[0] || 'lógica avanzada'}"]
+    "areas_reforzar": ["${debilidades[0] || 'conceptos básicos de programación'}"],
+    "areas_desafiar": ["${fortalezas[0] || 'lógica y algoritmos avanzados'}"]
   }
 }`;
   }

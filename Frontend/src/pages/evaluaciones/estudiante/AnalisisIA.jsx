@@ -1,4 +1,8 @@
-import { useState, useEffect } from 'react';
+/**
+ * Componente de Análisis con IA
+ * Muestra los análisis generados por IA de los intentos de evaluación del estudiante
+ */
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Brain, 
@@ -13,6 +17,19 @@ import {
     ArrowRight
 } from 'lucide-react';
 
+// Constantes de configuración
+const API_BASE_URL = 'http://localhost:4000/api';
+const REINTENTO_DELAY = 6000; // 6 segundos
+const NIVELES = {
+  EXCELENTE: { min: 80, color: 'text-green-600 bg-green-50', icon: CheckCircle },
+  BUENO: { min: 60, color: 'text-blue-600 bg-blue-50', icon: Target },
+  REGULAR: { min: 40, color: 'text-yellow-600 bg-yellow-50', icon: Target },
+  BAJO: { min: 0, color: 'text-red-600 bg-red-50', icon: AlertCircle }
+};
+
+/**
+ * Componente principal de Análisis IA
+ */
 export default function AnalisisIA() {
     const navigate = useNavigate();
     const [analisis, setAnalisis] = useState([]);
@@ -26,46 +43,69 @@ export default function AnalisisIA() {
     // Reintenta automáticamente si no hay análisis (espera a que la IA termine)
     useEffect(() => {
         if (!loading && analisis.length === 0) {
-            const timer = setTimeout(() => {
-                cargarAnalisis();
-            }, 6000);
+            const timer = setTimeout(cargarAnalisis, REINTENTO_DELAY);
             return () => clearTimeout(timer);
         }
     }, [loading, analisis.length]);
 
-    const cargarAnalisis = async () => {
+    /**
+     * Carga los análisis del estudiante actual desde la API
+     */
+    const cargarAnalisis = useCallback(async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:4000/api/ia/mis-analisis', {
+            const response = await fetch(`${API_BASE_URL}/ia/mis-analisis`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
 
-            if (!response.ok) throw new Error('Error al cargar análisis');
+            if (!response.ok) {
+                throw new Error('Error al cargar análisis');
+            }
 
             const data = await response.json();
             setAnalisis(data.analisis || []);
-        } catch (error) {
-            console.error('Error:', error);
-            setError(error.message);
+            setError(null);
+        } catch (err) {
+            console.error('Error cargando análisis:', err);
+            setError(err.message);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const getNivelColor = (porcentaje) => {
-        if (porcentaje >= 80) return 'text-green-600 bg-green-50';
-        if (porcentaje >= 60) return 'text-blue-600 bg-blue-50';
-        if (porcentaje >= 40) return 'text-yellow-600 bg-yellow-50';
-        return 'text-red-600 bg-red-50';
-    };
+    /**
+     * Obtiene la clase CSS según el porcentaje de rendimiento
+     * @param {number} porcentaje - Porcentaje de 0 a 100
+     * @returns {string} Clase CSS
+     */
+    const getNivelColor = useCallback((porcentaje) => {
+        if (porcentaje >= NIVELES.EXCELENTE.min) return NIVELES.EXCELENTE.color;
+        if (porcentaje >= NIVELES.BUENO.min) return NIVELES.BUENO.color;
+        if (porcentaje >= NIVELES.REGULAR.min) return NIVELES.REGULAR.color;
+        return NIVELES.BAJO.color;
+    }, []);
 
-    const getNivelIcon = (porcentaje) => {
-        if (porcentaje >= 80) return <CheckCircle className="text-green-600" size={24} />;
-        if (porcentaje >= 60) return <Target className="text-blue-600" size={24} />;
-        return <AlertCircle className="text-red-600" size={24} />;
-    };
+    /**
+     * Obtiene el ícono correspondiente al nivel de rendimiento
+     * @param {number} porcentaje - Porcentaje de 0 a 100
+     * @returns {JSX.Element} Componente de ícono
+     */
+    const getNivelIcon = useCallback((porcentaje) => {
+        const iconProps = { size: 24 };
+        
+        if (porcentaje >= NIVELES.EXCELENTE.min) {
+            const Icon = NIVELES.EXCELENTE.icon;
+            return <Icon className="text-green-600" {...iconProps} />;
+        }
+        if (porcentaje >= NIVELES.BUENO.min) {
+            const Icon = NIVELES.BUENO.icon;
+            return <Icon className="text-blue-600" {...iconProps} />;
+        }
+        const Icon = NIVELES.BAJO.icon;
+        return <Icon className="text-red-600" {...iconProps} />;
+    }, []);
 
     if (loading) {
         return (

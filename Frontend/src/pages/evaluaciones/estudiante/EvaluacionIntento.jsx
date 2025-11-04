@@ -125,6 +125,7 @@ function EvaluacionIntento() {
             ...prev,
             [preguntaId]: {
                 ...prev[preguntaId],
+                tipo: tipo,
                 ...(tipo === 'opcion_multiple' || tipo === 'verdadero_falso' 
                     ? { opcionSeleccionadaId: valor }
                     : tipo === 'seleccion_multiple'
@@ -132,7 +133,13 @@ function EvaluacionIntento() {
                     : tipo === 'respuesta_corta' || tipo === 'respuesta_larga'
                     ? { texto_respuesta: valor }
                     : tipo === 'codigo'
-                    ? { codigo: valor.codigo, salida_codigo: valor.output }
+                    ? (
+                        // Si valor es un número, es una opción seleccionada (pregunta de código con opciones)
+                        typeof valor === 'number' 
+                        ? { opcionSeleccionadaId: valor }
+                        // Si valor es un objeto, es código escrito (pregunta de código con editor)
+                        : { codigo: valor.codigo, salida_codigo: valor.output }
+                    )
                     : { relacion_par: valor }
                 )
             }
@@ -142,6 +149,15 @@ function EvaluacionIntento() {
     const enviarRespuestas = async () => {
         if (!intentoId) {
             alert('No se pudo identificar el intento');
+            return;
+        }
+
+        // Validar que todas las preguntas estén respondidas
+        const totalPreguntas = evaluacion.Preguntas?.length || 0;
+        const respondidas = contarRespondidas();
+        
+        if (respondidas < totalPreguntas) {
+            alert(`⚠️ Debes responder todas las preguntas antes de enviar.\n\nRespondidas: ${respondidas}/${totalPreguntas}\nFaltan: ${totalPreguntas - respondidas} pregunta(s)`);
             return;
         }
 
@@ -222,6 +238,11 @@ function EvaluacionIntento() {
             } else if (r.tipo === 'respuesta_corta' || r.tipo === 'respuesta_larga') {
                 return r.texto_respuesta?.trim() !== '';
             } else if (r.tipo === 'codigo') {
+                // Si tiene opcionSeleccionadaId, es pregunta de código con opciones (generada por IA)
+                if (r.opcionSeleccionadaId !== undefined) {
+                    return r.opcionSeleccionadaId !== null;
+                }
+                // Si no tiene opcionSeleccionadaId, es pregunta de escribir código
                 return r.codigo?.trim() !== '';
             }
             return false;
@@ -380,6 +401,61 @@ function EvaluacionIntento() {
 
                             {/* Opciones según tipo */}
                             <div className="mt-6 space-y-3">
+                                {/* Pregunta de Código con Código a Mostrar (generada por IA) */}
+                                {pregunta.tipo === 'codigo' && pregunta.codigo && pregunta.opciones && pregunta.opciones.length > 0 && (
+                                    <div className="space-y-4">
+                                        {/* Mostrar el código a analizar */}
+                                        <div>
+                                            <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                                <span className="text-blue-600">📝</span>
+                                                Código a Analizar
+                                            </label>
+                                            <div className="bg-slate-900 rounded-lg overflow-hidden border-2 border-blue-500">
+                                                <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                                                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                                    </div>
+                                                    <span className="text-slate-400 text-sm font-mono">javascript</span>
+                                                </div>
+                                                <pre className="p-4 text-green-400 font-mono text-sm overflow-x-auto whitespace-pre-wrap">
+                                                    {pregunta.codigo}
+                                                </pre>
+                                            </div>
+                                        </div>
+
+                                        {/* Opciones de respuesta */}
+                                        <div>
+                                            <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                                                Selecciona tu respuesta:
+                                            </label>
+                                            <div className="space-y-3">
+                                                {pregunta.opciones.map(opcion => (
+                                                    <label 
+                                                        key={opcion.id}
+                                                        className={`flex items-start sm:items-center gap-3 p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                                            respuestas[pregunta.id]?.opcionSeleccionadaId === opcion.id
+                                                                ? 'border-blue-500 bg-blue-50'
+                                                                : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                                                        }`}
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name={`pregunta-${pregunta.id}`}
+                                                            value={opcion.id}
+                                                            checked={respuestas[pregunta.id]?.opcionSeleccionadaId === opcion.id}
+                                                            onChange={() => handleRespuesta(pregunta.id, pregunta.tipo, opcion.id)}
+                                                            className="w-5 h-5 text-blue-600 mt-0.5"
+                                                        />
+                                                        <span className="text-slate-800">{opcion.texto}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Opción Múltiple o Verdadero/Falso */}
                                 {(pregunta.tipo === 'opcion_multiple' || pregunta.tipo === 'verdadero_falso') && (
                                     <div className="space-y-3">
@@ -459,8 +535,8 @@ function EvaluacionIntento() {
                                 />
                             )}
 
-                            {/* Pregunta de Código */}
-                            {pregunta.tipo === 'codigo' && (
+                            {/* Pregunta de Código - Editor (sin opciones, para escribir código) */}
+                            {pregunta.tipo === 'codigo' && (!pregunta.opciones || pregunta.opciones.length === 0) && (
                                 <PreguntaCodigoIntento
                                     pregunta={pregunta}
                                     respuesta={respuestas[pregunta.id]}

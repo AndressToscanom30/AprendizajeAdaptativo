@@ -1,3 +1,7 @@
+/**
+ * Controlador de Evaluaciones
+ * Gestiona CRUD de evaluaciones, asignación a estudiantes y preguntas
+ */
 import {
     Evaluacion,
     Pregunta,
@@ -11,6 +15,12 @@ import {
 import EvaluacionUsuario from "./EvaluacionUsuario.js";
 import sequelize from "../config/db.js";
 
+/**
+ * Crea una nueva evaluación con sus preguntas y opciones
+ * @param {Object} req - Request con datos de la evaluación
+ * @param {Object} res - Response object
+ * @returns {Promise<Object>} Evaluación creada
+ */
 export const crearEvaluacion = async (req, res) => {
     const t = await sequelize.transaction();
     try {

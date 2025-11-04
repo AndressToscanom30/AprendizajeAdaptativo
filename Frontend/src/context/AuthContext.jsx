@@ -1,10 +1,20 @@
-// src/context/AuthContext.jsx
-import { createContext, useState, useContext, useEffect, useRef } from "react";
+/**
+ * Contexto de Autenticación
+ * Gestiona el estado de autenticación del usuario y la expiración de tokens JWT
+ */
+import { createContext, useState, useContext, useEffect, useRef, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 import Swal from "sweetalert2";
 
+// Constantes de configuración
+const WARNING_BEFORE_EXPIRATION_SECONDS = 2 * 60; // 2 minutos antes
+const SESSION_EXTENSION_HOURS = 1;
+
 const AuthContext = createContext();
 
+/**
+ * Provider de autenticación
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,7 +22,10 @@ export const AuthProvider = ({ children }) => {
   const logoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
 
-  const clearTimers = () => {
+  /**
+   * Limpia los timers de advertencia y logout
+   */
+  const clearTimers = useCallback(() => {
     if (logoutTimerRef.current) {
       clearTimeout(logoutTimerRef.current);
       logoutTimerRef.current = null;
@@ -21,20 +34,20 @@ export const AuthProvider = ({ children }) => {
       clearTimeout(warningTimerRef.current);
       warningTimerRef.current = null;
     }
-  };
+  }, []);
 
-  const scheduleTokenTimers = (token) => {
+  /**
+   * Programa los timers para advertir y cerrar sesión automáticamente
+   * @param {string} token - Token JWT
+   */
+  const scheduleTokenTimers = useCallback((token) => {
     try {
       const decoded = jwtDecode(token);
       const nowSec = Date.now() / 1000;
       const timeLeftSec = decoded.exp - nowSec;
 
-      if (!timeLeftSec) {
-        logout();
-        return;
-      }
-
-      if (timeLeftSec <= -5) {
+      // Token ya expirado
+      if (!timeLeftSec || timeLeftSec <= -5) {
         Swal.fire("Sesión expirada", "Tu sesión ha expirado. Vuelve a iniciar sesión.", "info");
         logout();
         return;
@@ -42,14 +55,14 @@ export const AuthProvider = ({ children }) => {
 
       clearTimers();
 
-      const warningBeforeSec = 2 * 60;
-      const warningTimeMs = (timeLeftSec - warningBeforeSec) * 1000;
-
+      // Programar advertencia antes de expirar
+      const warningTimeMs = (timeLeftSec - WARNING_BEFORE_EXPIRATION_SECONDS) * 1000;
+      
       if (warningTimeMs > 0) {
         warningTimerRef.current = setTimeout(() => {
           Swal.fire({
             title: "Tu sesión está por expirar",
-            text: "¿Deseas extenderla por 1 hora más?",
+            text: `¿Deseas extenderla por ${SESSION_EXTENSION_HOURS} hora más?`,
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "Extender sesión",
@@ -67,17 +80,16 @@ export const AuthProvider = ({ children }) => {
         }, warningTimeMs);
       }
 
-      // timer para logout al expirar
+      // Programar logout automático al expirar
       logoutTimerRef.current = setTimeout(() => {
-        // token expiró: hacer logout y notificar
         logout();
         Swal.fire("Sesión expirada", "Tu sesión ha expirado. Vuelve a iniciar sesión.", "info");
       }, timeLeftSec * 1000);
     } catch (err) {
-      console.error("Error scheduleTokenTimers:", err);
+      console.error("Error programando timers de sesión:", err);
       logout();
     }
-  };
+  }, [clearTimers]);
 
   useEffect(() => {
     try {
