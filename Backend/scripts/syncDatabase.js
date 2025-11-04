@@ -1,5 +1,5 @@
-import sequelize from '../src/config/db.js';  // ✅ Ajusta la ruta
-import '../src/config/relaciones.js';  // ✅ Ajusta la ruta
+import sequelize from '../src/config/db.js';
+import '../src/config/relaciones.js';
 
 
 const syncDatabase = async () => {
