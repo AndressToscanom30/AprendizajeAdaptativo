@@ -139,7 +139,7 @@ function DetalleCursoEstudiante() {
 
   useEffect(() => {
     cargarDatosCurso();
-  }, [id]);
+  }, [id, location.key]); // Recargar cuando cambia la navegación
 
   // Recargar cuando se regresa de una evaluación
   useEffect(() => {

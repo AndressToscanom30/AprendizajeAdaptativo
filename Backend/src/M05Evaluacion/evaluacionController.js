@@ -233,7 +233,7 @@ export const obtenerEvaluacionPorId = async (req, res) => {
             {
               model: OpcionPregunta,
               as: "opciones",
-              attributes: ["id", "texto", "es_correcta"]
+              attributes: ["id", "texto", "es_correcta", "metadata"]
             }
           ],
           through: {
@@ -275,6 +275,7 @@ export const obtenerEvaluacionPorId = async (req, res) => {
         pregunta.opciones = pregunta.opciones.map((op) => ({
           id: op.id,
           texto: op.texto,
+          metadata: op.metadata, // Incluir metadata para preguntas de código
           ...(userRole !== "estudiante" || haAlcanzadoMax ? { es_correcta: op.es_correcta } : {})
         }));
       });

@@ -25,6 +25,13 @@ function CrearEvaluacionForm() {
 
     useEffect(() => {
         cargarCursos();
+        
+        // Cleanup function para limpiar el estado cuando se desmonte el componente
+        return () => {
+            setPreguntas([]);
+            setMensaje("");
+            setLoading(false);
+        };
     }, []);
 
     const cargarCursos = async () => {
@@ -122,12 +129,28 @@ function CrearEvaluacionForm() {
 
             const nuevaEval = await resEval.json();
 
-            setMensaje("✓ Evaluación creada exitosamente con " + preguntasFormateadas.length + " preguntas");
-            
-            // Redirigir después de 1.5 segundos
-            setTimeout(() => {
-                navigate("/profesor/evaluaciones");
-            }, 1500);
+            // Limpiar el estado inmediatamente
+            setPreguntas([]);
+            setEvaluacion({
+                titulo: "",
+                descripcion: "",
+                duracion_minutos: "",
+                comienza_en: "",
+                termina_en: "",
+                preguntas_revueltas: false,
+                max_intentos: 3,
+                curso_id: "",
+                activa: true
+            });
+
+            // Navegar inmediatamente con replace para evitar volver atrás
+            navigate("/profesor/evaluaciones", { 
+                replace: true,
+                state: { 
+                    mensaje: `✅ Evaluación "${nuevaEval.titulo}" creada exitosamente`,
+                    tipo: 'exito'
+                }
+            });
 
         } catch (error) {
             console.error(error);

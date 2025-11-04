@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
     ArrowLeft, 
     Clock, 
@@ -13,18 +13,32 @@ import {
     PlayCircle,
     FileText,
     Target,
-    Award
+    Award,
+    Eye
 } from 'lucide-react';
 
 function DetalleEvaluacionEstudiante() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [loading, setLoading] = useState(true);
     const [evaluacion, setEvaluacion] = useState(null);
     const [error, setError] = useState(null);
+    const [iniciandoIntento, setIniciandoIntento] = useState(false);
 
     useEffect(() => {
         cargarDetalles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, location.key]); // Recargar cuando cambia la ruta (regresa de intento)
+
+    // Recargar cuando se vuelva a esta página (por si completó un intento en otra pestaña)
+    useEffect(() => {
+        const handleFocus = () => {
+            cargarDetalles();
+        };
+        
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
@@ -55,7 +69,26 @@ function DetalleEvaluacionEstudiante() {
         }
     };
 
-    const iniciarIntento = () => {
+    const iniciarIntento = async () => {
+        if (iniciandoIntento) return; // Prevenir doble clic
+        
+        // Validación adicional en frontend
+        if (!evaluacion.puede_realizar) {
+            alert('No puedes iniciar un nuevo intento en este momento');
+            return;
+        }
+        
+        const intentosCompletados = evaluacion.intentos?.filter(
+            i => i.status === 'enviado' || i.status === 'calificado' || i.status === 'revisado'
+        ).length || 0;
+        
+        if (evaluacion.max_intentos && intentosCompletados >= evaluacion.max_intentos) {
+            alert(`Has alcanzado el límite de intentos (${evaluacion.max_intentos})`);
+            await cargarDetalles(); // Recargar datos por si están desactualizados
+            return;
+        }
+        
+        setIniciandoIntento(true);
         navigate(`/estudiante/evaluacion/${id}/intento`);
     };
 
@@ -154,10 +187,15 @@ function DetalleEvaluacionEstudiante() {
                     {evaluacion.puede_realizar && !evaluacion.tiempo_agotado && (
                         <button
                             onClick={iniciarIntento}
-                            className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-all transform hover:scale-105 shadow-lg flex items-center gap-2"
+                            disabled={iniciandoIntento}
+                            className={`px-6 py-3 rounded-xl font-semibold transition-all transform shadow-lg flex items-center gap-2 ${
+                                iniciandoIntento 
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-white text-blue-600 hover:bg-blue-50 hover:scale-105'
+                            }`}
                         >
                             <PlayCircle size={20} />
-                            Iniciar Intento
+                            {iniciandoIntento ? 'Iniciando...' : 'Iniciar Intento'}
                         </button>
                     )}
                 </div>
@@ -297,9 +335,21 @@ function DetalleEvaluacionEstudiante() {
                                             <div className="text-right">
                                                 <p className="text-2xl font-bold text-slate-800">
                                                     {intento.total_puntaje?.toFixed(1) || '0.0'}
+                                                    {evaluacion.puntaje_total ? (
+                                                        <span className="text-base text-slate-500 font-normal ml-1">
+                                                            / {evaluacion.puntaje_total.toFixed(1)}
+                                                        </span>
+                                                    ) : null}
                                                 </p>
                                                 <p className="text-xs text-slate-500">puntos</p>
                                             </div>
+                                            <button
+                                                onClick={() => navigate(`/estudiante/intento/${intento.id}/revision`)}
+                                                className="flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors font-medium text-sm"
+                                            >
+                                                <Eye size={16} />
+                                                Ver Respuestas
+                                            </button>
                                         </>
                                     ) : (
                                         <div className="flex items-center gap-2 text-yellow-600">
@@ -329,13 +379,20 @@ function DetalleEvaluacionEstudiante() {
                 <div className="flex justify-center">
                     <button
                         onClick={iniciarIntento}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-xl flex items-center gap-3"
+                        disabled={iniciandoIntento}
+                        className={`px-8 py-4 rounded-xl font-bold text-lg transition-all transform shadow-xl flex items-center gap-3 ${
+                            iniciandoIntento
+                                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 hover:scale-105'
+                        }`}
                     >
                         <PlayCircle size={24} />
-                        Iniciar Nuevo Intento
-                        <span className="text-sm bg-white/20 px-3 py-1 rounded-full">
-                            {evaluacion.intentos_restantes} restante{evaluacion.intentos_restantes !== 1 ? 's' : ''}
-                        </span>
+                        {iniciandoIntento ? 'Iniciando Intento...' : 'Iniciar Nuevo Intento'}
+                        {!iniciandoIntento && evaluacion.intentos_restantes !== undefined && (
+                            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">
+                                {evaluacion.intentos_restantes} restante{evaluacion.intentos_restantes !== 1 ? 's' : ''}
+                            </span>
+                        )}
                     </button>
                 </div>
             )}

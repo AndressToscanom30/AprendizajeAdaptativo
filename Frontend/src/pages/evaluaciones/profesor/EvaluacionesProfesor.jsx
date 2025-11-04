@@ -1,17 +1,33 @@
 import { useState, useEffect } from 'react';
 import EvaluacionCardProf from "../../../components/evaluaciones/EvaluacionCardProf.jsx";
-import { Search, PlusCircle, Filter, BookOpen, Loader2, AlertCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Search, PlusCircle, Filter, BookOpen, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext.jsx";
 
 function EvaluacionesProfesor() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
     const [evaluaciones, setEvaluaciones] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
+    const [mensajeExito, setMensajeExito] = useState(null);
+
+    // Mostrar mensaje de éxito si viene del state de navegación
+    useEffect(() => {
+        if (location.state?.mensaje) {
+            setMensajeExito(location.state.mensaje);
+            // Limpiar el state para evitar que se muestre de nuevo al recargar
+            window.history.replaceState({}, document.title);
+            
+            // Ocultar mensaje después de 5 segundos
+            setTimeout(() => {
+                setMensajeExito(null);
+            }, 5000);
+        }
+    }, [location.state]);
 
     const cargarEvaluaciones = async () => {
         if (!user?.id) {
@@ -111,6 +127,22 @@ function EvaluacionesProfesor() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
+                {/* Mensaje de éxito */}
+                {mensajeExito && (
+                    <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-4 shadow-lg animate-fade-in">
+                        <div className="flex items-center gap-3">
+                            <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+                            <p className="text-green-800 font-semibold">{mensajeExito}</p>
+                            <button
+                                onClick={() => setMensajeExito(null)}
+                                className="ml-auto text-green-600 hover:text-green-800 transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="bg-white rounded-3xl shadow-lg p-8 border border-slate-200">
                     <div className="flex items-center gap-4 mb-4">

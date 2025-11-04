@@ -132,7 +132,7 @@ function EvaluacionIntento() {
                     : tipo === 'respuesta_corta' || tipo === 'respuesta_larga'
                     ? { texto_respuesta: valor }
                     : tipo === 'codigo'
-                    ? { codigo: valor.codigo, output: valor.output, es_correcta: valor.es_correcta }
+                    ? { codigo: valor.codigo, salida_codigo: valor.output }
                     : { relacion_par: valor }
                 )
             }

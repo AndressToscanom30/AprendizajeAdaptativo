@@ -251,17 +251,37 @@ export const obtenerProgresoCurso = async (req, res) => {
     });
 
     // Calcular progreso
-    const evaluaciones_completadas = new Set(
-      intentos.filter(i => i.status === "calificado").map(i => i.evaluacionId)
-    ).size;
+    // Contar evaluaciones únicas completadas (con status enviado, calificado o revisado)
+    const evaluacionesCompletadasSet = new Set(
+      intentos
+        .filter(i => i.status === "enviado" || i.status === "calificado" || i.status === "revisado")
+        .map(i => i.evaluacionId)
+    );
+    const evaluaciones_completadas = evaluacionesCompletadasSet.size;
 
     const porcentaje_progreso = evaluaciones.length > 0
       ? (evaluaciones_completadas / evaluaciones.length) * 100
       : 0;
 
-    const intentosCalificados = intentos.filter(i => i.total_puntaje !== null);
-    const promedio_curso = intentosCalificados.length > 0
-      ? intentosCalificados.reduce((sum, i) => sum + i.total_puntaje, 0) / intentosCalificados.length
+    // Calcular promedio del curso usando el mejor intento de cada evaluación
+    const mejoresIntentos = [];
+    evaluaciones.forEach(evaluacion => {
+      const intentosEval = intentos.filter(i => 
+        i.evaluacionId === evaluacion.id && 
+        i.total_puntaje !== null &&
+        (i.status === "enviado" || i.status === "calificado" || i.status === "revisado")
+      );
+      
+      if (intentosEval.length > 0) {
+        const mejorIntento = intentosEval.reduce((max, intento) => 
+          intento.total_puntaje > max.total_puntaje ? intento : max
+        );
+        mejoresIntentos.push(mejorIntento);
+      }
+    });
+
+    const promedio_curso = mejoresIntentos.length > 0
+      ? mejoresIntentos.reduce((sum, i) => sum + i.total_puntaje, 0) / mejoresIntentos.length
       : 0;
 
     return res.json({

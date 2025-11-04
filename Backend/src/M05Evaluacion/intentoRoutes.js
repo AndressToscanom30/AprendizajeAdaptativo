@@ -5,7 +5,8 @@ import {
   iniciarIntento,
   enviarRespuestas,
   obtenerResultadoIntento,
-  listarIntentosPorEvaluacion
+  listarIntentosPorEvaluacion,
+  obtenerDetallesIntento
 } from "./intentoController.js";
 
 const router = Router();
@@ -15,6 +16,9 @@ router.post("/evaluacion/:evaluacionId", verifyToken, rolRequerido("estudiante")
 
 // Enviar respuestas (propietario del intento o profesor)
 router.post("/:intentoId/submit", verifyToken, enviarRespuestas);
+
+// Obtener detalles completos del intento (con preguntas y respuestas)
+router.get("/:intentoId/detalles", verifyToken, obtenerDetallesIntento);
 
 // Obtener resultado de intento
 router.get("/:intentoId", verifyToken, obtenerResultadoIntento);

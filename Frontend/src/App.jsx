@@ -35,6 +35,7 @@ import DetalleCursoEstudiante from "./pages/cursos/estudiante/DetalleCursoEstudi
 import EvaluacionesEstudiante from "./pages/evaluaciones/EvaluacionesEstudiante.jsx";
 import DetalleEvaluacionEstudiante from "./pages/evaluaciones/estudiante/DetalleEvaluacionEstudiante.jsx";
 import EvaluacionIntento from "./pages/evaluaciones/estudiante/EvaluacionIntento.jsx";
+import RevisionIntento from "./pages/evaluaciones/estudiante/RevisionIntento.jsx";
 import AnalisisIA from "./pages/evaluaciones/estudiante/AnalisisIA.jsx";
 import GestionRelaciones from "./pages/admin/GestionRelaciones.jsx";
 import VerificarRelacion from "./pages/admin/VerificarRelacion.jsx";
@@ -200,6 +201,17 @@ function App() {
                     </ProtectedRoute>}
                 />
 
+<<<<<<< Updated upstream
+=======
+                {/* Ruta de Revisión de Intento */}
+                <Route path="/estudiante/intento/:intentoId/revision"
+                  element={
+                    <ProtectedRoute roles={["estudiante"]}>
+                      <RevisionIntento />
+                    </ProtectedRoute>}
+                />
+
+>>>>>>> Stashed changes
                 {/* Ruta de Análisis IA */}
                 <Route path="/estudiante/analisis-ia"
                   element={

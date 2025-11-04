@@ -2,7 +2,9 @@ import EvaluacionUsuario from "./EvaluacionUsuario.js";
 import Evaluacion from "./Evaluacion.js";
 import User from "../M02Usuarios/User.js";
 import Intento from "./Intento.js";
+import PreguntaEvaluacion from "./PreguntaEvaluacion.js";
 import { Op } from "sequelize";
+import sequelize from "../config/db.js";
 
 export const asignarEvaluacion = async (req, res) => {
   try {
@@ -81,14 +83,17 @@ export const obtenerEvaluacionesAsignadas = async (req, res) => {
         const ahora = new Date();
         const terminaEn = asignacion.evaluacion.termina_en ? new Date(asignacion.evaluacion.termina_en) : null;
         const diasRestantes = terminaEn ? Math.ceil((terminaEn - ahora) / (1000 * 60 * 60 * 24)) : null;
+        const maxIntentos = asignacion.evaluacion.max_intentos || 1;
 
         return {
           ...asignacion.toJSON(),
           intentos_realizados: intentosRealizados,
+          max_intentos: maxIntentos,
+          intentos_restantes: Math.max(0, maxIntentos - intentosRealizados),
           mejor_calificacion: mejorIntento?.total_puntaje || 0,
           dias_restantes: diasRestantes,
           tiempo_agotado: terminaEn ? ahora > terminaEn : false,
-          puede_realizar: !terminaEn || ahora <= terminaEn
+          puede_realizar: (!terminaEn || ahora <= terminaEn) && intentosRealizados < maxIntentos
         };
       })
     );
@@ -136,6 +141,14 @@ export const obtenerDetalleEvaluacion = async (req, res) => {
       return res.status(404).json({ message: "Evaluación no encontrada o no asignada." });
     }
 
+    // Calcular el puntaje total de la evaluación usando Sequelize
+    const preguntasEvaluacion = await PreguntaEvaluacion.findAll({
+      where: { evaluacionId: id },
+      attributes: ['puntos']
+    });
+
+    const puntajeTotal = preguntasEvaluacion.reduce((sum, pe) => sum + (pe.puntos || 0), 0);
+
     // Obtener intentos previos
     const intentos = await Intento.findAll({
       where: {
@@ -156,7 +169,8 @@ export const obtenerDetalleEvaluacion = async (req, res) => {
       intentos_realizados: intentos,
       puede_realizar: puedeRealizar,
       intentos_restantes: asignacion.evaluacion.max_intentos - intentos.length,
-      tiempo_agotado: terminaEn ? ahora > terminaEn : false
+      tiempo_agotado: terminaEn ? ahora > terminaEn : false,
+      puntaje_total: puntajeTotal
     });
   } catch (error) {
     console.error("Error al obtener detalle de evaluación:", error);

@@ -2,7 +2,11 @@ import { useState, useRef } from 'react';
 import { Play, Terminal, RotateCcw, Lightbulb, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 
 function PreguntaCodigoIntento({ pregunta, respuesta, onChange }) {
-  const [codigo, setCodigo] = useState(respuesta?.codigo || pregunta.opciones[0]?.codigo_inicial || '');
+  // Obtener datos del metadata
+  const dataPregunta = pregunta.opciones[0]?.metadata || {};
+  const codigoInicial = dataPregunta.codigo_inicial || '// Escribe tu código aquí\n';
+  
+  const [codigo, setCodigo] = useState(respuesta?.codigo || codigoInicial);
   const [output, setOutput] = useState('');
   const [ejecutando, setEjecutando] = useState(false);
   const [error, setError] = useState(false);
@@ -10,10 +14,10 @@ function PreguntaCodigoIntento({ pregunta, respuesta, onChange }) {
   const [mostrarSolucion, setMostrarSolucion] = useState(false);
   const textareaRef = useRef(null);
 
-  const dataPregunta = pregunta.opciones[0] || {};
   const pistas = dataPregunta.pistas || [];
   const solucion = dataPregunta.solucion || '';
   const salidaEsperada = dataPregunta.salida_esperada || '';
+  const lenguaje = dataPregunta.lenguaje || 'javascript';
 
   const handleKeyDown = (e) => {
     if (e.key === 'Tab') {
@@ -104,9 +108,9 @@ function PreguntaCodigoIntento({ pregunta, respuesta, onChange }) {
       {/* Editor de Código */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
             <Terminal className="w-4 h-4 text-green-600" />
-            Editor de Código ({dataPregunta.lenguaje || 'JavaScript'})
+            Editor de Código ({lenguaje || 'JavaScript'})
           </label>
           <button
             type="button"
@@ -125,7 +129,7 @@ function PreguntaCodigoIntento({ pregunta, respuesta, onChange }) {
               <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
             </div>
-            <span className="text-slate-400 text-sm font-mono">{dataPregunta.lenguaje || 'javascript'}</span>
+            <span className="text-slate-400 text-sm font-mono">{lenguaje || 'javascript'}</span>
           </div>
           <textarea
             ref={textareaRef}

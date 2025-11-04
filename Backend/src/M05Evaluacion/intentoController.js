@@ -120,7 +120,9 @@ export const enviarRespuestas = async (req, res) => {
                 opcionSeleccionadaId,
                 opcion_seleccionadaIds,
                 texto_respuesta,
-                relacion_par
+                relacion_par,
+                codigo,
+                salida_codigo
             } = r;
 
             const existente = await IntentoRespuesta.findOne({
@@ -157,6 +159,18 @@ export const enviarRespuestas = async (req, res) => {
                 const correctPairs = pregunta.metadata?.correctPairs || [];
                 es_correcta = JSON.stringify(correctPairs) === JSON.stringify(relacion_par || []);
                 puntos_obtenidos = es_correcta ? pointsForQuestion : 0;
+            } else if (pregunta.tipo === "codigo") {
+                // Validar pregunta de código
+                const metadata = pregunta.opciones[0]?.metadata || {};
+                const salidaEsperada = metadata.salida_esperada || '';
+                
+                // Comparar la salida del código del estudiante con la salida esperada
+                // Limpiar espacios en blanco y saltos de línea para comparación
+                const salidaEstudianteNormalizada = (salida_codigo || '').trim().replace(/\s+/g, ' ');
+                const salidaEsperadaNormalizada = salidaEsperada.trim().replace(/\s+/g, ' ');
+                
+                es_correcta = salidaEstudianteNormalizada === salidaEsperadaNormalizada;
+                puntos_obtenidos = es_correcta ? pointsForQuestion : 0;
             } else {
                 es_correcta = null;
                 puntos_obtenidos = null;
@@ -169,6 +183,8 @@ export const enviarRespuestas = async (req, res) => {
                 opcion_seleccionadaIds,
                 texto_respuesta,
                 relacion_par,
+                codigo,
+                salida_codigo,
                 es_correcta,
                 puntos_obtenidos
             }, { transaction: t });
@@ -289,5 +305,57 @@ export const listarIntentosPorEvaluacion = async (req, res) => {
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: "Error al listar intentos", error: error.message });
+    }
+};
+
+export const obtenerDetallesIntento = async (req, res) => {
+    try {
+        const { intentoId } = req.params;
+        const userId = req.user.id;
+        const userRole = req.user.rol;
+
+        const intento = await Intento.findByPk(intentoId, {
+            include: [
+                {
+                    model: Evaluacion,
+                    as: "evaluacion",
+                    include: [
+                        {
+                            model: Pregunta,
+                            as: "Preguntas",
+                            include: [
+                                {
+                                    model: OpcionPregunta,
+                                    as: "opciones",
+                                    attributes: ["id", "texto", "es_correcta", "metadata"]
+                                }
+                            ],
+                            through: {
+                                model: PreguntaEvaluacion,
+                                attributes: ["puntos", "orden"]
+                            }
+                        }
+                    ]
+                },
+                {
+                    model: IntentoRespuesta,
+                    as: "respuestas"
+                }
+            ]
+        });
+
+        if (!intento) {
+            return res.status(404).json({ message: "Intento no encontrado" });
+        }
+
+        // Verificar permisos
+        if (userRole === 'estudiante' && intento.userId !== userId) {
+            return res.status(403).json({ message: "No tienes permiso para ver este intento" });
+        }
+
+        return res.json(intento);
+    } catch (error) {
+        console.error('Error al obtener detalles del intento:', error);
+        return res.status(500).json({ message: "Error al obtener detalles", error: error.message });
     }
 };

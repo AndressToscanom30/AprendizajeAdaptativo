@@ -295,7 +295,7 @@ function EvaluacionesEstudiante() {
                         <p className="text-xs text-slate-600">Intentos</p>
                       </div>
                       <p className="font-bold text-slate-800">
-                        {ev.intentos_realizados || 0} / {ev.evaluacion?.intentos_maximos || 0}
+                        {ev.intentos_realizados || 0} / {ev.max_intentos || ev.evaluacion?.max_intentos || 0}
                       </p>
                     </div>
 

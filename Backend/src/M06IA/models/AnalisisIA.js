@@ -49,7 +49,7 @@ const AnalisisIA = sequelize.define('AnalisisIA', {
     defaultValue: []
   },
   tiempoEstudioSugerido: {
-    type: DataTypes.STRING(100),
+    type: DataTypes.TEXT,
     allowNull: true,
     field: 'tiempo_estudio_sugerido'
   },

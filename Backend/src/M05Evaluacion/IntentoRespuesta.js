@@ -41,6 +41,14 @@ const IntentoRespuesta = sequelize.define("IntentoRespuesta", {
         type: DataTypes.JSONB,
         allowNull: true
     },
+    codigo: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    salida_codigo: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
     es_correcta: {
         type: DataTypes.BOOLEAN,
         allowNull: true
