@@ -2,13 +2,30 @@ import axios from "axios";
 
 class GroqService {
   constructor() {
-    this.apiKey = process.env.GROQ_API_KEY;
+    // Trim para evitar espacios invisibles del .env
+    this.apiKey = process.env.GROQ_API_KEY?.trim();
     this.baseURL = "https://api.groq.com/openai/v1/chat/completions";
-    this.model = "llama-3.3-70b-versatile"; 
+    this.model = "llama-3.3-70b-versatile";
+    
+    // 🔍 LOG PARA DEBUG
+    console.log('🔑 GroqService inicializado');
+    console.log('   - API Key presente:', !!this.apiKey);
+    console.log('   - API Key (primeros 15 chars):', this.apiKey?.substring(0, 15) + '...');
+    console.log('   - Longitud:', this.apiKey?.length);
+    
+    if (!this.apiKey) {
+      console.warn("⚠️ GROQ_API_KEY no configurada - los servicios de IA no funcionarán");
+    }
   }
 
   async generateCompletion(prompt, options = {}) {
+    if (!this.apiKey) {
+      throw new Error('GROQ_API_KEY no configurada en el archivo .env');
+    }
+
     try {
+      console.log('🔄 Llamando a Groq API...');
+      
       const response = await axios.post(
         this.baseURL,
         {
@@ -36,13 +53,22 @@ class GroqService {
         }
       );
 
+      console.log('✅ Groq API respondió correctamente');
       return JSON.parse(response.data.choices[0].message.content);
     } catch (error) {
-      console.error(
-        "Error en Groq API:",
-        error.response?.data || error.message
-      );
-      throw new Error("Error al comunicarse con el servicio de IA");
+      const status = error.response?.status;
+      const apiMsg = error.response?.data?.error?.message || error.response?.data || error.message;
+      
+      console.error('\n❌ ERROR EN GROQ API:');
+      console.error('   Status HTTP:', status);
+      console.error('   Mensaje:', apiMsg);
+      console.error('   API Key (primeros 15 chars):', this.apiKey?.substring(0, 15) + '...');
+      console.error('   Longitud de la key:', this.apiKey?.length);
+      
+      // Propagar error con información útil
+      const msg = typeof apiMsg === 'string' ? apiMsg : JSON.stringify(apiMsg);
+      const statusText = status ? ` (HTTP ${status})` : '';
+      throw new Error('Error al comunicarse con el servicio de IA' + statusText + ': ' + msg);
     }
   }
 
@@ -121,8 +147,6 @@ ${i + 1}. Pregunta (${r.tipo} - ${r.dificultad}):
   }
 
   construirPromptTestAdaptativo(analisis) {
-    const debilidadesStr = analisis.debilidades?.join(', ') || 'No detectadas';
-    const fortalezasStr = analisis.fortalezas?.join(', ') || 'No detectadas';
     
     return `Eres un profesor experto creando un test PERSONALIZADO para un estudiante específico.
 

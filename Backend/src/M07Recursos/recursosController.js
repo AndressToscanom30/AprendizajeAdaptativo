@@ -36,20 +36,28 @@ Responde ÚNICAMENTE con un objeto JSON en este formato:
 
     const resultado = await groqService.generateCompletion(prompt, {
       temperature: 0.7,
-      maxTokens: 1000,
+      maxTokens: 800,
     });
 
-    res.json({
+    return res.json({
       ok: true,
       data: resultado,
     });
   } catch (error) {
     console.error("Error al generar búsquedas:", error);
-    res.status(500).json({
-      ok: false,
-      message: "Error al generar búsquedas con IA",
-      error: error.message,
-    });
+    // Fallback no-bloqueante para que el front pueda seguir
+    const { tema, nivel = 'intermedio' } = req.body || {};
+    const fallback = {
+      busquedas: [
+        `${tema} ${nivel} explicacion paso a paso`,
+        `${tema} ejercicios resueltos ${nivel}`,
+        `${tema} tutorial practico`,
+        `${tema} conceptos basicos y ejemplos`,
+        `${tema} mejores practicas`
+      ],
+      descripcion: "Búsquedas generadas localmente como respaldo mientras el servicio de IA no está disponible."
+    };
+    return res.status(200).json({ ok: true, data: fallback, fallback: true });
   }
 };
 
@@ -125,7 +133,6 @@ export const buscarVideos = async (req, res) => {
 export const generarRecomendaciones = async (req, res) => {
   try {
     const { temas, nivel, objetivos } = req.body;
-    const userId = req.userId; // Del middleware de autenticación
 
     const prompt = `Como tutor educativo personalizado, genera una lista de 8 temas de estudio recomendados para un estudiante con las siguientes características:
 
@@ -150,20 +157,28 @@ Responde ÚNICAMENTE con un objeto JSON en este formato:
 
     const resultado = await groqService.generateCompletion(prompt, {
       temperature: 0.8,
-      maxTokens: 2000,
+      maxTokens: 1200,
     });
 
-    res.json({
+    return res.json({
       ok: true,
       data: resultado,
     });
   } catch (error) {
     console.error("Error al generar recomendaciones:", error);
-    res.status(500).json({
-      ok: false,
-      message: "Error al generar recomendaciones",
-      error: error.message,
-    });
+    // Fallback con recomendaciones genéricas útiles
+    const { temas = ["programación"], nivel = "intermedio" } = req.body || {};
+    const recomendaciones = temas.slice(0, 4).map(t => ({
+      titulo: `${t} para ${nivel}`,
+      descripcion: `Refuerza los fundamentos de ${t} con practica guiada y proyectos cortos.`,
+      nivel,
+      duracionEstimada: "4-6 horas"
+    }));
+    const data = {
+      recomendaciones,
+      mensaje: "Recomendaciones generadas localmente como respaldo mientras el servicio de IA no está disponible."
+    };
+    return res.status(200).json({ ok: true, data, fallback: true });
   }
 };
 

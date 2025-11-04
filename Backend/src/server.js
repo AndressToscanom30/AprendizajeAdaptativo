@@ -1,9 +1,11 @@
-import app from "./app.js";
 import dotenv from "dotenv";
+// ⚠️ IMPORTANTE: cargar .env ANTES de cualquier otro import
+dotenv.config();
+
+import app from "./app.js";
 import sequelize from './config/db.js'
 import "./config/relaciones.js";
 
-dotenv.config();
 const PORT = process.env.PORT || 4000;
 
 (async () => {

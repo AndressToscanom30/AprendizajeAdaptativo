@@ -9,6 +9,7 @@ import OpcionPregunta from "../M05Evaluacion/OpcionPregunta.js";
 import PreguntaEvaluacion from "../M05Evaluacion/PreguntaEvaluacion.js";
 import EvaluacionUsuario from "../M05Evaluacion/EvaluacionUsuario.js";
 import sequelize from "../config/db.js";
+import { Op } from "sequelize";
 
 class IAController {
   async analizarIntento(req, res) {
@@ -30,7 +31,7 @@ class IAController {
               {
                 model: Pregunta,
                 as: "pregunta",
-                attributes: ["id", "text", "tipo", "dificultad"],
+                attributes: ["id", "texto", "tipo", "dificultad"],
                 include: [
                   {
                     model: OpcionPregunta,
@@ -58,7 +59,8 @@ class IAController {
         });
       }
 
-      const estadosValidos = ["calificado", "revisado"];
+      // Permitir analizar intentos ya enviados (aunque no calificados manualmente)
+      const estadosValidos = ["enviado", "calificado", "revisado"];
       if (!estadosValidos.includes(intento.status)) {
         return res.status(400).json({
           success: false,
@@ -143,10 +145,10 @@ class IAController {
             tiempo_estudio_sugerido: resultadoIA.tiempo_estudio_sugerido,
           },
         });
-      } catch (errorIA) {
-        console.error("❌ Error en Groq API:", errorIA);
+      } catch (error_) {
+        console.error("❌ Error en Groq API:", error_);
         await analisis.update({ estado: "error" });
-        throw errorIA;
+        throw error_;
       }
     } catch (error) {
       console.error("❌ Error al analizar intento:", error);
@@ -252,7 +254,7 @@ class IAController {
     try {
       const userId = req.user.id;
 
-      const analisis = await AnalisisIA.findAll({
+      let analisis = await AnalisisIA.findAll({
         where: { usuarioId: userId },
         include: [
           {
@@ -275,6 +277,29 @@ class IAController {
         order: [["createdAt", "DESC"]],
         limit: 20,
       });
+
+      // Si no hay análisis, intentar generar en segundo plano el más reciente
+      if (!analisis || analisis.length === 0) {
+        const ultimoIntento = await Intento.findOne({
+          where: {
+            userId,
+            status: "enviado",
+            updatedAt: { [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          },
+          order: [["updatedAt", "DESC"]],
+        });
+
+        if (ultimoIntento) {
+          // Lanzar análisis en background y responder vacío por ahora
+          setImmediate(async () => {
+            try {
+              await this.analizarYGenerarAutomatico(ultimoIntento.id, userId);
+            } catch (e) {
+              console.error("Error generando análisis en obtenerMisAnalisis:", e.message);
+            }
+          });
+        }
+      }
 
       // Enriquecer con información de evaluaciones adaptativas generadas
       const analisisEnriquecidos = await Promise.all(
@@ -441,7 +466,7 @@ class IAController {
               {
                 model: Pregunta,
                 as: "pregunta",
-                attributes: ["id", "texto", "tipo", "dificultad", "puntos"],
+                attributes: ["id", "texto", "tipo", "dificultad"],
                 include: [
                   {
                     model: OpcionPregunta,
@@ -618,9 +643,8 @@ class IAController {
             texto: preguntaIA.pregunta,
             tipo: "opcion_multiple",
             dificultad: this.mapearDificultad(preguntaIA.dificultad),
-            puntos: preguntaIA.dificultad || 1,
-            tiempo_sugerido: 60,
             explicacion: preguntaIA.explicacion || "",
+            creado_por: userId, // Campo requerido
           },
           { transaction: t }
         );
@@ -672,7 +696,8 @@ class IAController {
   // Helper para mapear dificultad numérica a texto
   mapearDificultad(nivel) {
     if (nivel <= 2) return "facil";
-    if (nivel <= 3) return "medio";
+    // Enum permitido en el modelo es: "facil" | "media" | "dificil"
+    if (nivel <= 3) return "media";
     return "dificil";
   }
   static prepararDatosParaIA(intento) {
@@ -695,10 +720,8 @@ class IAController {
       respuestas: (intento.respuestas || []).map((respuesta) => {
         const pregunta = respuesta.pregunta;
 
-        const esCorrecta =
-          respuesta.es_correcta !== undefined
-            ? respuesta.es_correcta
-            : IAController.evaluarRespuesta(respuesta, pregunta);
+        const esCampoBooleano = (respuesta.es_correcta === true || respuesta.es_correcta === false);
+        const esCorrecta = esCampoBooleano ? respuesta.es_correcta : IAController.evaluarRespuesta(respuesta, pregunta);
 
         return {
           pregunta_id: pregunta.id,
@@ -720,7 +743,7 @@ class IAController {
       categoria: respuesta.pregunta.categoria || "General",
       tipo: respuesta.pregunta.tipo,
       dificultad: respuesta.pregunta.dificultad,
-      texto: respuesta.pregunta.text,
+      texto: respuesta.pregunta.texto, // corregido campo
     }));
 
     return { resultados, preguntas };
@@ -738,14 +761,14 @@ class IAController {
 
     switch (pregunta.tipo) {
       case "opcion_multiple":
-      case "verdadero_falso":
+      case "verdadero_falso": {
         // ✅ Usar opcionSeleccionadaId
         const opcionCorrecta = pregunta.opciones?.find(
           (o) => o.esCorrecta || o.es_correcta
         );
         return intentoRespuesta.opcionSeleccionadaId === opcionCorrecta?.id;
-
-      case "seleccion_multiple":
+      }
+      case "seleccion_multiple": {
         // ✅ Usar opcion_seleccionadaIds (es un array)
         const correctas =
           pregunta.opciones
@@ -757,7 +780,7 @@ class IAController {
           intentoRespuesta.opcion_seleccionadaIds || []
         ).sort();
         return JSON.stringify(correctas) === JSON.stringify(seleccionadas);
-
+      }
       case "respuesta_corta":
       case "completar_blanco":
         // ✅ Usar texto_respuesta

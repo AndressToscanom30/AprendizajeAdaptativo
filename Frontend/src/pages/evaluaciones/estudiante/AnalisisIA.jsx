@@ -23,6 +23,16 @@ export default function AnalisisIA() {
         cargarAnalisis();
     }, []);
 
+    // Reintenta automáticamente si no hay análisis (espera a que la IA termine)
+    useEffect(() => {
+        if (!loading && analisis.length === 0) {
+            const timer = setTimeout(() => {
+                cargarAnalisis();
+            }, 6000);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, analisis.length]);
+
     const cargarAnalisis = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -87,12 +97,18 @@ export default function AnalisisIA() {
             <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-12 text-center">
                 <Brain className="w-20 h-20 text-purple-400 mx-auto mb-6" />
                 <h3 className="text-2xl font-bold text-gray-800 mb-3">
-                    No tienes análisis todavía
+                    Aún no hay análisis disponibles
                 </h3>
-                <p className="text-gray-600 max-w-md mx-auto">
-                    Completa una evaluación y la IA analizará automáticamente tu desempeño 
-                    para generar recomendaciones personalizadas
+                <p className="text-gray-600 max-w-md mx-auto mb-6">
+                    Si acabas de completar una evaluación, la IA está generando tu análisis en segundo plano.
+                    Esto puede tomar unos segundos.
                 </p>
+                <button
+                    onClick={() => { setLoading(true); cargarAnalisis(); }}
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all shadow"
+                >
+                    Reintentar
+                </button>
             </div>
         );
     }
