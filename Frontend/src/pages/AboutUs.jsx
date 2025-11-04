@@ -12,13 +12,13 @@ function AboutUs() {
 
         const handleMouseMove = (e) => {
             setMousePosition({
-                x: (e.clientX - window.innerWidth / 2) / window.innerWidth,
-                y: (e.clientY - window.innerHeight / 2) / window.innerHeight
+                x: (e.clientX - globalThis.innerWidth / 2) / globalThis.innerWidth,
+                y: (e.clientY - globalThis.innerHeight / 2) / globalThis.innerHeight
             });
         };
 
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
+        globalThis.addEventListener('mousemove', handleMouseMove);
+        return () => globalThis.removeEventListener('mousemove', handleMouseMove);
     }, []);
 
     const teamMembers = [
@@ -48,13 +48,13 @@ function AboutUs() {
     const values = [
         {
             title: "Misión",
-            description: "Empoderar a cada persona para que alcance su máximo potencial a través de experiencias de aprendizaje adaptativas y tecnológicas.",
+            description: "Empoderar a cada persona para que alcance su máximo potencial como programador a través de experiencias de aprendizaje adaptativas, evaluaciones inteligentes y tecnologías innovadoras.",
             icon: "🎯",
             delay: "0ms"
         },
         {
             title: "Visión",
-            description: "Ser la plataforma líder en educación personalizada, inspirando a millones a aprender de manera inteligente y colaborativa.",
+            description: "Ser la plataforma líder en educación personalizada de programación, inspirando a millones a aprender código de manera inteligente, práctica y colaborativa.",
             icon: "👁️",
             delay: "150ms"
         },
@@ -122,7 +122,7 @@ function AboutUs() {
 
                                 <div className="mb-10">
                                     <p className="text-lg sm:text-xl md:text-2xl leading-relaxed max-w-2xl mx-auto lg:mx-0 font-light text-slate-600">
-                                        En Aprendizaje Adaptativo creemos que la educación debe ser <span className="text-blue-600 font-medium">personalizada</span>, inclusiva y emocionante. Nuestra misión es transformar la manera en que las personas aprenden, conectando <span className="text-blue-600 font-medium">tecnología, pasión y comunidad</span>.
+                                        En Aprendizaje Adaptativo creemos que la educación en programación debe ser <span className="text-blue-600 font-medium">personalizada</span>, inclusiva y emocionante. Nuestra misión es transformar la manera en que las personas aprenden a programar, conectando <span className="text-blue-600 font-medium">tecnología, pasión y comunidad</span> para formar desarrolladores competentes.
                                     </p>
                                 </div>
 

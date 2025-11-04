@@ -155,7 +155,7 @@ function DashboardEstudiante() {
               <span className="text-sm text-gray-500 font-medium">Promedio</span>
             </div>
             <div className="text-3xl font-bold text-gray-900 mb-1">
-              <AnimatedCounter value={parseFloat(progreso?.promedio_general || 0)} />
+              <AnimatedCounter value={Number.parseFloat(progreso?.promedio_general || 0)} />
               <span className="text-lg">%</span>
             </div>
             <p className="text-gray-600 text-sm">Calificación general</p>

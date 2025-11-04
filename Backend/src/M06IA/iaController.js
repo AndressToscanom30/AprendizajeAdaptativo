@@ -77,7 +77,7 @@ class IAController {
       if (analisisExistente) {
         // ✅ Si está en error, lo borramos y reintentamos
         if (analisisExistente.estado === "error") {
-          console.log("⚠️  Análisis anterior falló, reintentando...");
+          
           await analisisExistente.destroy();
           // Continúa con el flujo normal
         }
@@ -111,14 +111,14 @@ class IAController {
       });
 
       try {
-        console.log("🤖 Llamando a Groq API...");
+        
 
         const resultadoIA = await groqService.analizarDiagnostico(
           datosAnalisis.resultados,
           datosAnalisis.preguntas
         );
 
-        console.log("✅ Respuesta de Groq recibida");
+        
 
         await analisis.update({
           puntuacionGlobal: resultadoIA.puntuacion_global,
@@ -255,7 +255,10 @@ class IAController {
       const userId = req.user.id;
 
       let analisis = await AnalisisIA.findAll({
-        where: { usuarioId: userId },
+        where: { 
+          usuarioId: userId,
+          estado: 'completado' // ✅ Solo devolver análisis completados
+        },
         include: [
           {
             model: Intento,
@@ -449,7 +452,7 @@ class IAController {
   // ✅ NUEVO: Análisis y generación automática después de completar intento
   async analizarYGenerarAutomatico(intentoId, userId) {
     try {
-      console.log(`🤖 Iniciando análisis automático para intento ${intentoId}`);
+      
 
       // 1. Obtener el intento completo
       const intento = await Intento.findByPk(intentoId, {
@@ -481,7 +484,7 @@ class IAController {
       });
 
       if (!intento) {
-        console.log("⚠️ Intento no encontrado");
+        
         return null;
       }
 
@@ -503,7 +506,7 @@ class IAController {
         });
 
         try {
-          console.log("🧠 Solicitando análisis a IA...");
+          
           const resultadoIA = await groqService.analizarDiagnostico(
             datosAnalisis.resultados,
             datosAnalisis.preguntas
@@ -520,7 +523,7 @@ class IAController {
             estado: "completado",
           });
 
-          console.log("✅ Análisis completado");
+          
         } catch (error) {
           console.error("❌ Error en análisis IA:", error);
           await analisis.update({ estado: "error" });
@@ -536,7 +539,7 @@ class IAController {
       // 5. Si no existe test, generarlo
       if (!testAdaptativo) {
         try {
-          console.log("🎯 Generando test adaptativo...");
+          
           const testGenerado = await groqService.generarTestAdaptativo({
             debilidades: analisis.debilidades,
             fortalezas: analisis.fortalezas,
@@ -552,7 +555,7 @@ class IAController {
             estado: "generado",
           });
 
-          console.log("✅ Test adaptativo generado");
+          
         } catch (error) {
           console.error("❌ Error generando test adaptativo:", error);
           return { analisis };
@@ -566,7 +569,7 @@ class IAController {
         testAdaptativo.estado === "generado"
       ) {
         try {
-          console.log("📝 Convirtiendo test a evaluación...");
+          
           const evaluacionAdaptativa = await this.convertirTestAEvaluacion(
             testAdaptativo,
             intento.evaluacion.curso_id,
@@ -578,9 +581,7 @@ class IAController {
             estado: "convertido_evaluacion",
           });
 
-          console.log(
-            `🎉 Evaluación adaptativa creada: ${evaluacionAdaptativa.id}`
-          );
+          
 
           return {
             analisis,
@@ -682,9 +683,7 @@ class IAController {
 
       await t.commit();
 
-      console.log(
-        `✅ Evaluación adaptativa creada con ${preguntasIA.length} preguntas`
-      );
+      
       return evaluacion;
     } catch (error) {
       await t.rollback();
@@ -708,11 +707,7 @@ class IAController {
     const puntaje =
       intento.puntajeTotal || intento.total_puntaje || respuestasCorrectas;
 
-    console.log("🔍 Debug intento:", {
-      puntaje_calculado: puntaje,
-      respuestas_correctas: respuestasCorrectas,
-      total_respuestas: intento.respuestas?.length,
-    });
+    
 
     const resultados = {
       puntuacion: puntaje,
@@ -751,13 +746,7 @@ class IAController {
   // ✅ Método estático
   static evaluarRespuesta(intentoRespuesta, pregunta) {
     // ✅ ACTUALIZADO: Usar los nombres de campo correctos
-    console.log("🔍 Debug respuesta:", {
-      opcionSeleccionadaId: intentoRespuesta.opcionSeleccionadaId,
-      opcion_seleccionadaIds: intentoRespuesta.opcion_seleccionadaIds,
-      texto_respuesta: intentoRespuesta.texto_respuesta,
-      es_correcta: intentoRespuesta.es_correcta,
-      tipo_pregunta: pregunta.tipo,
-    });
+    
 
     switch (pregunta.tipo) {
       case "opcion_multiple":
@@ -795,13 +784,11 @@ class IAController {
     }
   }
 
-  // 🔄 REINTENTAR CONVERSIÓN DE TESTS PENDIENTES
+  // REINTENTAR CONVERSIÓN DE TESTS PENDIENTES
   async reintentarConversionPendiente(req, res) {
     try {
       const userId = req.user.id;
       const convertirTodos = req.query.todos === 'true'; // Parámetro opcional para convertir todos
-      
-      console.log(`🔄 Buscando tests pendientes de conversión${convertirTodos ? ' (TODOS)' : ` para usuario ${userId}`}...`);
       
       // Buscar tests en estado "generado" sin evaluacionId
       const whereClause = {
@@ -839,13 +826,13 @@ class IAController {
         });
       }
 
-      console.log(`📋 Encontrados ${testsPendientes.length} tests pendientes`);
+      
 
       const resultados = [];
       
       for (const test of testsPendientes) {
         try {
-          console.log(`📝 Convirtiendo test ${test.id}...`);
+          
           
           // ✅ Permitir curso_id null (evaluaciones sin curso asignado)
           const cursoId = test.analisis?.intento?.evaluacion?.curso_id || null;
@@ -864,7 +851,7 @@ class IAController {
             estado: "convertido_evaluacion"
           });
 
-          console.log(`✅ Test ${test.id} convertido a evaluación ${evaluacionAdaptativa.id}`);
+          
           resultados.push({ 
             testId: test.id, 
             evaluacionId: evaluacionAdaptativa.id,
@@ -907,7 +894,7 @@ class IAController {
     try {
       const userId = req.user.id;
       
-      console.log(`🔄 Buscando análisis en error para regenerar...`);
+      
       
       // Buscar análisis en estado "error" del usuario
       const analisisError = await AnalisisIA.findAll({
@@ -934,14 +921,12 @@ class IAController {
         });
       }
 
-      console.log(`📋 Encontrados ${analisisError.length} análisis en error`);
+      
 
       const resultados = [];
       
       for (const analisis of analisisError) {
         try {
-          console.log(`🔄 Regenerando análisis ${analisis.id} (intento: ${analisis.intentoId})...`);
-          
           // Reintentar el análisis completo
           const resultado = await this.analizarYGenerarAutomatico(
             analisis.intentoId,
@@ -949,7 +934,7 @@ class IAController {
           );
 
           if (resultado && resultado.analisis && resultado.analisis.estado === 'completado') {
-            console.log(`✅ Análisis ${analisis.id} regenerado exitosamente`);
+            
             resultados.push({ 
               analisisId: analisis.id,
               intentoId: analisis.intentoId,
@@ -957,7 +942,7 @@ class IAController {
               success: true
             });
           } else {
-            console.log(`⚠️ Análisis ${analisis.id} falló nuevamente`);
+            
             resultados.push({ 
               analisisId: analisis.id,
               intentoId: analisis.intentoId,

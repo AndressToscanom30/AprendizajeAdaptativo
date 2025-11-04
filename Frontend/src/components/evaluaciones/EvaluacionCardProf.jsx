@@ -48,7 +48,7 @@ function EvaluacionCardProf({ evaluacion, onEdit, onDelete, onView }) {
       {/* Descripción */}
       <p className="text-slate-600 mb-5 leading-relaxed line-clamp-3 text-sm">
         {evaluacion?.descripcion ||
-          "Descripción de la evaluación. Explica los temas, objetivos o tipo de preguntas que el estudiante encontrará en esta prueba."}
+          "Descripción de la evaluación. Explica los temas de programación, conceptos clave, estructuras de datos o algoritmos que el estudiante encontrará en esta prueba."}
       </p>
 
       {/* Información de fechas e intentos */}

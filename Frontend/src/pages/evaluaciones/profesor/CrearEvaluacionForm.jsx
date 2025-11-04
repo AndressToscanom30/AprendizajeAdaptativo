@@ -101,8 +101,8 @@ function CrearEvaluacionForm() {
             const evaluacionData = {
                 ...evaluacion,
                 profesor_id: user?.id,
-                duracion_minutos: parseInt(evaluacion.duracion_minutos),
-                max_intentos: parseInt(evaluacion.max_intentos),
+                duracion_minutos: Number.parseInt(evaluacion.duracion_minutos),
+                max_intentos: Number.parseInt(evaluacion.max_intentos),
                 preguntas: preguntasFormateadas // Enviar preguntas junto con la evaluación
             };
 

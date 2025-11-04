@@ -28,7 +28,7 @@ export default function Footer() {
             />
             <div>
               <h3 className="font-bold text-2xl md:text-3xl text-white mb-2">APRENDIZAJE ADAPTATIVO</h3>
-              <p className="text-sm md:text-base" style={{ color: '#9ca3af' }}>Plataforma educativa inteligente</p>
+              <p className="text-sm md:text-base" style={{ color: '#9ca3af' }}>Plataforma educativa de programación inteligente</p>
             </div>
           </div>
         </div>

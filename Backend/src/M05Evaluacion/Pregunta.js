@@ -20,7 +20,8 @@ const Pregunta = sequelize.define("Pregunta", {
             "respuesta_corta",
             "respuesta_larga",
             "completar_blanco",
-            "relacion_par"
+            "relacion_par",
+            "codigo"
         ),
         allowNull: false
     },

@@ -33,7 +33,7 @@ export const iniciarIntento = async (req, res) => {
 
         if (intentoEnProgreso) {
             await t.commit();
-            console.log(`✅ Reanudando intento en progreso: ${intentoEnProgreso.id}`);
+            
             return res.status(200).json(intentoEnProgreso);
         }
 
@@ -79,7 +79,7 @@ export const iniciarIntento = async (req, res) => {
         );
 
         await t.commit();
-        console.log(`🆕 Nuevo intento creado: ${intento.id}`);
+        
         return res.status(201).json(intento);
     } catch (error) {
         console.error(error);
@@ -91,27 +91,27 @@ export const iniciarIntento = async (req, res) => {
 export const enviarRespuestas = async (req, res) => {
     const t = await sequelize.transaction();
     try {
-        console.log('📝 INICIANDO enviarRespuestas');
+        
         const userId = req.user.id;
         const { intentoId } = req.params;
         const { respuestas } = req.body;
 
-        console.log(`🔍 Intento ID: ${intentoId}, User ID: ${userId}`);
-        console.log(`📊 Respuestas recibidas: ${respuestas?.length || 0}`);
+        
+        
 
         const intento = await Intento.findByPk(intentoId, { transaction: t });
         if (!intento) {
-            console.log('❌ Intento no encontrado');
+            
             await t.rollback();
             return res.status(404).json({ message: "Intento no encontrado" });
         }
         if (intento.userId !== userId && req.user.role !== "profesor") {
-            console.log('❌ Usuario no autorizado');
+            
             await t.rollback();
             return res.status(403).json({ message: "No puedes enviar este inteto" });
         }
 
-        console.log('✅ Intento válido, procesando respuestas...');
+        
         let totalScore = 0;
 
         for (const r of respuestas) {
@@ -181,7 +181,7 @@ export const enviarRespuestas = async (req, res) => {
         intento.finalizado_en = new Date();
         await intento.save({ transaction: t });
 
-        console.log(`💾 Guardando intento con puntaje: ${totalScore}`);
+        
 
         // Actualizar estado de EvaluacionUsuario a "completada"
         await EvaluacionUsuario.update(
@@ -196,21 +196,21 @@ export const enviarRespuestas = async (req, res) => {
             }
         );
 
-        console.log('✅ Haciendo commit de la transacción...');
+        
         await t.commit();
         
         // Calcular puntaje total DESPUÉS del commit para evitar deadlock
         await calcularPuntajeTotal(intento.id);
         
-        console.log(`🎉 INTENTO ENVIADO EXITOSAMENTE - Puntaje: ${totalScore}`);
+        
         
         // 🤖 ANÁLISIS AUTOMÁTICO CON IA - No bloqueante
         // Ejecutar en segundo plano sin esperar
         setImmediate(async () => {
             try {
-                console.log(`🚀 Iniciando análisis IA en segundo plano para intento ${intento.id}`);
+                
                 await iaController.analizarYGenerarAutomatico(intento.id, userId);
-                console.log(`✅ Análisis IA completado para intento ${intento.id}`);
+                
             } catch (error) {
                 console.error(`⚠️ Error en análisis IA (no crítico):`, error.message);
                 // No afecta la respuesta al usuario
@@ -231,7 +231,7 @@ export const enviarRespuestas = async (req, res) => {
 
 const calcularPuntajeTotal = async (intentoId) => {
     try {
-        console.log(`📊 Calculando puntaje total para intento: ${intentoId}`);
+        
         const intento = await Intento.findByPk(intentoId, {
             include: [
                 {
@@ -242,12 +242,12 @@ const calcularPuntajeTotal = async (intentoId) => {
         });
 
         if (!intento) {
-            console.log('⚠️ Intento no encontrado en calcularPuntajeTotal');
+            
             return 0;
         }
         
         if (!intento.respuestas) {
-            console.log('⚠️ No hay respuestas en el intento');
+            
             return 0;
         }
 
@@ -255,7 +255,7 @@ const calcularPuntajeTotal = async (intentoId) => {
             return sum + (r.puntos_obtenidos || 0);
         }, 0);
 
-        console.log(`✅ Puntaje recalculado: ${total}`);
+        
         intento.total_puntaje = total;
         await intento.save();
         return total;

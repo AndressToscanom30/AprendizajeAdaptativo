@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { BarChart3, TrendingUp, Users, FileText, BookOpen, Target, Clock, Loader2, AlertCircle } from "lucide-react";
+import { BarChart3, TrendingUp, Users, FileText, BookOpen, Target, Loader2, AlertCircle } from "lucide-react";
 
 export default function Reportes() {
-  const { user } = useAuth();
   const [estadisticas, setEstadisticas] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,13 +26,15 @@ export default function Reportes() {
       });
       const cursos = await resCursos.json();
 
-      // Calcular estudiantes únicos
       const estudiantesUnicos = new Set();
-      cursos.forEach(curso => {
-        curso.estudiantes?.forEach(est => estudiantesUnicos.add(est.id));
-      });
+      for (const curso of cursos) {
+        if (curso.estudiantes) {
+          for (const est of curso.estudiantes) {
+            estudiantesUnicos.add(est.id);
+          }
+        }
+      }
 
-      // Evalua activas
       const evaluacionesActivas = evaluaciones.filter(e => e.activa).length;
 
       setEstadisticas({

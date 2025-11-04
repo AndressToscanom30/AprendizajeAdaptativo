@@ -33,13 +33,13 @@ export default function NavBarEstudiantes() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      setScrolled(globalThis.scrollY > 20);
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    globalThis.addEventListener("scroll", handleScroll);
+    return () => globalThis.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (!user || user.rol !== "estudiante") return null;
+  if (!user?.rol || user.rol !== "estudiante") return null;
 
   const studentMenuItems = [
     { name: "Dashboard", href: "/dashboardE", icon: LayoutDashboard },
@@ -59,7 +59,7 @@ export default function NavBarEstudiantes() {
 
   return (
     <>
-      <nav className={`sticky top-0 z-50 bg-white border-b transition-all duration-300 overflow-x-hidden ${scrolled ? 'shadow-lg border-slate-200' : 'border-slate-100'}`}>
+      <nav className={`sticky top-0 z-50 bg-white border-b transition-all duration-300 ${scrolled ? 'shadow-lg border-slate-200' : 'border-slate-100'}`}>
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center gap-4">
@@ -114,43 +114,60 @@ export default function NavBarEstudiantes() {
         </div>
       </nav>
 
+      {/* Overlay para cerrar el sidebar en móvil */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm mt-20"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
           onClick={closeSidebar}
         />
       )}
 
+      {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-screen bg-white border-r border-slate-200 z-30 
-        transform transition-all duration-300 ease-in-out shadow-xl pt-20
+        className={`fixed top-20 left-0 h-[calc(100vh-5rem)] bg-white border-r border-slate-200 z-30 
+        transform transition-all duration-300 ease-in-out shadow-xl overflow-x-hidden
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-        lg:translate-x-0 ${sidebarCollapsed ? 'lg:w-20' : 'w-72'}`}
+        lg:translate-x-0 ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'} w-72`}
       >
-        <div className="flex flex-col h-[calc(100vh-5rem)] overflow-y-auto">
-          <div className={`p-6 border-b border-slate-200 ${sidebarCollapsed ? 'lg:p-4' : ''}`}>
+        <div className="flex flex-col h-full overflow-x-hidden">
+          {/* Header del Sidebar */}
+          <div className={`flex-shrink-0 border-b border-slate-200 ${sidebarCollapsed ? 'lg:p-2 p-6' : 'p-6'}`}>
             <div className={`flex items-center ${sidebarCollapsed ? 'lg:justify-center' : 'gap-3'}`}>
               <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
+              {/* Desktop - condicional */}
               {!sidebarCollapsed && (
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 lg:block hidden">
                   <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Estudiante</p>
                   <p className="text-sm font-semibold text-slate-800 truncate">
                     {user?.nombre || user?.email}
                   </p>
                 </div>
               )}
+              {/* Móvil - siempre visible */}
+              <div className="flex-1 min-w-0 lg:hidden">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Estudiante</p>
+                <p className="text-sm font-semibold text-slate-800 truncate">
+                  {user?.nombre || user?.email}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* Contenido scrolleable del Sidebar */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-6">
             <div>
+              {/* Título "Panel Principal" - Desktop condicional */}
               {!sidebarCollapsed && (
-                <h3 className="text-xs font-bold uppercase tracking-wide mb-3 px-3 text-slate-500">
+                <h3 className="text-xs font-bold uppercase tracking-wide mb-3 px-3 text-slate-500 lg:block hidden">
                   Panel Principal
                 </h3>
               )}
+              {/* Título "Panel Principal" - Móvil siempre visible */}
+              <h3 className="text-xs font-bold uppercase tracking-wide mb-3 px-3 text-slate-500 lg:hidden">
+                Panel Principal
+              </h3>
               <nav className="space-y-1">
                 {studentMenuItems.map((item) => {
                   const Icon = item.icon;
@@ -167,16 +184,17 @@ export default function NavBarEstudiantes() {
                       } ${sidebarCollapsed ? 'lg:justify-center' : ''}`}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
+                      {/* Texto en móvil siempre visible */}
+                      <span className="font-medium lg:hidden">{item.name}</span>
+                      {/* Texto en desktop solo si no está colapsado */}
                       {!sidebarCollapsed && (
-                        <>
-                          <span className="font-medium">{item.name}</span>
-                          {isActive && (
-                            <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
-                          )}
-                        </>
+                        <span className="font-medium hidden lg:block">{item.name}</span>
+                      )}
+                      {!sidebarCollapsed && isActive && (
+                        <div className="ml-auto w-2 h-2 bg-white rounded-full hidden lg:block"></div>
                       )}
                       {sidebarCollapsed && (
-                        <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                        <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 hidden lg:block">
                           {item.name}
                         </div>
                       )}
@@ -188,10 +206,13 @@ export default function NavBarEstudiantes() {
 
             <div className="pt-4 border-t border-slate-200">
               {!sidebarCollapsed && (
-                <h3 className="text-xs font-bold uppercase tracking-wide mb-3 px-3 text-slate-500">
+                <h3 className="text-xs font-bold uppercase tracking-wide mb-3 px-3 text-slate-500 lg:block hidden">
                   Navegación
                 </h3>
               )}
+              <h3 className="text-xs font-bold uppercase tracking-wide mb-3 px-3 text-slate-500 lg:hidden">
+                Navegación
+              </h3>
               <nav className="space-y-1">
                 {generalMenuItems.map((item) => {
                   const Icon = item.icon;
@@ -208,9 +229,14 @@ export default function NavBarEstudiantes() {
                       } ${sidebarCollapsed ? 'lg:justify-center' : ''}`}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
-                      {!sidebarCollapsed && <span className="font-medium">{item.name}</span>}
+                      {/* Texto en móvil siempre visible */}
+                      <span className="font-medium lg:hidden">{item.name}</span>
+                      {/* Texto en desktop solo si no está colapsado */}
+                      {!sidebarCollapsed && (
+                        <span className="font-medium hidden lg:block">{item.name}</span>
+                      )}
                       {sidebarCollapsed && (
-                        <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                        <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 hidden lg:block">
                           {item.name}
                         </div>
                       )}
@@ -221,15 +247,21 @@ export default function NavBarEstudiantes() {
             </div>
           </div>
 
-          <div className="border-t border-slate-200">
+          {/* Footer del Sidebar */}
+          <div className="flex-shrink-0 border-t border-slate-200 p-4">
             <button
               onClick={logout}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-all duration-300 group ${sidebarCollapsed ? 'lg:justify-center' : ''} relative`}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 group ${sidebarCollapsed ? 'lg:justify-center' : ''} relative`}
             >
               <LogOut className="w-5 h-5 flex-shrink-0 group-hover:rotate-12 transition-transform" />
-              {!sidebarCollapsed && <span className="font-medium">Cerrar Sesión</span>}
+              {/* Texto en móvil siempre visible */}
+              <span className="font-medium lg:hidden">Cerrar Sesión</span>
+              {/* Texto en desktop solo si no está colapsado */}
+              {!sidebarCollapsed && (
+                <span className="font-medium hidden lg:block">Cerrar Sesión</span>
+              )}
               {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 hidden lg:block">
                   Cerrar Sesión
                 </div>
               )}

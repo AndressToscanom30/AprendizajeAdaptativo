@@ -160,7 +160,7 @@ function FormularioPregunta({ preguntaInicial, onGuardar, onCancelar }) {
                     <input
                         type="number"
                         value={formData.puntos}
-                        onChange={(e) => setFormData({ ...formData, puntos: parseInt(e.target.value) })}
+                        onChange={(e) => setFormData({ ...formData, puntos: Number.parseInt(e.target.value) })}
                         className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
                         min="1"
                         required
@@ -174,7 +174,7 @@ function FormularioPregunta({ preguntaInicial, onGuardar, onCancelar }) {
                     <input
                         type="number"
                         value={formData.tiempo_sugerido}
-                        onChange={(e) => setFormData({ ...formData, tiempo_sugerido: parseInt(e.target.value) })}
+                        onChange={(e) => setFormData({ ...formData, tiempo_sugerido: Number.parseInt(e.target.value) })}
                         className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
                         min="10"
                         step="10"

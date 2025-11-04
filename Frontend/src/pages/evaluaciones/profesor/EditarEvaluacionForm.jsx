@@ -88,8 +88,8 @@ function EditarEvaluacionForm() {
             const token = localStorage.getItem('token');
             const dataToSend = {
                 ...formData,
-                duracion_minutos: parseInt(formData.duracion_minutos),
-                max_intentos: parseInt(formData.max_intentos),
+                duracion_minutos: Number.parseInt(formData.duracion_minutos),
+                max_intentos: Number.parseInt(formData.max_intentos),
                 comienza_en: formData.comienza_en || null,
                 termina_en: formData.termina_en || null,
                 profesor_id: user.id,
@@ -199,7 +199,7 @@ function EditarEvaluacionForm() {
                                 onChange={handleChange}
                                 required
                                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
-                                placeholder="Ej: Evaluación Final de Matemáticas"
+                                placeholder="Ej: Evaluación de Fundamentos de Programación"
                             />
                         </div>
 

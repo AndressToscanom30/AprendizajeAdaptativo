@@ -18,7 +18,7 @@ const OpcionPregunta = sequelize.define("OpcionPregunta", {
     },
     texto: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: true  // Permitir null para preguntas de código
     },
     es_correcta: {
         type: DataTypes.BOOLEAN,
@@ -26,7 +26,8 @@ const OpcionPregunta = sequelize.define("OpcionPregunta", {
     },
     metadata: {
         type: DataTypes.JSONB,
-        allowNull: true
+        allowNull: true,
+        comment: 'Para preguntas de código: {codigo_inicial, solucion, salida_esperada, pistas, lenguaje}'
     }
 });
 

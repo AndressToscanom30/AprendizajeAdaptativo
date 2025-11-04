@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import StudentLayout from '../../../components/StudentLayout';
 import { useSidebar } from '../../../context/SidebarContext';
+import PreguntaCodigoIntento from '../../../components/evaluaciones/PreguntaCodigoIntento';
 
 function EvaluacionIntento() {
     const { id } = useParams(); // evaluacionId
@@ -130,6 +131,8 @@ function EvaluacionIntento() {
                     ? { opcion_seleccionadaIds: valor }
                     : tipo === 'respuesta_corta' || tipo === 'respuesta_larga'
                     ? { texto_respuesta: valor }
+                    : tipo === 'codigo'
+                    ? { codigo: valor.codigo, output: valor.output, es_correcta: valor.es_correcta }
                     : { relacion_par: valor }
                 )
             }
@@ -152,8 +155,8 @@ function EvaluacionIntento() {
             const token = localStorage.getItem('token');
             const respuestasArray = Object.values(respuestas);
 
-            console.log('📤 Enviando respuestas:', respuestasArray);
-            console.log('🆔 Intento ID:', intentoId);
+            
+            
 
             const response = await fetch(
                 `http://localhost:4000/api/intentos/${intentoId}/submit`,
@@ -167,7 +170,7 @@ function EvaluacionIntento() {
                 }
             );
 
-            console.log('📥 Response status:', response.status);
+            
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -176,7 +179,7 @@ function EvaluacionIntento() {
             }
 
             const resultado = await response.json();
-            console.log('✅ Resultado:', resultado);
+            
             
             // Navegar al curso si existe, sino a evaluaciones
             if (evaluacion.curso_id) {
@@ -218,6 +221,8 @@ function EvaluacionIntento() {
                 return r.opcion_seleccionadaIds?.length > 0;
             } else if (r.tipo === 'respuesta_corta' || r.tipo === 'respuesta_larga') {
                 return r.texto_respuesta?.trim() !== '';
+            } else if (r.tipo === 'codigo') {
+                return r.codigo?.trim() !== '';
             }
             return false;
         }).length;
@@ -265,31 +270,36 @@ function EvaluacionIntento() {
     return (
         <StudentLayout>
             {/* Navbar Simple con Temporizador - Fijo arriba */}
-            <div className="bg-white shadow-md border-b border-slate-200 sticky top-0 z-20 -mx-6 -mt-6">
-                <div className="px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <BookOpen size={28} className="text-blue-600" />
-                        <h1 className="text-xl font-bold text-slate-800">Realizando Evaluación</h1>
-                    </div>
-                    {tiempoRestante !== null && (
-                        <div className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-lg ${
-                            tiempoRestante < 300 
-                                ? 'bg-red-100 text-red-700 animate-pulse' 
-                                : 'bg-blue-100 text-blue-700'
-                        }`}>
-                            <Clock size={22} />
-                            {formatearTiempo(tiempoRestante)}
+            <div className="bg-white shadow-md border-b border-slate-200 sticky top-0 z-20">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <BookOpen size={28} className="text-blue-600 flex-shrink-0" />
+                            <div>
+                                <h1 className="text-lg sm:text-xl font-bold text-slate-800">Realizando Evaluación</h1>
+                                <p className="text-xs text-slate-600">{evaluacion.titulo}</p>
+                            </div>
                         </div>
-                    )}
+                        {tiempoRestante !== null && (
+                            <div className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-bold text-base sm:text-lg ${
+                                tiempoRestante < 300 
+                                    ? 'bg-red-100 text-red-700 animate-pulse' 
+                                    : 'bg-blue-100 text-blue-700'
+                            }`}>
+                                <Clock size={20} className="flex-shrink-0" />
+                                <span>{formatearTiempo(tiempoRestante)}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
             {/* Contenido Principal */}
-            <div className="py-6 space-y-6 pb-32">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-32">
                 {/* Header de Evaluación */}
-                <div className="bg-white shadow-lg rounded-2xl mb-6 p-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
+                <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                             <button
                                 onClick={() => {
                                     if (confirm('¿Seguro que quieres salir? Perderás tu progreso.')) {
@@ -298,87 +308,90 @@ function EvaluacionIntento() {
                                 }}
                                 className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
                             >
-                                <ArrowLeft size={20} />
+                                <ArrowLeft size={20} className="flex-shrink-0" />
                                 <span className="font-medium">Salir</span>
                             </button>
-                        <div className="border-l border-slate-300 pl-4">
-                            <h2 className="text-2xl font-bold text-slate-800">
-                                {evaluacion.titulo}
-                            </h2>
-                            <p className="text-sm text-slate-600 mt-1">
-                                {respondidas} de {totalPreguntas} preguntas respondidas
-                            </p>
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={enviarRespuestas}
-                        disabled={enviando}
-                        className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                        {enviando ? (
-                            <>
-                                <Loader2 className="animate-spin" size={20} />
-                                Enviando...
-                            </>
-                        ) : (
-                            <>
-                                <Send size={20} />
-                                Enviar
-                            </>
-                        )}
-                    </button>
-                </div>
-
-                {/* Barra de progreso */}
-                <div className="mt-4">
-                    <div className="w-full bg-slate-200 rounded-full h-2">
-                        <div 
-                            className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(respondidas / totalPreguntas) * 100}%` }}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Preguntas */}
-            <div className="space-y-6">
-                {evaluacion.Preguntas?.map((pregunta, index) => (
-                    <div key={pregunta.id} className="bg-white rounded-2xl shadow-lg p-6 border-2 border-slate-200">
-                        {/* Header de pregunta */}
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="flex gap-3 flex-1">
-                                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-full font-bold text-lg flex-shrink-0">
-                                    {index + 1}
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-lg font-semibold text-slate-800">{pregunta.texto}</p>
-                                    <div className="flex items-center gap-4 mt-2">
-                                        <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
-                                            {pregunta.tipo.replace(/_/g, ' ')}
-                                        </span>
-                                        <span className="text-sm text-slate-600">
-                                            {pregunta.PreguntaEvaluacion?.puntos || 1} {pregunta.PreguntaEvaluacion?.puntos === 1 ? 'punto' : 'puntos'}
-                                        </span>
-                                    </div>
-                                </div>
+                            <div className="sm:border-l sm:border-slate-300 sm:pl-4">
+                                <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
+                                    {evaluacion.titulo}
+                                </h2>
+                                <p className="text-sm text-slate-600 mt-1">
+                                    {respondidas} de {totalPreguntas} preguntas respondidas
+                                </p>
                             </div>
                         </div>
 
-                        {/* Opciones según tipo */}
-                        <div className="mt-4 space-y-3">
-                            {/* Opción Múltiple o Verdadero/Falso */}
-                            {(pregunta.tipo === 'opcion_multiple' || pregunta.tipo === 'verdadero_falso') && (
-                                <div className="space-y-2">
-                                    {pregunta.opciones?.map(opcion => (
-                                        <label 
-                                            key={opcion.id}
-                                            className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                                                respuestas[pregunta.id]?.opcionSeleccionadaId === opcion.id
-                                                    ? 'border-blue-500 bg-blue-50'
-                                                    : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
-                                            }`}
-                                        >
+                        <button
+                            onClick={enviarRespuestas}
+                            disabled={enviando}
+                            className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full sm:w-auto"
+                        >
+                            {enviando ? (
+                                <>
+                                    <Loader2 className="animate-spin" size={20} />
+                                    <span>Enviando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Send size={20} />
+                                    <span>Enviar</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Barra de progreso */}
+                    <div className="mt-6">
+                        <div className="w-full bg-slate-200 rounded-full h-3">
+                            <div 
+                                className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all duration-300"
+                                style={{ width: `${(respondidas / totalPreguntas) * 100}%` }}
+                            />
+                        </div>
+                        <p className="text-sm text-slate-600 mt-2 text-center">
+                            Progreso: {Math.round((respondidas / totalPreguntas) * 100)}%
+                        </p>
+                    </div>
+                </div>
+
+                {/* Preguntas */}
+                <div className="space-y-6">
+                    {evaluacion.Preguntas?.map((pregunta, index) => (
+                        <div key={pregunta.id} className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-2 border-slate-200">
+                            {/* Header de pregunta */}
+                            <div className="flex flex-col sm:flex-row items-start justify-between mb-6 gap-4">
+                                <div className="flex gap-3 flex-1 w-full">
+                                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-full font-bold text-lg flex-shrink-0">
+                                        {index + 1}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-base sm:text-lg font-semibold text-slate-800 leading-relaxed break-words">{pregunta.texto}</p>
+                                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-3">
+                                            <span className="text-xs sm:text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
+                                                {pregunta.tipo.replace(/_/g, ' ')}
+                                            </span>
+                                            <span className="text-xs sm:text-sm text-slate-600">
+                                                {pregunta.PreguntaEvaluacion?.puntos || 1} {pregunta.PreguntaEvaluacion?.puntos === 1 ? 'punto' : 'puntos'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Opciones según tipo */}
+                            <div className="mt-6 space-y-3">
+                                {/* Opción Múltiple o Verdadero/Falso */}
+                                {(pregunta.tipo === 'opcion_multiple' || pregunta.tipo === 'verdadero_falso') && (
+                                    <div className="space-y-3">
+                                        {pregunta.opciones?.map(opcion => (
+                                            <label 
+                                                key={opcion.id}
+                                                className={`flex items-start sm:items-center gap-3 p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                                    respuestas[pregunta.id]?.opcionSeleccionadaId === opcion.id
+                                                        ? 'border-blue-500 bg-blue-50'
+                                                        : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                                                }`}
+                                            >
                                             <input
                                                 type="radio"
                                                 name={`pregunta-${pregunta.id}`}
@@ -443,6 +456,15 @@ function EvaluacionIntento() {
                                     placeholder="Escribe tu respuesta aquí..."
                                     rows={5}
                                     className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"
+                                />
+                            )}
+
+                            {/* Pregunta de Código */}
+                            {pregunta.tipo === 'codigo' && (
+                                <PreguntaCodigoIntento
+                                    pregunta={pregunta}
+                                    respuesta={respuestas[pregunta.id]}
+                                    onChange={(dataCodigo) => handleRespuesta(pregunta.id, pregunta.tipo, dataCodigo)}
                                 />
                             )}
                         </div>

@@ -8,11 +8,13 @@ import {
   Link,
   Trash2,
   GripVertical,
+  Code,
 } from "lucide-react";
 import OpcionMultiple from "./tiposPreguntas/OpcionMultiple";
 import SeleccionMultiple from "./tiposPreguntas/SeleccionMultiple";
 import VerdaderoFalso from "./tiposPreguntas/VerdaderoFalso";
 import RespuestaTexto from "./tiposPreguntas/RespuestaTexto";
+import PreguntaCodigo from "./tiposPreguntas/PreguntaCodigo";
 
 function PreguntaEditor({ onChange, onDelete, initialData = {}, numero }) {
   const [tipo, setTipo] = useState(initialData.tipo || "opcion_multiple");
@@ -52,7 +54,7 @@ function PreguntaEditor({ onChange, onDelete, initialData = {}, numero }) {
   };
 
   const handlePuntajeChange = (e) => {
-    const newPuntaje = parseInt(e.target.value) || 1;
+    const newPuntaje = Number.parseInt(e.target.value) || 1;
     setPuntaje(newPuntaje);
     handleUpdate({ puntaje: newPuntaje });
   };
@@ -63,6 +65,7 @@ function PreguntaEditor({ onChange, onDelete, initialData = {}, numero }) {
     { value: "verdadero_falso", label: "Verdadero/Falso", icon: ToggleLeft, color: "purple" },
     { value: "respuesta_corta", label: "Respuesta Corta", icon: Type, color: "orange" },
     { value: "respuesta_larga", label: "Respuesta Larga", icon: AlignLeft, color: "pink" },
+    { value: "codigo", label: "Código de Programación", icon: Code, color: "indigo" },
   ];
 
   return (
@@ -97,7 +100,7 @@ function PreguntaEditor({ onChange, onDelete, initialData = {}, numero }) {
             type="text"
             value={titulo}
             onChange={handleTituloChange}
-            placeholder="Ej: ¿Cuál es la capital de Francia?"
+            placeholder="Ej: ¿Qué es una variable en programación?"
             className="w-full border-2 border-slate-300 rounded-xl p-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all"
             required
           />
@@ -230,6 +233,16 @@ function PreguntaEditor({ onChange, onDelete, initialData = {}, numero }) {
               onChange={(ops) => {
                 setOpciones(ops);
                 handleUpdate({ opciones: ops });
+              }}
+            />
+          )}
+
+          {tipo === "codigo" && (
+            <PreguntaCodigo
+              initialData={opciones[0] || {}}
+              onChange={(dataCodigo) => {
+                setOpciones([dataCodigo]);
+                handleUpdate({ opciones: [dataCodigo] });
               }}
             />
           )}

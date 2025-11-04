@@ -219,7 +219,7 @@ function CursosProfesor() {
 
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={() => window.location.href = `/profesor/cursos/${curso.id}`}
+                                        onClick={() => globalThis.location.href = `/profesor/cursos/${curso.id}`}
                                         className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold text-sm"
                                     >
                                         Ver Detalles
@@ -269,7 +269,7 @@ function CursosProfesor() {
                                         onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
                                         required
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
-                                        placeholder="Ej: Matemáticas Avanzadas"
+                                        placeholder="Ej: Programación Orientada a Objetos"
                                     />
                                 </div>
 
@@ -282,7 +282,7 @@ function CursosProfesor() {
                                         value={formData.codigo}
                                         onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
-                                        placeholder="Ej: MAT-101"
+                                        placeholder="Ej: PROG-201"
                                     />
                                 </div>
 
@@ -348,7 +348,7 @@ function CursosProfesor() {
                                         onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
                                         required
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
-                                        placeholder="Ej: Matemáticas Avanzadas"
+                                        placeholder="Ej: Programación Orientada a Objetos"
                                     />
                                 </div>
 
@@ -361,7 +361,7 @@ function CursosProfesor() {
                                         value={formData.codigo}
                                         onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
-                                        placeholder="Ej: MAT-101"
+                                        placeholder="Ej: PROG-201"
                                     />
                                 </div>
 

@@ -12,13 +12,13 @@ function Home() {
 
         const handleMouseMove = (e) => {
             setMousePosition({
-                x: (e.clientX - window.innerWidth / 2) / window.innerWidth,
-                y: (e.clientY - window.innerHeight / 2) / window.innerHeight
+                x: (e.clientX - globalThis.innerWidth / 2) / globalThis.innerWidth,
+                y: (e.clientY - globalThis.innerHeight / 2) / globalThis.innerHeight
             });
         };
 
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
+        globalThis.addEventListener('mousemove', handleMouseMove);
+        return () => globalThis.removeEventListener('mousemove', handleMouseMove);
     }, []);
 
     const features = [
@@ -99,7 +99,7 @@ function Home() {
 
                                 <div>
                                     <p className="text-lg sm:text-xl md:text-2xl leading-relaxed max-w-2xl mx-auto lg:mx-0 font-light text-slate-600">
-                                        Un sistema de evaluación <span className="text-blue-600 font-medium">inteligente</span> que se adapta a tu ritmo y estilo de aprendizaje, proporcionando una experiencia completamente <span className="text-blue-600 font-medium">personalizada</span>.
+                                        Un sistema de evaluación <span className="text-blue-600 font-medium">inteligente</span> que se adapta a tu ritmo y estilo de aprendizaje en <span className="text-blue-600 font-medium">programación</span>, proporcionando una experiencia completamente <span className="text-blue-600 font-medium">personalizada</span> para dominar conceptos clave, algoritmos y desarrollo de software.
                                     </p>
                                 </div>
 
@@ -158,7 +158,7 @@ function Home() {
                             </h2>
                             <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto mb-6 rounded-full"></div>
                             <p className="text-lg sm:text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed font-light text-slate-600">
-                                Nuestro sistema utiliza algoritmos de inteligencia artificial para crear una experiencia de aprendizaje completamente personalizada.
+                                Nuestro sistema utiliza algoritmos de inteligencia artificial para crear una experiencia de aprendizaje de programación completamente personalizada. Desde conceptos básicos hasta patrones de diseño avanzados.
                             </p>
                         </div>
 

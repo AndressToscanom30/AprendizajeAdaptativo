@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { Users, GraduationCap, TrendingUp, Search, Mail, BookOpen, Loader2, AlertCircle } from "lucide-react";
+import { Users, GraduationCap, Search, Mail, BookOpen, Loader2, AlertCircle } from "lucide-react";
 
 export default function Estudiantes() {
-  const { user } = useAuth();
   const [cursos, setCursos] = useState([]);
   const [estudiantes, setEstudiantes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,26 +26,27 @@ export default function Estudiantes() {
       const dataCursos = await resCursos.json();
       setCursos(dataCursos);
 
-      // Extraer todos los estudiantes únicos de todos los cursos
       const todosEstudiantes = new Map();
       
-      dataCursos.forEach(curso => {
-        curso.estudiantes?.forEach(est => {
-          if (!todosEstudiantes.has(est.id)) {
-            todosEstudiantes.set(est.id, {
-              ...est,
-              cursos: []
+      for (const curso of dataCursos) {
+        if (curso.estudiantes) {
+          for (const est of curso.estudiantes) {
+            if (!todosEstudiantes.has(est.id)) {
+              todosEstudiantes.set(est.id, {
+                ...est,
+                cursos: []
+              });
+            }
+            todosEstudiantes.get(est.id).cursos.push({
+              id: curso.id,
+              titulo: curso.titulo,
+              codigo: curso.codigo,
+              estado: est.CourseStudent?.estado,
+              inscrito_en: est.CourseStudent?.inscrito_en
             });
           }
-          todosEstudiantes.get(est.id).cursos.push({
-            id: curso.id,
-            titulo: curso.titulo,
-            codigo: curso.codigo,
-            estado: est.CourseStudent?.estado,
-            inscrito_en: est.CourseStudent?.inscrito_en
-          });
-        });
-      });
+        }
+      }
 
       setEstudiantes(Array.from(todosEstudiantes.values()));
       setError(null);
