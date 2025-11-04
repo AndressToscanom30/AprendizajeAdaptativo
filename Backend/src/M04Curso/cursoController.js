@@ -179,3 +179,62 @@ export const eliminarEstudianteCurso = async (req, res) => {
         return res.status(500).json({ message: "Error al eliminar estudiante", error: error.message });
     }
 };
+
+// Actualizar curso
+export const actualizarCurso = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { titulo, descripcion, codigo } = req.body;
+        const profesorId = req.user.id;
+
+        // Verificar que el curso pertenece al profesor
+        const curso = await Course.findOne({
+            where: { id, profesorId }
+        });
+
+        if (!curso) {
+            return res.status(404).json({ message: "Curso no encontrado o no tienes permiso" });
+        }
+
+        await curso.update({
+            titulo: titulo || curso.titulo,
+            descripcion: descripcion !== undefined ? descripcion : curso.descripcion,
+            codigo: codigo !== undefined ? codigo : curso.codigo
+        });
+
+        return res.json(curso);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error al actualizar curso", error: error.message });
+    }
+};
+
+// Eliminar curso
+export const eliminarCurso = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const profesorId = req.user.id;
+
+        // Verificar que el curso pertenece al profesor
+        const curso = await Course.findOne({
+            where: { id, profesorId }
+        });
+
+        if (!curso) {
+            return res.status(404).json({ message: "Curso no encontrado o no tienes permiso" });
+        }
+
+        // Eliminar relaciones con estudiantes
+        await CourseStudent.destroy({
+            where: { courseId: id }
+        });
+
+        // Eliminar el curso
+        await curso.destroy();
+
+        return res.json({ message: "Curso eliminado exitosamente" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error al eliminar curso", error: error.message });
+    }
+};

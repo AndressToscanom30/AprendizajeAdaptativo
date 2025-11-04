@@ -7,7 +7,9 @@ import {
     obtenerCursosEstudiante,
     inscribirEstudiante,
     obtenerEstudiantesCurso,
-    eliminarEstudianteCurso
+    eliminarEstudianteCurso,
+    actualizarCurso,
+    eliminarCurso
 } from './cursoController.js';
 
 const router = Router();
@@ -16,6 +18,8 @@ const router = Router();
 router.post('/', verifyToken, rolRequerido("profesor"), crearCurso);
 router.get('/profesor', verifyToken, rolRequerido("profesor"), obtenerCursosProfesor);
 router.get('/:id/estudiantes', verifyToken, rolRequerido("profesor"), obtenerEstudiantesCurso);
+router.put('/:id', verifyToken, rolRequerido("profesor"), actualizarCurso);
+router.delete('/:id', verifyToken, rolRequerido("profesor"), eliminarCurso);
 router.post('/inscribir', verifyToken, rolRequerido("profesor"), inscribirEstudiante);
 router.delete('/:cursoId/estudiantes/:estudianteId', verifyToken, rolRequerido("profesor"), eliminarEstudianteCurso);
 

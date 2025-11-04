@@ -11,13 +11,14 @@ import {
   LogOut,
   Shield,
   Users,
-  Search,
+  BarChart3,
   FileText,
   ChevronLeft,
   ChevronRight,
   Info,
   Mail,
-  GraduationCap
+  Settings,
+  Database
 } from "lucide-react";
 
 export default function NavBarAdmin() {
@@ -42,12 +43,11 @@ export default function NavBarAdmin() {
   if (!user || user.rol !== "admin") return null;
 
   const adminMenuItems = [
-    { name: "Dashboard", href: "/dashboardP", icon: LayoutDashboard },
-    { name: "Gestión Relaciones", href: "/admin/relaciones", icon: Users },
-    { name: "Verificar Relación", href: "/admin/verificar", icon: Search },
-    { name: "Evaluaciones", href: "/evaluaciones/profesor", icon: FileText },
-    { name: "Cursos", href: "/profesor/cursos", icon: BookOpen },
-    { name: "Usuarios", href: "/estudiantes", icon: GraduationCap },
+    { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { name: "Usuarios", href: "/admin/usuarios", icon: Users },
+    { name: "Reportes", href: "/admin/reportes", icon: BarChart3 },
+    { name: "Configuración", href: "/admin/configuracion", icon: Settings },
+    { name: "Base de Datos", href: "/admin/database", icon: Database },
     { name: "Perfil", href: "/perfil", icon: UserCircle },
   ];
 
@@ -66,7 +66,7 @@ export default function NavBarAdmin() {
             <div className="flex items-center gap-4">
               <button 
                 onClick={toggleSidebar}
-                className="lg:hidden p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300"
+                className="lg:hidden p-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all duration-300"
               >
                 <Menu className="w-6 h-6" />
               </button>
@@ -76,7 +76,7 @@ export default function NavBarAdmin() {
                 onClick={() => navigate("/")}
               >
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-600 rounded-xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
                   <img
                     src="/finalaa.png"
                     width={48}
@@ -87,7 +87,7 @@ export default function NavBarAdmin() {
                 </div>
                 <div className="hidden sm:block">
                   <span className="text-xl font-light text-slate-800">Aprendizaje</span>
-                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent ml-1">
+                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-400 bg-clip-text text-transparent ml-1">
                     Adaptativo
                   </span>
                 </div>
@@ -105,127 +105,155 @@ export default function NavBarAdmin() {
 
               <button
                 onClick={logout}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300"
               >
-                <LogOut className="w-5 h-5" />
-                <span className="hidden sm:inline">Salir</span>
+                <LogOut className="w-4 h-4" />
+                <span className="hidden md:inline">Salir</span>
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Sidebar móvil/desktop */}
-      <div className={`fixed inset-0 z-40 ${sidebarOpen ? 'block' : 'hidden'} lg:hidden`}>
-        <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={closeSidebar}></div>
-        <aside className="absolute left-0 top-0 h-full w-72 bg-white shadow-2xl">
-          <div className="p-6 border-b border-slate-200">
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-full p-3">
-                <Shield className="w-8 h-8 text-purple-600" />
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm mt-20"
+          onClick={closeSidebar}
+        />
+      )}
+
+      <aside
+        className={`fixed top-0 left-0 h-screen bg-white border-r border-slate-200 z-30 
+        transform transition-all duration-300 ease-in-out shadow-xl pt-20
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+        lg:translate-x-0 ${sidebarCollapsed ? 'lg:w-20' : 'w-72'}`}
+      >
+        <div className="flex flex-col h-[calc(100vh-5rem)] overflow-y-auto">
+          <div className={`p-6 border-b border-slate-200 ${sidebarCollapsed ? 'lg:p-4' : ''}`}>
+            <div className={`flex items-center ${sidebarCollapsed ? 'lg:justify-center' : 'gap-3'}`}>
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                <Shield className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <p className="text-xs text-slate-500">Administrador</p>
-                <p className="text-sm font-semibold text-slate-800">{user?.nombre}</p>
-              </div>
+              {!sidebarCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-purple-600">Admin</p>
+                  <p className="text-sm font-semibold text-slate-800 truncate">
+                    {user?.nombre || user?.email}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          <nav className="p-4">
-            <div className="mb-6">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-3">Panel Admin</p>
-              {adminMenuItems.map((item) => (
-                <NavLink
-                  key={item.name}
-                  to={item.href}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3 mb-1 rounded-xl transition-all duration-300 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                        : 'text-slate-600 hover:bg-purple-50 hover:text-purple-600'
-                    }`
-                  }
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.name}</span>
-                </NavLink>
-              ))}
+          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div>
+              {!sidebarCollapsed && (
+                <h3 className="text-xs font-bold uppercase tracking-wide mb-3 px-3 text-slate-500">
+                  Panel de Admin
+                </h3>
+              )}
+              <nav className="space-y-1">
+                {adminMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <NavLink
+                      key={item.name}
+                      to={item.href}
+                      onClick={closeSidebar}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${
+                        isActive
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-200'
+                          : 'text-slate-600 hover:bg-purple-50 hover:text-purple-600'
+                      } ${sidebarCollapsed ? 'lg:justify-center' : ''}`}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      {!sidebarCollapsed && (
+                        <>
+                          <span className="font-medium">{item.name}</span>
+                          {isActive && (
+                            <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
+                          )}
+                        </>
+                      )}
+                      {sidebarCollapsed && (
+                        <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                          {item.name}
+                        </div>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </nav>
             </div>
 
-            <div className="border-t border-slate-200 pt-4">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-3">General</p>
-              {generalMenuItems.map((item) => (
-                <NavLink
-                  key={item.name}
-                  to={item.href}
-                  className="flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-all duration-300"
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.name}</span>
-                </NavLink>
-              ))}
+            <div className="pt-4 border-t border-slate-200">
+              {!sidebarCollapsed && (
+                <h3 className="text-xs font-bold uppercase tracking-wide mb-3 px-3 text-slate-500">
+                  Navegación
+                </h3>
+              )}
+              <nav className="space-y-1">
+                {generalMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <NavLink
+                      key={item.name}
+                      to={item.href}
+                      onClick={closeSidebar}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${
+                        isActive
+                          ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-200'
+                          : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
+                      } ${sidebarCollapsed ? 'lg:justify-center' : ''}`}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      {!sidebarCollapsed && <span className="font-medium">{item.name}</span>}
+                      {sidebarCollapsed && (
+                        <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                          {item.name}
+                        </div>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </nav>
             </div>
-          </nav>
-        </aside>
-      </div>
-
-      {/* Sidebar desktop colapsable */}
-      <aside className={`hidden lg:block fixed left-0 top-0 h-screen bg-white border-r border-slate-200 transition-all duration-300 z-30 pt-20 ${
-        sidebarCollapsed ? 'w-20' : 'w-72'
-      }`}>
-        <div className="h-[calc(100vh-5rem)] overflow-y-auto">
-        <button
-          onClick={toggleSidebarCollapse}
-          className="absolute -right-3 top-24 bg-white border-2 border-slate-200 rounded-full p-1 hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 shadow-md"
-        >
-          {sidebarCollapsed ? <ChevronRight className="w-4 h-4 text-slate-600" /> : <ChevronLeft className="w-4 h-4 text-slate-600" />}
-        </button>
-
-        <nav className="p-4 h-full overflow-y-auto">
-          <div className="mb-6">
-            {!sidebarCollapsed && (
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-3">Panel Admin</p>
-            )}
-            {adminMenuItems.map((item) => (
-              <NavLink
-                key={item.name}
-                to={item.href}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 mb-1 rounded-xl transition-all duration-300 ${
-                    isActive
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                      : 'text-slate-600 hover:bg-purple-50 hover:text-purple-600'
-                  } ${sidebarCollapsed ? 'justify-center' : ''}`
-                }
-                title={sidebarCollapsed ? item.name : ''}
-              >
-                <item.icon className="w-5 h-5" />
-                {!sidebarCollapsed && <span className="font-medium">{item.name}</span>}
-              </NavLink>
-            ))}
           </div>
 
-          <div className="border-t border-slate-200 pt-4">
-            {!sidebarCollapsed && (
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-3">General</p>
-            )}
-            {generalMenuItems.map((item) => (
-              <NavLink
-                key={item.name}
-                to={item.href}
-                className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-all duration-300 ${
-                  sidebarCollapsed ? 'justify-center' : ''
-                }`}
-                title={sidebarCollapsed ? item.name : ''}
-              >
-                <item.icon className="w-5 h-5" />
-                {!sidebarCollapsed && <span className="font-medium">{item.name}</span>}
-              </NavLink>
-            ))}
+          <div className="border-t border-slate-200">
+            <button
+              onClick={logout}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-all duration-300 group ${sidebarCollapsed ? 'lg:justify-center' : ''} relative`}
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0 group-hover:rotate-12 transition-transform" />
+              {!sidebarCollapsed && <span className="font-medium">Cerrar Sesión</span>}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                  Cerrar Sesión
+                </div>
+              )}
+            </button>
+
+            <button
+              onClick={toggleSidebarCollapse}
+              className="hidden lg:flex w-full items-center justify-center gap-2 px-4 py-3 text-slate-600 hover:bg-slate-100 border-t border-slate-200 transition-all duration-300"
+            >
+              {sidebarCollapsed ? (
+                <ChevronRight className="w-5 h-5" />
+              ) : (
+                <>
+                  <ChevronLeft className="w-5 h-5" />
+                  <span className="text-sm font-medium">Colapsar</span>
+                </>
+              )}
+            </button>
           </div>
-        </nav>
         </div>
       </aside>
+
+      <div className={`hidden lg:block transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-72'} flex-shrink-0`} />
     </>
   );
 }

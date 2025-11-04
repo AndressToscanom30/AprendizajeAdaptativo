@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { 
-    Users, Target, Clock, Zap, TrendingUp, Brain, 
+    Users, Target, Zap, TrendingUp, Brain, 
     Book, ChevronRight, Lightbulb, Award,
     BookOpen, GraduationCap, ChartBar, UserCheck, Settings, AlertCircle, Loader2
 } from 'lucide-react';
@@ -90,6 +90,7 @@ function DashboardProfesor() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [estadisticas, setEstadisticas] = useState({
         totalEstudiantes: 0,
         estudiantesActivos: 0,
@@ -100,12 +101,20 @@ function DashboardProfesor() {
         tasaCompletado: 0,
         tiempoPromedio: 0
     });
-    const [cursos, setCursos] = useState([]);
-    const [evaluaciones, setEvaluaciones] = useState([]);
     const [actividadReciente, setActividadReciente] = useState([]);
 
     useEffect(() => {
         cargarDatos();
+        
+        const handleMouseMove = (e) => {
+            setMousePosition({
+                x: (e.clientX - window.innerWidth / 2) / window.innerWidth,
+                y: (e.clientY - window.innerHeight / 2) / window.innerHeight
+            });
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
 
     const cargarDatos = async () => {
@@ -122,7 +131,6 @@ function DashboardProfesor() {
             
             if (!cursosRes.ok) throw new Error('Error al cargar cursos');
             const cursosData = await cursosRes.json();
-            setCursos(cursosData);
 
             // Cargar evaluaciones del profesor
             const evaluacionesRes = await fetch('http://localhost:4000/api/evaluaciones', {
@@ -131,40 +139,32 @@ function DashboardProfesor() {
             
             if (!evaluacionesRes.ok) throw new Error('Error al cargar evaluaciones');
             const evaluacionesData = await evaluacionesRes.json();
-            setEvaluaciones(evaluacionesData);
 
-            // Calcular estadísticas
+            // Calcular estadísticas REALES (sin mock data)
             const estudiantesUnicos = new Set();
-            cursosData.forEach(curso => {
+            for (const curso of cursosData) {
                 if (curso.estudiantes) {
-                    curso.estudiantes.forEach(est => estudiantesUnicos.add(est.id));
+                    for (const est of curso.estudiantes) {
+                        estudiantesUnicos.add(est.id);
+                    }
                 }
-            });
+            }
 
             const totalEstudiantes = estudiantesUnicos.size;
             const evaluacionesActivas = evaluacionesData.filter(e => e.activa).length;
 
-            // Simular actividad reciente basada en evaluaciones
-            const actividadSimulada = evaluacionesData.slice(0, 4).map((evaluacion, index) => ({
-                id: evaluacion.id,
-                student: `Estudiante ${index + 1}`,
-                action: evaluacion.activa ? 'En progreso' : 'Completado',
-                score: Math.floor(Math.random() * 40) + 60,
-                time: `Hace ${index + 1}h`,
-                evaluacion: evaluacion.titulo
-            }));
-
-            setActividadReciente(actividadSimulada);
+            // Por ahora, actividad reciente se deja vacía hasta tener endpoint real
+            setActividadReciente([]);
 
             setEstadisticas({
                 totalEstudiantes,
-                estudiantesActivos: Math.floor(totalEstudiantes * 0.85),
+                estudiantesActivos: totalEstudiantes, // Todos los inscritos se consideran activos por ahora
                 totalEvaluaciones: evaluacionesData.length,
                 evaluacionesActivas,
                 totalCursos: cursosData.length,
-                promedioGeneral: 78,
-                tasaCompletado: 85,
-                tiempoPromedio: 42
+                promedioGeneral: 0, // Se calculará cuando haya resultados
+                tasaCompletado: 0,  // Se calculará cuando haya resultados
+                tiempoPromedio: 0   // Se calculará cuando haya resultados
             });
 
         } catch (err) {
@@ -229,9 +229,44 @@ function DashboardProfesor() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
-            <div className="container mx-auto px-4 py-8">
-                <div className="max-w-7xl mx-auto space-y-8">
+        <div className="min-h-screen bg-white relative">
+            {/* Fondo animado con parallax */}
+            <div className="fixed inset-0 -z-10 overflow-hidden">
+                <div
+                    className="absolute -top-40 -right-40 w-96 h-96 bg-blue-100 rounded-full opacity-30 blur-3xl"
+                    style={{
+                        transform: `translate(${mousePosition.x * 20}px, ${mousePosition.y * 20}px)`
+                    }}
+                ></div>
+                <div
+                    className="absolute top-1/2 -left-40 w-80 h-80 bg-indigo-200 rounded-full opacity-20 blur-3xl"
+                    style={{
+                        transform: `translate(${mousePosition.x * -15}px, ${mousePosition.y * -15}px)`
+                    }}
+                ></div>
+                <div
+                    className="absolute -bottom-20 right-1/4 w-64 h-64 bg-blue-100 rounded-full opacity-25 blur-2xl"
+                    style={{
+                        transform: `translate(${mousePosition.x * 10}px, ${mousePosition.y * 10}px)`
+                    }}
+                ></div>
+
+                {/* Grid de fondo */}
+                <div className="absolute inset-0">
+                    <svg className="w-full h-full opacity-5" viewBox="0 0 1000 1000">
+                        <defs>
+                            <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                                <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#1e40af" strokeWidth="1" />
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#grid)" />
+                    </svg>
+                </div>
+            </div>
+
+            <div className="relative z-10">
+                <div className="container mx-auto px-4 py-8">
+                    <div className="max-w-7xl mx-auto space-y-8">
                     <div className="flex justify-end mb-4">
                         <button 
                             onClick={() => navigate('/evaluaciones/profesor')}
@@ -257,83 +292,86 @@ function DashboardProfesor() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-blue-100">
+                        {/* Tarjeta de Estudiantes */}
+                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-blue-100">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
                                     <Users className="w-6 h-6 text-white" />
                                 </div>
                                 <div className="text-right">
                                     <div className="text-3xl font-bold text-slate-800">
-                                        <AnimatedCounter value={classStats.activeStudents} />/{classStats.totalStudents}
+                                        <AnimatedCounter value={classStats.totalStudents} />
                                     </div>
-                                    <div className="text-slate-500 text-sm font-medium">Estudiantes Activos</div>
+                                    <div className="text-slate-500 text-sm font-medium">Estudiantes</div>
                                 </div>
                             </div>
-                            <div className="w-full bg-slate-200 rounded-full h-2.5">
-                                <div 
-                                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-1000"
-                                    style={{ width: `${(classStats.activeStudents / classStats.totalStudents) * 100}%` }}
-                                ></div>
+                            <div className="flex items-center gap-2 text-sm text-blue-600 font-medium">
+                                <UserCheck className="w-4 h-4" />
+                                <span>{classStats.totalStudents > 0 ? 'Inscritos en cursos' : 'Sin estudiantes'}</span>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-green-100">
+                        {/* Tarjeta de Evaluaciones */}
+                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-green-100">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
                                     <Target className="w-6 h-6 text-white" />
                                 </div>
                                 <div className="text-right">
                                     <div className="text-3xl font-bold text-slate-800">
-                                        <AnimatedCounter value={classStats.completionRate} suffix="%" />
+                                        <AnimatedCounter value={estadisticas.totalEvaluaciones} />
                                     </div>
-                                    <div className="text-slate-500 text-sm font-medium">Tasa de Completado</div>
+                                    <div className="text-slate-500 text-sm font-medium">Evaluaciones</div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
                                 <TrendingUp className="w-4 h-4" />
-                                <span>Por encima del promedio</span>
+                                <span>{estadisticas.evaluacionesActivas} activas</span>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-amber-100">
+                        {/* Tarjeta de Cursos */}
+                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-amber-100">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg">
-                                    <Clock className="w-6 h-6 text-white" />
+                                    <Book className="w-6 h-6 text-white" />
                                 </div>
                                 <div className="text-right">
                                     <div className="text-3xl font-bold text-slate-800">
-                                        <AnimatedCounter value={classStats.averageTime} suffix="m" />
+                                        <AnimatedCounter value={estadisticas.totalCursos} />
                                     </div>
-                                    <div className="text-slate-500 text-sm font-medium">Tiempo Promedio</div>
+                                    <div className="text-slate-500 text-sm font-medium">Cursos</div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-amber-600 font-medium">
-                                <Zap className="w-4 h-4" />
-                                <span>Tiempo Efectivo</span>
+                                <BookOpen className="w-4 h-4" />
+                                <span>{estadisticas.totalCursos > 0 ? 'Cursos creados' : 'Sin cursos'}</span>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-indigo-100">
+                        {/* Tarjeta de Actividad */}
+                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-purple-100">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl shadow-lg">
-                                    <Award className="w-6 h-6 text-white" />
+                                <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg">
+                                    <Zap className="w-6 h-6 text-white" />
                                 </div>
                                 <div className="text-right">
                                     <div className="text-3xl font-bold text-slate-800">
-                                        <AnimatedCounter value={classStats.averageScore} suffix="%" />
+                                        <AnimatedCounter value={actividadReciente.length} />
                                     </div>
-                                    <div className="text-slate-500 text-sm font-medium">Promedio General</div>
+                                    <div className="text-slate-500 text-sm font-medium">Actividades</div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-indigo-600 font-medium">
-                                <ChartBar className="w-4 h-4" />
-                                <span>Buen Rendimiento</span>
+                            <div className="flex items-center gap-2 text-sm text-purple-600 font-medium">
+                                <Brain className="w-4 h-4" />
+                                <span>Últimas {actividadReciente.length > 0 ? 'registradas' : 'sin datos'}</span>
                             </div>
                         </div>
                     </div>
 
+                    {/* Sección de gráficas */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                        <div className="lg:col-span-2 bg-white rounded-3xl shadow-lg p-8 border border-slate-200">
+                        <div className="lg:col-span-2 bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-8 border border-white/50">
                             <div className="flex items-center justify-between mb-6">
                                 <div>
                                     <h3 className="text-2xl font-bold text-slate-800">Progreso por Tema</h3>
@@ -352,7 +390,7 @@ function DashboardProfesor() {
                             </SafeChartWrapper>
                         </div>
                         
-                        <div className="bg-white rounded-3xl shadow-lg p-8 border border-slate-200">
+                        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-8 border border-white/50">
                             <div className="flex items-center justify-between mb-6">
                                 <div>
                                     <h3 className="text-2xl font-bold text-slate-800">Distribución de Niveles</h3>
@@ -375,7 +413,7 @@ function DashboardProfesor() {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl shadow-lg p-8 border border-green-200">
+                        <div className="bg-gradient-to-br from-green-50/80 to-emerald-50/80 backdrop-blur-sm rounded-3xl shadow-lg p-8 border border-green-200/50">
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-3">
                                     <div className="p-3 bg-green-500 rounded-xl shadow-lg">
@@ -390,17 +428,17 @@ function DashboardProfesor() {
                             <div className="space-y-3">
                                 {estadisticas.totalEstudiantes > 0 ? (
                                     <>
-                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className="font-bold text-slate-800">Rendimiento Alto</span>
-                                                <span className="text-green-600 font-bold text-lg">~95%</span>
+                                                <span className="text-green-600 font-bold text-lg">Alta</span>
                                             </div>
                                             <div className="text-sm text-slate-600">Estudiantes destacados en cursos</div>
                                         </div>
-                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className="font-bold text-slate-800">Progreso Excelente</span>
-                                                <span className="text-green-600 font-bold text-lg">~92%</span>
+                                                <span className="text-green-600 font-bold text-lg">Excelente</span>
                                             </div>
                                             <div className="text-sm text-slate-600">Completando evaluaciones exitosamente</div>
                                         </div>
@@ -414,7 +452,7 @@ function DashboardProfesor() {
                             </div>
                         </div>
 
-                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl shadow-lg p-8 border border-amber-200">
+                        <div className="bg-gradient-to-br from-amber-50/80 to-orange-50/80 backdrop-blur-sm rounded-3xl shadow-lg p-8 border border-amber-200/50">
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-3">
                                     <div className="p-3 bg-amber-500 rounded-xl shadow-lg">
@@ -429,19 +467,19 @@ function DashboardProfesor() {
                             <div className="space-y-3">
                                 {estadisticas.totalEstudiantes > 0 ? (
                                     <>
-                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="font-bold text-slate-800">Rendimiento Bajo</span>
-                                                <span className="text-red-600 font-bold text-lg">~45%</span>
+                                                <span className="font-bold text-slate-800">Seguimiento Cercano</span>
+                                                <span className="text-amber-600 font-bold text-lg">Atención</span>
                                             </div>
-                                            <div className="text-sm text-slate-600">Requieren apoyo adicional</div>
+                                            <div className="text-sm text-slate-600">Estudiantes que necesitan apoyo</div>
                                         </div>
-                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="font-bold text-slate-800">Progreso Lento</span>
-                                                <span className="text-amber-600 font-bold text-lg">~58%</span>
+                                                <span className="font-bold text-slate-800">Monitoreo Activo</span>
+                                                <span className="text-amber-600 font-bold text-lg">Revisar</span>
                                             </div>
-                                            <div className="text-sm text-slate-600">Necesitan seguimiento cercano</div>
+                                            <div className="text-sm text-slate-600">Requieren seguimiento personalizado</div>
                                         </div>
                                     </>
                                 ) : (
@@ -453,7 +491,7 @@ function DashboardProfesor() {
                             </div>
                         </div>
 
-                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl shadow-lg p-8 border border-blue-200">
+                        <div className="bg-gradient-to-br from-blue-50/80 to-indigo-50/80 backdrop-blur-sm rounded-3xl shadow-lg p-8 border border-blue-200/50">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="p-3 bg-blue-500 rounded-xl shadow-lg">
                                     <Lightbulb className="w-6 h-6 text-white" />
@@ -513,7 +551,7 @@ function DashboardProfesor() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-3xl shadow-lg p-8 mb-8 border border-slate-200">
+                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-8 mb-8 border border-white/50">
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-3">
                                 <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl shadow-lg">
@@ -524,18 +562,20 @@ function DashboardProfesor() {
                                     <p className="text-slate-600 text-sm">Últimas actividades de los estudiantes</p>
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => navigate('/estudiantes')}
-                                className="text-blue-600 hover:text-blue-700 text-sm font-bold transition-colors"
-                            >
-                                Ver Todo
-                            </button>
+                            {estadisticas.totalEstudiantes > 0 && (
+                                <button 
+                                    onClick={() => navigate('/estudiantes')}
+                                    className="text-blue-600 hover:text-blue-700 text-sm font-bold transition-all hover:-translate-y-0.5"
+                                >
+                                    Ver Todo
+                                </button>
+                            )}
                         </div>
                         
                         {classStats.recentActivities.length > 0 ? (
                             <div className="grid gap-4">
                                 {classStats.recentActivities.map((activity) => (
-                                    <div key={activity.id} className="flex items-center justify-between p-5 bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl hover:shadow-md transition-all duration-300 border border-slate-200 cursor-pointer">
+                                    <div key={activity.id} className="flex items-center justify-between p-5 bg-gradient-to-r from-slate-50/80 to-blue-50/80 backdrop-blur-sm rounded-2xl hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 border border-slate-200/50 cursor-pointer">
                                         <div className="flex items-center gap-4">
                                             <div className="flex items-center justify-center w-14 h-14 bg-white rounded-xl shadow-md">
                                                 <GraduationCap className="w-7 h-7 text-blue-600" />
@@ -560,13 +600,13 @@ function DashboardProfesor() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-16 bg-slate-50 rounded-2xl">
+                            <div className="text-center py-16 bg-slate-50/50 backdrop-blur-sm rounded-2xl">
                                 <Brain className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                                 <h4 className="text-lg font-semibold text-slate-600 mb-2">Sin actividad reciente</h4>
                                 <p className="text-slate-500 text-sm">
                                     {estadisticas.totalEvaluaciones > 0 
-                                        ? 'Las actividades de los estudiantes aparecerán aquí' 
-                                        : 'Crea evaluaciones para empezar a monitorear la actividad'}
+                                        ? 'Las actividades de los estudiantes aparecerán aquí cuando completen evaluaciones' 
+                                        : 'Crea evaluaciones para empezar a monitorear la actividad de tus estudiantes'}
                                 </p>
                             </div>
                         )}
@@ -582,7 +622,7 @@ function DashboardProfesor() {
                                 {estadisticas.totalEvaluaciones === 0 ? 'Crear Primera Evaluación' : 'Gestionar Evaluaciones'}
                             </button>
                             <button 
-                                onClick={() => navigate('/cursos/profesor')}
+                                onClick={() => navigate('/profesor/cursos')}
                                 className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                             >
                                 <Book className="w-5 h-5" />
@@ -601,6 +641,7 @@ function DashboardProfesor() {
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     );

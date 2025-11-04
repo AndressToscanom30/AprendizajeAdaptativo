@@ -6,6 +6,7 @@ import NavigationWrapper from "./components/NavigationWrapper.jsx";
 import StudentLayout from "./components/StudentLayout.jsx";
 import ProfessorLayout from "./components/ProfessorLayout.jsx";
 import AdminLayout from "./components/AdminLayout.jsx";
+import PublicLayout from "./components/PublicLayout.jsx";
 import Footer from "./components/Footer";
 import DashboardE from "./pages/DashboardEstudiante";
 import DashboardP from "./pages/DashboardProfesor";
@@ -41,11 +42,11 @@ function App() {
             <NavigationWrapper />
             <div className="flex-1 w-full overflow-x-hidden">
               <Routes>
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/about" element={<AboutUs />} />
-                <Route path="/contact" element={<Contact />} />
+                <Route path="/about" element={<PublicLayout><AboutUs /></PublicLayout>} />
+                <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
 
               <Route path="/recursos" element={
                 <ProtectedRoute roles={["estudiante", "profesor"]}>
