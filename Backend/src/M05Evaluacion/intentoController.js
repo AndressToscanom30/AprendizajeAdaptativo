@@ -173,18 +173,42 @@ export const enviarRespuestas = async (req, res) => {
                 const correctPairs = pregunta.metadata?.correctPairs || [];
                 es_correcta = JSON.stringify(correctPairs) === JSON.stringify(relacion_par || []);
                 puntos_obtenidos = es_correcta ? pointsForQuestion : 0;
+            } else if (pregunta.tipo === "respuesta_corta" || pregunta.tipo === "respuesta_larga") {
+                // Validar respuesta de texto comparando con respuesta_esperada
+                if (pregunta.respuesta_esperada) {
+                    // Normalizar ambas respuestas: quitar espacios extras, convertir a minúsculas
+                    const respuestaEstudiante = (texto_respuesta || '').trim().toLowerCase();
+                    const respuestaEsperada = pregunta.respuesta_esperada.trim().toLowerCase();
+                    
+                    es_correcta = respuestaEstudiante === respuestaEsperada;
+                    puntos_obtenidos = es_correcta ? pointsForQuestion : 0;
+                } else {
+                    // Si no hay respuesta esperada, dejar como null para calificación manual
+                    es_correcta = null;
+                    puntos_obtenidos = null;
+                }
             } else if (pregunta.tipo === "codigo") {
-                // Validar pregunta de código
-                const metadata = pregunta.opciones[0]?.metadata || {};
-                const salidaEsperada = metadata.salida_esperada || '';
-                
-                // Comparar la salida del código del estudiante con la salida esperada
-                // Limpiar espacios en blanco y saltos de línea para comparación
-                const salidaEstudianteNormalizada = (salida_codigo || '').trim().replace(/\s+/g, ' ');
-                const salidaEsperadaNormalizada = salidaEsperada.trim().replace(/\s+/g, ' ');
-                
-                es_correcta = salidaEstudianteNormalizada === salidaEsperadaNormalizada;
-                puntos_obtenidos = es_correcta ? pointsForQuestion : 0;
+                // Caso 1: Pregunta de código con OPCIONES (generada por IA)
+                if (opcionSeleccionadaId && pregunta.opciones && pregunta.opciones.length > 0) {
+                    const opcion = pregunta.opciones.find(o => o.id === opcionSeleccionadaId);
+                    es_correcta = !!(opcion && opcion.es_correcta);
+                    puntos_obtenidos = es_correcta ? pointsForQuestion : 0;
+                }
+                // Caso 2: Pregunta de código con EDITOR (creada por profesor)
+                else if (codigo && salida_codigo) {
+                    const metadata = pregunta.opciones[0]?.metadata || {};
+                    const salidaEsperada = metadata.salida_esperada || '';
+                    
+                    // Comparar la salida del código del estudiante con la salida esperada
+                    const salidaEstudianteNormalizada = (salida_codigo || '').trim().replace(/\s+/g, ' ');
+                    const salidaEsperadaNormalizada = salidaEsperada.trim().replace(/\s+/g, ' ');
+                    
+                    es_correcta = salidaEstudianteNormalizada === salidaEsperadaNormalizada;
+                    puntos_obtenidos = es_correcta ? pointsForQuestion : 0;
+                } else {
+                    es_correcta = null;
+                    puntos_obtenidos = null;
+                }
             } else {
                 es_correcta = null;
                 puntos_obtenidos = null;

@@ -733,7 +733,8 @@ class IAController {
           const opcionesData = preguntaIA.opciones.map((op) => ({
             preguntaId: pregunta.id,
             texto: op.texto,
-            es_correcta: op.es_correcta || false,
+            // ✅ Soportar tanto es_correcta como esCorrecta (por si la IA usa camelCase)
+            es_correcta: op.es_correcta !== undefined ? op.es_correcta : (op.esCorrecta || false),
           }));
 
           await OpcionPregunta.bulkCreate(opcionesData, { transaction: t });

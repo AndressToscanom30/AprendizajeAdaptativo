@@ -38,6 +38,12 @@ function RevisionIntento() {
 
             const data = await response.json();
             console.log('Intento cargado:', data);
+            console.log('📊 Puntaje total del intento:', data.total_puntaje);
+            console.log('📝 Respuestas con puntos:', data.respuestas?.map(r => ({
+                preguntaId: r.preguntaId,
+                es_correcta: r.es_correcta,
+                puntos_obtenidos: r.puntos_obtenidos
+            })));
             setIntento(data);
         } catch (error) {
             console.error('Error:', error);
@@ -50,7 +56,7 @@ function RevisionIntento() {
     const renderRespuesta = (pregunta, respuesta) => {
         // Opción Múltiple o Verdadero/Falso
         if (pregunta.tipo === 'opcion_multiple' || pregunta.tipo === 'verdadero_falso') {
-            const opcionSeleccionada = pregunta.opciones?.find(op => op.id === respuesta.opcion_seleccionadaId);
+            const opcionSeleccionada = pregunta.opciones?.find(op => op.id === respuesta.opcionSeleccionadaId);
             const opcionCorrecta = pregunta.opciones?.find(op => op.es_correcta);
 
             return (
@@ -128,18 +134,21 @@ function RevisionIntento() {
 
         // Respuesta de Texto
         if (pregunta.tipo === 'respuesta_corta' || pregunta.tipo === 'respuesta_larga') {
-            const respuestaCorrecta = pregunta.opciones?.[0]?.texto || 'No hay respuesta modelo';
+            // Intentar obtener la respuesta modelo de diferentes fuentes
+            const respuestaCorrecta = pregunta.respuesta_esperada || pregunta.opciones?.[0]?.texto || 'No hay respuesta modelo';
 
             return (
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Tu respuesta:</label>
+                        <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            Tu respuesta:
+                        </label>
                         <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
                             <p className="text-slate-800 whitespace-pre-wrap">{respuesta.texto_respuesta || 'Sin respuesta'}</p>
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                        <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                             <Lightbulb className="w-4 h-4 text-amber-600" />
                             Respuesta modelo:
                         </label>
@@ -153,6 +162,102 @@ function RevisionIntento() {
 
         // Pregunta de Código
         if (pregunta.tipo === 'codigo') {
+            console.log('🔍 Revisión - Pregunta codigo:', {
+                preguntaId: pregunta.id,
+                tiene_opciones: pregunta.opciones && pregunta.opciones.length > 0,
+                tiene_texto: pregunta.opciones?.[0]?.texto,
+                opcion_seleccionada_id: respuesta.opcionSeleccionadaId,  // ✅ CORREGIDO: con S mayúscula
+                respuesta_completa: respuesta
+            });
+
+            // Caso 1: Pregunta de código CON OPCIONES (generada por IA)
+            if (pregunta.opciones && pregunta.opciones.length > 0 && pregunta.opciones[0]?.texto) {
+                const opcionSeleccionada = pregunta.opciones?.find(op => op.id === respuesta.opcionSeleccionadaId);  // ✅ CORREGIDO
+                const opcionCorrecta = pregunta.opciones?.find(op => op.es_correcta);
+
+                console.log('📊 Opciones encontradas:', {
+                    total_opciones: pregunta.opciones.length,
+                    opcion_seleccionada: opcionSeleccionada?.texto,
+                    opcion_correcta: opcionCorrecta?.texto
+                });
+
+                return (
+                    <div className="space-y-4">
+                        {/* Código a analizar */}
+                        {pregunta.codigo && (
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                    <Code className="w-4 h-4 text-blue-600" />
+                                    Código a Analizar:
+                                </label>
+                                <div className="bg-slate-900 rounded-lg overflow-hidden border-2 border-blue-500">
+                                    <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                                            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                        </div>
+                                        <span className="text-slate-400 text-sm font-mono">javascript</span>
+                                    </div>
+                                    <pre className="p-4 text-green-400 font-mono text-sm overflow-x-auto whitespace-pre-wrap">
+                                        {pregunta.codigo}
+                                    </pre>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Opciones de respuesta */}
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Opciones:</label>
+                            <div className="space-y-3">
+                                {pregunta.opciones?.map(opcion => (
+                                    <div 
+                                        key={opcion.id}
+                                        className={`p-4 rounded-lg border-2 ${
+                                            opcion.es_correcta
+                                                ? 'bg-green-50 border-green-500'
+                                                : opcion.id === opcionSeleccionada?.id && !opcion.es_correcta
+                                                ? 'bg-red-50 border-red-500'
+                                                : 'bg-slate-50 border-slate-200'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-slate-800">{opcion.texto}</span>
+                                            <div className="flex items-center gap-2">
+                                                {opcion.es_correcta && (
+                                                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
+                                                        Correcta
+                                                    </span>
+                                                )}
+                                                {opcion.id === opcionSeleccionada?.id && (
+                                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                                                        Tu respuesta
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Respuesta esperada (si existe) */}
+                        {pregunta.respuesta_esperada && (
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                    <Lightbulb className="w-4 h-4 text-amber-600" />
+                                    Explicación:
+                                </label>
+                                <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-lg">
+                                    <p className="text-slate-800 whitespace-pre-wrap">{pregunta.respuesta_esperada}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+
+            // Caso 2: Pregunta de código CON EDITOR (creada por profesor)
             const metadata = pregunta.opciones?.[0]?.metadata || {};
             const solucion = metadata.solucion || 'No hay solución disponible';
             const salidaEsperada = metadata.salida_esperada || '';
