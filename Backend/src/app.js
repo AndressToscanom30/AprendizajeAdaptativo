@@ -8,6 +8,7 @@ import evaluacionRoutes from "./M05Evaluacion/evaluacionRoutes.js";
 import preguntaRoutes from "./M05Evaluacion/preguntaRoutes.js";
 import intentoRoutes from "./M05Evaluacion/intentoRoutes.js";
 import iaRoutes from "./M06IA/iaRoutes.js";
+import recursosRoutes from "./M07Recursos/recursosRoutes.js";
 
 const app = express();
 
@@ -42,5 +43,6 @@ app.use("/api/evaluaciones", evaluacionRoutes);
 app.use("/api/preguntas", preguntaRoutes);
 app.use("/api/intentos", intentoRoutes);
 app.use("/api/ia", iaRoutes);
+app.use("/api/recursos", recursosRoutes);
 
 export default app;

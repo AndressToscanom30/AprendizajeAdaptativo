@@ -19,6 +19,7 @@ import Diagnostico from "./pages/Diagnostico";
 import Perfil from "./pages/Perfil.jsx";
 import Estudiantes from "./pages/Estudiantes.jsx";
 import Reportes from "./pages/Reportes.jsx";
+import Recursos from "./pages/Recursos.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import RecuperarPassword from "./pages/RecuperarPassword.jsx";
@@ -51,12 +52,7 @@ function App() {
               <Route path="/recursos" element={
                 <ProtectedRoute roles={["estudiante", "profesor"]}>
                   {(user) => {
-                    const content = (
-                      <div className="p-8">
-                        <h1 className="text-2xl font-bold">Recursos de Aprendizaje</h1>
-                        <p>Página en construcción...</p>
-                      </div>
-                    );
+                    const content = <Recursos />;
                     return user.rol === "profesor" ? (
                       <ProfessorLayout>{content}</ProfessorLayout>
                     ) : (
