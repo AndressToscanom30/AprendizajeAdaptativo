@@ -9,6 +9,8 @@ import preguntaRoutes from "./M05Evaluacion/preguntaRoutes.js";
 import intentoRoutes from "./M05Evaluacion/intentoRoutes.js";
 import iaRoutes from "./M06IA/iaRoutes.js";
 import recursosRoutes from "./M07Recursos/recursosRoutes.js";
+import testRoutes from "./M08TestIA/testRoutes.js";
+import estudianteRoutes from "./M09Estudiante/estudianteRoutes.js";
 
 const app = express();
 
@@ -44,5 +46,7 @@ app.use("/api/preguntas", preguntaRoutes);
 app.use("/api/intentos", intentoRoutes);
 app.use("/api/ia", iaRoutes);
 app.use("/api/recursos", recursosRoutes);
+app.use("/api/tests", testRoutes);
+app.use("/api/estudiante", estudianteRoutes);
 
 export default app;

@@ -12,7 +12,12 @@ import PreguntaEtiqueta from "../M05Evaluacion/PreguntaEtiqueta.js";
 
 // ✅ Importar modelos de IA
 import AnalisisIA from "../M06IA/models/AnalisisIA.js";
-import TestAdaptativo from "../M06IA/models/TestAdaptativo.js";
+import TestAdaptativoM06 from "../M06IA/models/TestAdaptativo.js";
+
+// ✅ Importar modelos de Test Adaptativos M08
+import TestAdaptativo from "../M08TestIA/TestAdaptativo.js";
+import PreguntaTest from "../M08TestIA/PreguntaTest.js";
+import RespuestaTest from "../M08TestIA/RespuestaTest.js";
 
 // ===== RELACIONES EXISTENTES =====
 
@@ -112,13 +117,55 @@ TestAdaptativo.belongsTo(AnalisisIA, {
 });
 
 // TestAdaptativo <--> Evaluacion (opcional)
-TestAdaptativo.belongsTo(Evaluacion, { 
+TestAdaptativoM06.belongsTo(Evaluacion, { 
   foreignKey: "evaluacionId", 
   as: "evaluacion" 
 });
-Evaluacion.hasMany(TestAdaptativo, { 
+Evaluacion.hasMany(TestAdaptativoM06, { 
   foreignKey: "evaluacionId", 
   as: "testsAdaptativos" 
+});
+
+// ===== RELACIONES M08 TEST ADAPTATIVOS =====
+
+// Usuario <--> Tests Adaptativos (uno a muchos)
+User.hasMany(TestAdaptativo, { 
+  foreignKey: "userId", 
+  as: "testsRealizados" 
+});
+TestAdaptativo.belongsTo(User, { 
+  foreignKey: "userId", 
+  as: "estudiante" 
+});
+
+// Test <--> Preguntas (uno a muchos)
+TestAdaptativo.hasMany(PreguntaTest, { 
+  foreignKey: "testId", 
+  as: "preguntas" 
+});
+PreguntaTest.belongsTo(TestAdaptativo, { 
+  foreignKey: "testId", 
+  as: "test" 
+});
+
+// Pregunta <--> Respuesta (uno a uno)
+PreguntaTest.hasOne(RespuestaTest, { 
+  foreignKey: "preguntaId", 
+  as: "respuesta" 
+});
+RespuestaTest.belongsTo(PreguntaTest, { 
+  foreignKey: "preguntaId", 
+  as: "pregunta" 
+});
+
+// Test <--> Respuestas (uno a muchos)
+TestAdaptativo.hasMany(RespuestaTest, { 
+  foreignKey: "testId", 
+  as: "respuestas" 
+});
+RespuestaTest.belongsTo(TestAdaptativo, { 
+  foreignKey: "testId", 
+  as: "test" 
 });
 
 // Exportar todos los modelos
@@ -131,9 +178,12 @@ export {
   Intento, 
   IntentoRespuesta, 
   OpcionPregunta, 
-  Pregunta, 
+  Pregunta,
   PreguntaEvaluacion,
   PreguntaEtiqueta,
   AnalisisIA,
-  TestAdaptativo
+  TestAdaptativoM06,
+  TestAdaptativo,
+  PreguntaTest,
+  RespuestaTest
 };
