@@ -11,7 +11,6 @@ const syncDatabase = async () => {
     
     console.log('🔄 Sincronizando modelos de IA...');
     
-    // alter: true → Actualiza las tablas sin borrar datos
     await sequelize.sync({ alter: true });
     
     console.log('✅ Tablas sincronizadas correctamente:');
