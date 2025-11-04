@@ -8,6 +8,7 @@ import Pregunta from "../M05Evaluacion/Pregunta.js";
 import OpcionPregunta from "../M05Evaluacion/OpcionPregunta.js";
 import PreguntaEvaluacion from "../M05Evaluacion/PreguntaEvaluacion.js";
 import EvaluacionUsuario from "../M05Evaluacion/EvaluacionUsuario.js";
+import Etiqueta from "../M05Evaluacion/Etiqueta.js";
 import sequelize from "../config/db.js";
 import { Op } from "sequelize";
 
@@ -476,6 +477,12 @@ class IAController {
                     as: "opciones",
                     attributes: ["id", "texto", "es_correcta"],
                   },
+                  {
+                    model: Etiqueta,
+                    as: "etiquetas",
+                    attributes: ["id", "nombre"],
+                    through: { attributes: [] }
+                  }
                 ],
               },
             ],
@@ -488,12 +495,41 @@ class IAController {
         return null;
       }
 
-      // 2. Verificar si ya existe análisis
+      // 2. Verificar si ya existe análisis para ESTA evaluación (cualquier intento)
+      let analisisExistente = await AnalisisIA.findOne({
+        include: [{
+          model: Intento,
+          as: 'intento',
+          where: { evaluacionId: intento.evaluacionId, userId },
+          attributes: ['id', 'total_puntaje']
+        }],
+        order: [[{ model: Intento, as: 'intento' }, 'total_puntaje', 'DESC']]
+      });
+
+      // 3. Si ya existe análisis y este intento NO es mejor, no crear nuevo
+      if (analisisExistente) {
+        const puntajeAnterior = analisisExistente.intento?.total_puntaje || 0;
+        const puntajeNuevo = intento.total_puntaje || 0;
+        
+        console.log(`📊 Análisis existente - Puntaje anterior: ${puntajeAnterior}, Nuevo: ${puntajeNuevo}`);
+        
+        // Solo actualizar si el nuevo intento es MEJOR
+        if (puntajeNuevo <= puntajeAnterior) {
+          console.log(`⏭️  Intento no es mejor, conservando análisis anterior`);
+          return analisisExistente;
+        }
+        
+        console.log(`✨ Nuevo intento es mejor, actualizando análisis...`);
+        // Eliminar análisis anterior para crear uno nuevo
+        await analisisExistente.destroy();
+      }
+
+      // 4. Crear nuevo análisis para el mejor intento
       let analisis = await AnalisisIA.findOne({
         where: { intentoId: intentoId },
       });
 
-      // 3. Si no existe o falló, crear/regenerar análisis
+      // 5. Si no existe o falló, crear/regenerar análisis
       if (!analisis || analisis.estado === "error") {
         const datosAnalisis = IAController.prepararDatosParaIA(intento);
 
@@ -714,13 +750,18 @@ class IAController {
       total_preguntas: intento.respuestas?.length || 0,
       respuestas: (intento.respuestas || []).map((respuesta) => {
         const pregunta = respuesta.pregunta;
+        
+        // Obtener categoría desde etiquetas
+        const categoria = pregunta.etiquetas && pregunta.etiquetas.length > 0
+          ? pregunta.etiquetas.map(e => e.nombre).join(', ')
+          : `Preguntas de ${pregunta.tipo || 'general'}`;
 
         const esCampoBooleano = (respuesta.es_correcta === true || respuesta.es_correcta === false);
         const esCorrecta = esCampoBooleano ? respuesta.es_correcta : IAController.evaluarRespuesta(respuesta, pregunta);
 
         return {
           pregunta_id: pregunta.id,
-          categoria: pregunta.categoria || "General",
+          categoria: categoria,
           tipo: pregunta.tipo,
           dificultad: pregunta.dificultad,
           es_correcta: esCorrecta,
@@ -733,13 +774,20 @@ class IAController {
       }),
     };
 
-    const preguntas = (intento.respuestas || []).map((respuesta) => ({
-      id: respuesta.pregunta.id,
-      categoria: respuesta.pregunta.categoria || "General",
-      tipo: respuesta.pregunta.tipo,
-      dificultad: respuesta.pregunta.dificultad,
-      texto: respuesta.pregunta.texto, // corregido campo
-    }));
+    const preguntas = (intento.respuestas || []).map((respuesta) => {
+      const pregunta = respuesta.pregunta;
+      const categoria = pregunta.etiquetas && pregunta.etiquetas.length > 0
+        ? pregunta.etiquetas.map(e => e.nombre).join(', ')
+        : `Preguntas de ${pregunta.tipo || 'general'}`;
+      
+      return {
+        id: pregunta.id,
+        categoria: categoria,
+        tipo: pregunta.tipo,
+        dificultad: pregunta.dificultad,
+        texto: pregunta.texto,
+      };
+    });
 
     return { resultados, preguntas };
   }

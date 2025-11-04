@@ -84,43 +84,59 @@ class GroqService {
     const respuestasCorrectas = resultados.respuestas?.filter(r => r.es_correcta).length || 0;
     const porcentajeGeneral = totalPreguntas > 0 ? ((respuestasCorrectas / totalPreguntas) * 100).toFixed(2) : 0;
 
+    // Agrupar por categoría para mostrar contexto
+    const categorias = {};
+    resultados.respuestas?.forEach(r => {
+      const cat = r.categoria || 'General';
+      if (!categorias[cat]) {
+        categorias[cat] = { correctas: 0, total: 0 };
+      }
+      categorias[cat].total++;
+      if (r.es_correcta) categorias[cat].correctas++;
+    });
+
+    const resumenCategorias = Object.entries(categorias)
+      .map(([nombre, datos]) => `${nombre}: ${datos.correctas}/${datos.total} correctas`)
+      .join('\n');
+
     const detalleRespuestas = resultados.respuestas?.slice(0, 15).map((r, i) => 
-      `${i + 1}. ${r.tipo} (${r.dificultad}) - ${r.categoria || 'General'}: ${r.es_correcta ? '✓' : '✗'}`
+      `${i + 1}. ${r.categoria} - ${r.tipo} (dif: ${r.dificultad}): ${r.es_correcta ? '✓' : '✗'}`
     ).join('\n') || 'Sin datos';
 
-    return `Analiza estos resultados de evaluación de programación.
+    return `Analiza resultados de evaluación de programación.
 
-RESULTADOS:
-- Puntaje: ${resultados.puntuacion || respuestasCorrectas}/${totalPreguntas}
-- Porcentaje: ${porcentajeGeneral}%
+PUNTAJE: ${resultados.puntuacion || respuestasCorrectas}/${totalPreguntas} (${porcentajeGeneral}%)
 
-RESPUESTAS:
+CATEGORÍAS:
+${resumenCategorias}
+
+DETALLE RESPUESTAS:
 ${detalleRespuestas}
 
-GENERA:
-1. Agrupa por categoría y calcula % de acierto
-2. Identifica TOP 3 debilidades (<60%)
-3. Identifica TOP 2 fortalezas (≥75%)
-4. Da 5 recomendaciones específicas
-5. Estima tiempo de estudio necesario
+INSTRUCCIONES:
+1. Agrupa por categoría (usa nombres específicos de las categorías mostradas arriba)
+2. Identifica 3 DEBILIDADES específicas (categorías con <60% o temas donde falló)
+3. Identifica 2 FORTALEZAS (categorías con ≥75%)
+4. Da 5 recomendaciones CONCRETAS (no genéricas como "practicar más")
+5. Estima tiempo de estudio realista
 
-Responde SOLO con JSON válido:
+Responde SOLO JSON válido:
 {
   "puntuacion_global": ${resultados.puntuacion || respuestasCorrectas},
   "porcentaje_total": ${porcentajeGeneral},
   "categorias": [
     {
-      "nombre": "string",
+      "nombre": "nombre exacto de categoría",
       "correctas": 0,
       "totales": 0,
       "porcentaje": 0,
       "nivel": "fuerte"
     }
   ],
-  "debilidades": ["string", "string", "string"],
-  "fortalezas": ["string", "string"],
-  "recomendaciones": ["string", "string", "string", "string", "string"],
-  "tiempo_estudio_sugerido": "string"
+  "debilidades": ["tema específico 1", "tema específico 2", "tema específico 3"],
+  "fortalezas": ["tema específico 1", "tema específico 2"],
+  "recomendaciones": ["acción concreta 1", "acción concreta 2", "acción concreta 3", "acción concreta 4", "acción concreta 5"],
+  "tiempo_estudio_sugerido": "X horas/días específicos"
 }`;
   }
 
