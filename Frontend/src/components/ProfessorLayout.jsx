@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useAuth } from "../context/AuthContext.jsx";
 import { useSidebar } from "../context/SidebarContext.jsx";
 
@@ -5,7 +6,7 @@ export default function ProfessorLayout({ children }) {
   const { user } = useAuth();
   const { sidebarCollapsed } = useSidebar();
 
-  if (!user || user.rol !== "profesor") {
+  if (!user?.rol || user.rol !== "profesor") {
     return <div>{children}</div>;
   }
 
@@ -17,3 +18,7 @@ export default function ProfessorLayout({ children }) {
     </div>
   );
 }
+
+ProfessorLayout.propTypes = {
+  children: PropTypes.node.isRequired
+};

@@ -19,13 +19,13 @@ function Recursos() {
 
     const handleMouseMove = (e) => {
       setMousePosition({
-        x: (e.clientX - window.innerWidth / 2) / window.innerWidth,
-        y: (e.clientY - window.innerHeight / 2) / window.innerHeight,
+        x: (e.clientX - globalThis.innerWidth / 2) / globalThis.innerWidth,
+        y: (e.clientY - globalThis.innerHeight / 2) / globalThis.innerHeight,
       });
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    globalThis.addEventListener("mousemove", handleMouseMove);
+    return () => globalThis.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   const cargarRecomendaciones = async () => {

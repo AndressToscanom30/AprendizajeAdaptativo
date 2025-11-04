@@ -34,13 +34,13 @@ export default function NavBarAdmin() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      setScrolled(globalThis.scrollY > 20);
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    globalThis.addEventListener("scroll", handleScroll);
+    return () => globalThis.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (!user || user.rol !== "admin") return null;
+  if (!user?.rol || user.rol !== "admin") return null;
 
   const adminMenuItems = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },

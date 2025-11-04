@@ -87,7 +87,7 @@ function Evaluaciones() {
                     </div>
                     <p className="text-red-700 mb-6">{error}</p>
                     <button 
-                        onClick={() => window.location.reload()} 
+                        onClick={() => globalThis.location.reload()} 
                         className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold"
                     >
                         <RefreshCw className="w-5 h-5" />

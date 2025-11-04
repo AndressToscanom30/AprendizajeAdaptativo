@@ -122,7 +122,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     // redirigir al login o home
-    window.location.href = "/login";
+    globalThis.location.href = "/login";
   };
 
   // intenta extender la sesión (si tienes endpoint /api/auth/refresh)

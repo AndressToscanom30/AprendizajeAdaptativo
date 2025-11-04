@@ -64,12 +64,31 @@ export const crearEvaluacion = async (req, res) => {
 
                 // Crear opciones si existen
                 if (preguntaData.opciones && Array.isArray(preguntaData.opciones) && preguntaData.opciones.length > 0) {
-                    const opcionesData = preguntaData.opciones.map(opcion => ({
-                        preguntaId: pregunta.id,
-                        texto: opcion.texto,
-                        es_correcta: opcion.es_correcta || false,
-                        metadata: opcion.metadata || null
-                    }));
+                    const opcionesData = preguntaData.opciones.map(opcion => {
+                        // Para preguntas de código, guardar todo en metadata
+                        if (preguntaData.tipo === 'codigo') {
+                            return {
+                                preguntaId: pregunta.id,
+                                texto: null, // No se usa texto para código
+                                es_correcta: false, // No aplica para código
+                                metadata: {
+                                    codigo_inicial: opcion.codigo_inicial,
+                                    solucion: opcion.solucion,
+                                    salida_esperada: opcion.salida_esperada,
+                                    pistas: opcion.pistas || [],
+                                    lenguaje: opcion.lenguaje || 'javascript',
+                                    tipo: opcion.tipo
+                                }
+                            };
+                        }
+                        // Para otros tipos de preguntas
+                        return {
+                            preguntaId: pregunta.id,
+                            texto: opcion.texto,
+                            es_correcta: opcion.es_correcta || false,
+                            metadata: opcion.metadata || null
+                        };
+                    });
                     
                     await OpcionPregunta.bulkCreate(opcionesData, { transaction: t });
                 }

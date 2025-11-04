@@ -28,10 +28,10 @@ function Register() {
     const navigate = useNavigate();
 
   useEffect(() => {
-    if (!window.turnstile || !captchaRef.current) return;
+    if (!globalThis.turnstile || !captchaRef.current) return;
 
     if (!captchaRef.current.hasChildNodes()) {
-      window.turnstile.render(captchaRef.current, {
+      globalThis.turnstile.render(captchaRef.current, {
         sitekey: "0x4AAAAAAB3rAGBxsobQExgb",
         theme: "light",
         size: "normal",
@@ -80,8 +80,8 @@ function Register() {
     } catch (err) {
       console.error(err);
       setError(err.message);
-      if (window.turnstile && captchaRef.current) {
-        window.turnstile.reset(captchaRef.current);
+      if (globalThis.turnstile && captchaRef.current) {
+        globalThis.turnstile.reset(captchaRef.current);
       }
     } finally {
       setLoading(false);

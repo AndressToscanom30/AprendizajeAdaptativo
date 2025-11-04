@@ -8,7 +8,7 @@ class GroqService {
     this.model = "llama-3.3-70b-versatile";
     
     // 🔍 LOG PARA DEBUG
-    console.log('🔑 GroqService inicializado');
+    
     console.log('   - API Key presente:', !!this.apiKey);
     console.log('   - API Key (primeros 15 chars):', this.apiKey?.substring(0, 15) + '...');
     console.log('   - Longitud:', this.apiKey?.length);
@@ -24,7 +24,7 @@ class GroqService {
     }
 
     try {
-      console.log('🔄 Llamando a Groq API...');
+      
       
       const response = await axios.post(
         this.baseURL,
@@ -53,7 +53,7 @@ class GroqService {
         }
       );
 
-      console.log('✅ Groq API respondió correctamente');
+      
       return JSON.parse(response.data.choices[0].message.content);
     } catch (error) {
       const status = error.response?.status;

@@ -1,4 +1,4 @@
-import { Course, CourseStudent, User, Evaluacion } from "../config/relaciones.js";
+import { Course, CourseStudent, User } from "../config/relaciones.js";
 
 // Crear un curso
 export const crearCurso = async (req, res) => {
