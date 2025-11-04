@@ -90,7 +90,22 @@ class GroqService {
    */
   async generarTestAdaptativo(analisis) {
     const prompt = this.construirPromptTestAdaptativo(analisis);
-    return await this.generateCompletion(prompt);
+    const resultado = await this.generateCompletion(prompt);
+    
+    // DEBUG: Ver qué devuelve la IA
+    console.log('🔍 DEBUG - Test generado por IA:');
+    console.log('   Número de preguntas:', resultado.preguntas?.length);
+    resultado.preguntas?.forEach((p, i) => {
+      console.log(`   Pregunta ${i + 1}:`, {
+        tipo: p.tipo_pregunta,
+        tiene_codigo: !!p.codigo,
+        codigo_length: p.codigo?.length || 0,
+        tiene_opciones: !!p.opciones,
+        num_opciones: p.opciones?.length || 0
+      });
+    });
+    
+    return resultado;
   }
 
   construirPromptAnalisis(resultados, preguntas) {
@@ -258,7 +273,9 @@ RESPONDE ÚNICAMENTE CON JSON VÁLIDO (sin comentarios, sin texto adicional):
       "tipo": "refuerzo",
       "dificultad": 2,
       "pregunta": "¿Qué valor se imprime en la consola al ejecutar este código?",
-      "codigo": "let x = 5;\\nlet y = x + 3;\\nconsole.log(y);",
+      "codigo": "let x = 5;
+let y = x + 3;
+console.log(y);",
       "opciones": [
         {"texto": "8", "es_correcta": true},
         {"texto": "5", "es_correcta": false},

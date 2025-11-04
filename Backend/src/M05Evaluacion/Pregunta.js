@@ -33,6 +33,16 @@ const Pregunta = sequelize.define("Pregunta", {
         type: DataTypes.TEXT,
         allowNull: true
     },
+    codigo: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Código a mostrar en preguntas tipo 'codigo' generadas por IA"
+    },
+    respuesta_esperada: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Respuesta esperada para preguntas de respuesta_corta"
+    },
     creado_por: {
         type: DataTypes.UUID,
         allowNull: false,
