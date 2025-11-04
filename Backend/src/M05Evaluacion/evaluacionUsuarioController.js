@@ -65,17 +65,25 @@ export const obtenerEvaluacionesAsignadas = async (req, res) => {
           return null;
         }
 
+        // Contar solo intentos completados (enviado, calificado, revisado)
         const intentosRealizados = await Intento.count({
           where: {
             evaluacionId: asignacion.evaluacionId,
-            userId: estudianteId
+            userId: estudianteId,
+            status: {
+              [Op.in]: ["enviado", "calificado", "revisado"]
+            }
           }
         });
 
+        // Mejor intento solo de los completados
         const mejorIntento = await Intento.findOne({
           where: {
             evaluacionId: asignacion.evaluacionId,
-            userId: estudianteId
+            userId: estudianteId,
+            status: {
+              [Op.in]: ["enviado", "calificado", "revisado"]
+            }
           },
           order: [["total_puntaje", "DESC"]]
         });
@@ -149,6 +157,19 @@ export const obtenerDetalleEvaluacion = async (req, res) => {
 
     const puntajeTotal = preguntasEvaluacion.reduce((sum, pe) => sum + (pe.puntos || 0), 0);
 
+    // 🆕 Limpiar intentos abandonados (más de 24 horas en progreso)
+    const hace24Horas = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await Intento.destroy({
+      where: {
+        evaluacionId: id,
+        userId: estudianteId,
+        status: 'progreso',
+        iniciado_en: {
+          [Op.lt]: hace24Horas
+        }
+      }
+    });
+
     // Obtener intentos previos
     const intentos = await Intento.findAll({
       where: {
@@ -158,17 +179,22 @@ export const obtenerDetalleEvaluacion = async (req, res) => {
       order: [["iniciado_en", "DESC"]]
     });
 
+    // Contar solo intentos completados para validación
+    const intentosCompletados = intentos.filter(
+      i => i.status === "enviado" || i.status === "calificado" || i.status === "revisado"
+    ).length;
+
     const ahora = new Date();
     const terminaEn = asignacion.evaluacion.termina_en ? new Date(asignacion.evaluacion.termina_en) : null;
     const puedeRealizar = 
       (!terminaEn || ahora <= terminaEn) && 
-      intentos.length < asignacion.evaluacion.max_intentos;
+      intentosCompletados < asignacion.evaluacion.max_intentos;
 
     res.json({
       ...asignacion.toJSON(),
       intentos_realizados: intentos,
       puede_realizar: puedeRealizar,
-      intentos_restantes: asignacion.evaluacion.max_intentos - intentos.length,
+      intentos_restantes: asignacion.evaluacion.max_intentos - intentosCompletados,
       tiempo_agotado: terminaEn ? ahora > terminaEn : false,
       puntaje_total: puntajeTotal
     });

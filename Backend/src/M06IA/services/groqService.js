@@ -24,8 +24,6 @@ class GroqService {
     }
 
     try {
-      
-      
       const response = await axios.post(
         this.baseURL,
         {
@@ -33,16 +31,15 @@ class GroqService {
           messages: [
             {
               role: "system",
-              content:
-                "Eres un asistente educativo experto en programación y pedagogía adaptativa.",
+              content: "Eres un asistente educativo. Siempre respondes con JSON válido, sin texto adicional antes o después del JSON.",
             },
             {
               role: "user",
               content: prompt,
             },
           ],
-          temperature: options.temperature || 0.7,
-          max_tokens: options.maxTokens || 2000,
+          temperature: options.temperature || 0.5,
+          max_tokens: options.maxTokens || 3000,
           response_format: { type: "json_object" },
         },
         {
@@ -87,137 +84,109 @@ class GroqService {
     const respuestasCorrectas = resultados.respuestas?.filter(r => r.es_correcta).length || 0;
     const porcentajeGeneral = totalPreguntas > 0 ? ((respuestasCorrectas / totalPreguntas) * 100).toFixed(2) : 0;
 
-    return `Eres un experto pedagogo especializado en educación adaptativa. Analiza estos resultados de evaluación y genera un análisis profundo.
+    const detalleRespuestas = resultados.respuestas?.slice(0, 15).map((r, i) => 
+      `${i + 1}. ${r.tipo} (${r.dificultad}) - ${r.categoria || 'General'}: ${r.es_correcta ? '✓' : '✗'}`
+    ).join('\n') || 'Sin datos';
 
-📊 RESULTADOS DEL ESTUDIANTE:
-- Puntaje obtenido: ${resultados.puntuacion || respuestasCorrectas}
-- Total de preguntas: ${totalPreguntas}
-- Porcentaje general: ${porcentajeGeneral}%
+    return `Analiza estos resultados de evaluación de programación.
 
-📝 DETALLE DE RESPUESTAS:
-${resultados.respuestas?.map((r, i) => `
-${i + 1}. Pregunta (${r.tipo} - ${r.dificultad}):
-   - Categoría: ${r.categoria || 'General'}
-   - Resultado: ${r.es_correcta ? '✅ CORRECTA' : '❌ INCORRECTA'}
-`).join('')}
+RESULTADOS:
+- Puntaje: ${resultados.puntuacion || respuestasCorrectas}/${totalPreguntas}
+- Porcentaje: ${porcentajeGeneral}%
 
-🎯 TU TAREA:
-1. **Agrupa las preguntas por categoría** y calcula el % de acierto en cada una
-2. **Identifica las TOP 3 DEBILIDADES** (categorías con <60% acierto o temas donde falló)
-3. **Identifica las TOP 2 FORTALEZAS** (categorías con ≥75% acierto)
-4. **Genera 5 recomendaciones ESPECÍFICAS** de estudio (no genéricas)
-5. **Estima tiempo de estudio** necesario para mejorar (ej: "2-3 horas diarias por 1 semana")
+RESPUESTAS:
+${detalleRespuestas}
 
-⚠️ IMPORTANTE:
-- Sé específico con los temas (ej: "Bucles while" en lugar de "Control de flujo")
-- Las recomendaciones deben ser accionables
-- Prioriza las debilidades más críticas
+GENERA:
+1. Agrupa por categoría y calcula % de acierto
+2. Identifica TOP 3 debilidades (<60%)
+3. Identifica TOP 2 fortalezas (≥75%)
+4. Da 5 recomendaciones específicas
+5. Estima tiempo de estudio necesario
 
-📤 RESPONDE SOLO EN ESTE FORMATO JSON (sin markdown):
+Responde SOLO con JSON válido:
 {
   "puntuacion_global": ${resultados.puntuacion || respuestasCorrectas},
   "porcentaje_total": ${porcentajeGeneral},
   "categorias": [
     {
-      "nombre": "nombre de la categoría",
-      "correctas": número de respuestas correctas,
-      "totales": número total de preguntas,
-      "porcentaje": porcentaje de acierto,
-      "nivel": "fuerte" | "medio" | "débil"
+      "nombre": "string",
+      "correctas": 0,
+      "totales": 0,
+      "porcentaje": 0,
+      "nivel": "fuerte"
     }
   ],
-  "debilidades": [
-    "Tema específico 1 donde tiene problemas",
-    "Tema específico 2 donde tiene problemas",
-    "Tema específico 3 donde tiene problemas"
-  ],
-  "fortalezas": [
-    "Tema específico 1 que domina bien",
-    "Tema específico 2 que domina bien"
-  ],
-  "recomendaciones": [
-    "Recomendación específica 1",
-    "Recomendación específica 2",
-    "Recomendación específica 3",
-    "Recomendación específica 4",
-    "Recomendación específica 5"
-  ],
-  "tiempo_estudio_sugerido": "X horas/días estimados para mejorar"
+  "debilidades": ["string", "string", "string"],
+  "fortalezas": ["string", "string"],
+  "recomendaciones": ["string", "string", "string", "string", "string"],
+  "tiempo_estudio_sugerido": "string"
 }`;
   }
 
   construirPromptTestAdaptativo(analisis) {
+    // Parsear datos si vienen como JSON strings
+    let debilidades = analisis.debilidades;
+    let fortalezas = analisis.fortalezas;
     
-    return `Eres un profesor experto creando un test PERSONALIZADO para un estudiante específico.
+    if (typeof debilidades === 'string') {
+      try {
+        debilidades = JSON.parse(debilidades);
+      } catch (e) {
+        debilidades = [];
+      }
+    }
+    
+    if (typeof fortalezas === 'string') {
+      try {
+        fortalezas = JSON.parse(fortalezas);
+      } catch (e) {
+        fortalezas = [];
+      }
+    }
+    
+    debilidades = Array.isArray(debilidades) ? debilidades.slice(0, 3) : [];
+    fortalezas = Array.isArray(fortalezas) ? fortalezas.slice(0, 2) : [];
+    
+    const debilidadesText = debilidades.length > 0 ? debilidades.join(', ') : 'Conceptos básicos de programación';
+    const fortalezasText = fortalezas.length > 0 ? fortalezas.join(', ') : 'Ninguna identificada';
+    
+    return `Genera un test de 10 preguntas de programación.
 
-📊 PERFIL DEL ESTUDIANTE:
-✅ FORTALEZAS:
-${analisis.fortalezas?.map(f => `   - ${f}`).join('\n') || '   - No detectadas'}
+DEBILIDADES DEL ESTUDIANTE: ${debilidadesText}
+FORTALEZAS DEL ESTUDIANTE: ${fortalezasText}
 
-❌ DEBILIDADES:
-${analisis.debilidades?.map(d => `   - ${d}`).join('\n') || '   - No detectadas'}
+Crea 10 preguntas con esta distribución:
+- 5 preguntas fáciles (dificultad 1-3) sobre las DEBILIDADES
+- 2 preguntas medias (dificultad 3) mezclando temas
+- 3 preguntas difíciles (dificultad 4-5) sobre las FORTALEZAS
 
-📈 RENDIMIENTO POR CATEGORÍAS:
-${analisis.categorias?.map(cat => 
-  `   - ${cat.nombre}: ${cat.porcentaje}% (${cat.nivel})`
-).join('\n') || '   - Sin datos'}
+Cada pregunta debe tener:
+- Una pregunta clara
+- 4 opciones (solo 1 correcta)
+- Una explicación de la respuesta correcta
 
-🎯 EVALUACIÓN DE ORIGEN: "${analisis.evaluacion_original}"
-
-🎨 GENERA UN TEST ADAPTATIVO CON ESTAS REGLAS:
-
-**ESTRUCTURA (10 preguntas TOTAL):**
-
-1. **REFUERZO (4-5 preguntas):**
-   - Enfocadas en las DEBILIDADES del estudiante
-   - Dificultad: Básica (1-2) o Media (3)
-   - Objetivo: Que pueda responderlas correctamente y ganar confianza
-   - Incluye explicación detallada de por qué la respuesta es correcta
-
-2. **PRÁCTICA (2-3 preguntas):**
-   - Temas mixtos (debilidades + fortalezas)
-   - Dificultad: Media (3)
-   - Objetivo: Consolidar conocimientos
-
-3. **DESAFÍO (2-3 preguntas):**
-   - Enfocadas en las FORTALEZAS del estudiante
-   - Dificultad: Alta (4-5)
-   - Objetivo: Estimular y extender sus capacidades
-
-**FORMATO DE CADA PREGUNTA:**
-- Pregunta clara y específica
-- 4 opciones de respuesta (solo 1 correcta)
-- Las opciones incorrectas deben ser plausibles (no obviamente falsas)
-- Explicación pedagógica de la respuesta correcta
-- Si aplica, incluye código de ejemplo
-
-⚠️ MUY IMPORTANTE:
-- NO repitas preguntas de la evaluación original
-- Sé específico con los temas (usa los nombres exactos de las debilidades)
-- Las preguntas deben ser PROGRESIVAS (de fácil a difícil)
-- Cada explicación debe enseñar algo nuevo
-
-📤 RESPONDE SOLO EN ESTE FORMATO JSON (sin markdown):
+Responde con este JSON (sin texto adicional):
 {
   "preguntas": [
     {
-      "categoria": "categoría específica del tema",
-      "tipo": "refuerzo" | "practica" | "desafio",
-      "dificultad": 1 | 2 | 3 | 4 | 5,
-      "pregunta": "Texto de la pregunta clara y concisa",
-      "codigo": "código de ejemplo si aplica, o null",
+      "categoria": "tema específico",
+      "tipo": "refuerzo",
+      "dificultad": 2,
+      "pregunta": "texto de la pregunta",
+      "codigo": null,
       "opciones": [
-        { "texto": "Opción A", "es_correcta": true },
-        { "texto": "Opción B", "es_correcta": false },
-        { "texto": "Opción C", "es_correcta": false },
-        { "texto": "Opción D", "es_correcta": false }
+        {"texto": "opción A", "es_correcta": true},
+        {"texto": "opción B", "es_correcta": false},
+        {"texto": "opción C", "es_correcta": false},
+        {"texto": "opción D", "es_correcta": false}
       ],
-      "explicacion": "Por qué la respuesta correcta lo es + concepto que refuerza"
+      "explicacion": "por qué la respuesta A es correcta"
     }
   ],
   "enfoque": {
-    "areas_reforzar": ["debilidad 1", "debilidad 2", "..."],
-    "areas_desafiar": ["fortaleza 1", "fortaleza 2"]
+    "areas_reforzar": ["${debilidades[0] || 'conceptos básicos'}"],
+    "areas_desafiar": ["${fortalezas[0] || 'lógica avanzada'}"]
   }
 }`;
   }

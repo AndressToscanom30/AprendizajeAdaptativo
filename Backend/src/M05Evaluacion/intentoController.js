@@ -21,7 +21,21 @@ export const iniciarIntento = async (req, res) => {
             return res.status(404).json({ message: "Evaluación no encontrada" });
         }
 
-        // 🆕 PRIMERO: Buscar si hay un intento en progreso
+        // 🆕 LIMPIAR intentos abandonados (más de 24 horas en progreso)
+        const hace24Horas = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        await Intento.destroy({
+            where: {
+                userId,
+                evaluacionId,
+                status: 'progreso',
+                iniciado_en: {
+                    [Op.lt]: hace24Horas
+                }
+            },
+            transaction: t
+        });
+
+        // 🆕 Buscar si hay un intento en progreso reciente
         const intentoEnProgreso = await Intento.findOne({
             where: {
                 userId,
@@ -33,7 +47,7 @@ export const iniciarIntento = async (req, res) => {
 
         if (intentoEnProgreso) {
             await t.commit();
-            
+            console.log(`✅ Reanudando intento en progreso ${intentoEnProgreso.id}`);
             return res.status(200).json(intentoEnProgreso);
         }
 
