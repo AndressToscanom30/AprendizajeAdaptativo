@@ -102,15 +102,40 @@ function PreguntaCodigoIntento({ pregunta, respuesta, onChange }) {
   };
 
   const outputCoincide = output.trim() === salidaEsperada.trim();
+  
+  // Código de la pregunta (para análisis)
+  const codigoPregunta = pregunta.codigo;
 
   return (
     <div className="space-y-4">
+      {/* Mostrar código de la pregunta si existe (para preguntas tipo "¿Qué imprime?") */}
+      {codigoPregunta && (
+        <div>
+          <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+            <Eye className="w-4 h-4 text-blue-600" />
+            Código a Analizar
+          </label>
+          <div className="bg-slate-900 rounded-lg overflow-hidden border-2 border-blue-700">
+            <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span className="text-blue-400 text-sm font-medium">Código de la Pregunta</span>
+              </div>
+              <span className="text-slate-400 text-sm font-mono">{lenguaje || 'javascript'}</span>
+            </div>
+            <pre className="p-4 text-blue-400 font-mono text-sm overflow-x-auto whitespace-pre-wrap">
+              {codigoPregunta}
+            </pre>
+          </div>
+        </div>
+      )}
+
       {/* Editor de Código */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
             <Terminal className="w-4 h-4 text-green-600" />
-            Editor de Código ({lenguaje || 'JavaScript'})
+            {codigoPregunta ? 'Tu Respuesta' : 'Editor de Código'} ({lenguaje || 'JavaScript'})
           </label>
           <button
             type="button"

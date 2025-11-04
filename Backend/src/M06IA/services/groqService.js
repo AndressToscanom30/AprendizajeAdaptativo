@@ -89,36 +89,53 @@ class GroqService {
     resultados.respuestas?.forEach(r => {
       const cat = r.categoria || 'General';
       if (!categorias[cat]) {
-        categorias[cat] = { correctas: 0, total: 0 };
+        categorias[cat] = { correctas: 0, total: 0, incorrectas: [] };
       }
       categorias[cat].total++;
-      if (r.es_correcta) categorias[cat].correctas++;
+      if (r.es_correcta) {
+        categorias[cat].correctas++;
+      } else {
+        categorias[cat].incorrectas.push(r.tipo);
+      }
     });
 
     const resumenCategorias = Object.entries(categorias)
-      .map(([nombre, datos]) => `${nombre}: ${datos.correctas}/${datos.total} correctas`)
+      .map(([nombre, datos]) => {
+        const pct = ((datos.correctas / datos.total) * 100).toFixed(0);
+        return `${nombre}: ${datos.correctas}/${datos.total} (${pct}%)`;
+      })
       .join('\n');
 
     const detalleRespuestas = resultados.respuestas?.slice(0, 15).map((r, i) => 
-      `${i + 1}. ${r.categoria} - ${r.tipo} (dif: ${r.dificultad}): ${r.es_correcta ? '✓' : '✗'}`
+      `${i + 1}. [${r.categoria}] ${r.tipo} (dif: ${r.dificultad}): ${r.es_correcta ? '✓ CORRECTA' : '✗ INCORRECTA'}`
     ).join('\n') || 'Sin datos';
 
-    return `Analiza resultados de evaluación de programación.
+    return `Analiza estos resultados y genera feedback ESPECÍFICO basado en las CATEGORÍAS reales.
 
 PUNTAJE: ${resultados.puntuacion || respuestasCorrectas}/${totalPreguntas} (${porcentajeGeneral}%)
 
-CATEGORÍAS:
+RENDIMIENTO POR CATEGORÍA:
 ${resumenCategorias}
 
-DETALLE RESPUESTAS:
+DETALLE DE CADA RESPUESTA:
 ${detalleRespuestas}
 
-INSTRUCCIONES:
-1. Agrupa por categoría (usa nombres específicos de las categorías mostradas arriba)
-2. Identifica 3 DEBILIDADES específicas (categorías con <60% o temas donde falló)
-3. Identifica 2 FORTALEZAS (categorías con ≥75%)
-4. Da 5 recomendaciones CONCRETAS (no genéricas como "practicar más")
-5. Estima tiempo de estudio realista
+INSTRUCCIONES CRÍTICAS:
+1. USA LAS CATEGORÍAS EXACTAS mostradas arriba (no inventes categorías nuevas)
+2. Para DEBILIDADES: Menciona las categorías donde el estudiante falló (< 60%)
+3. Para FORTALEZAS: Menciona las categorías donde el estudiante acertó (≥ 75%)
+4. Si una categoría aparece en los datos, ÚSALA en tu análisis
+5. NO menciones "Preguntas de código" o tipos de pregunta - menciona LOS TEMAS
+
+EJEMPLO CORRECTO:
+Si las categorías son "Console.log, Impresión" y "Bucles, Iteración":
+- Debilidad: "Dificultad con el uso de console.log para depuración"
+- Fortaleza: "Buen manejo de bucles for e iteración"
+
+EJEMPLO INCORRECTO:
+- ❌ "Preguntas de código"
+- ❌ "Preguntas difíciles"
+- ❌ "Opción múltiple"
 
 Responde SOLO JSON válido:
 {
@@ -126,17 +143,30 @@ Responde SOLO JSON válido:
   "porcentaje_total": ${porcentajeGeneral},
   "categorias": [
     {
-      "nombre": "nombre exacto de categoría",
+      "nombre": "nombre EXACTO de categoría del listado",
       "correctas": 0,
       "totales": 0,
       "porcentaje": 0,
       "nivel": "fuerte"
     }
   ],
-  "debilidades": ["tema específico 1", "tema específico 2", "tema específico 3"],
-  "fortalezas": ["tema específico 1", "tema específico 2"],
-  "recomendaciones": ["acción concreta 1", "acción concreta 2", "acción concreta 3", "acción concreta 4", "acción concreta 5"],
-  "tiempo_estudio_sugerido": "X horas/días específicos"
+  "debilidades": [
+    "Menciona la CATEGORÍA específica y qué debe mejorar de ese tema",
+    "Otra CATEGORÍA donde falló y qué practicar",
+    "Tercera CATEGORÍA con bajo rendimiento"
+  ],
+  "fortalezas": [
+    "CATEGORÍA donde tuvo buen rendimiento y qué domina",
+    "Otra CATEGORÍA con alto porcentaje de aciertos"
+  ],
+  "recomendaciones": [
+    "Acción específica relacionada con las categorías débiles",
+    "Ejercicio práctico para la categoría con más errores",
+    "Recurso para estudiar la categoría problemática",
+    "Práctica adicional en categoría intermedia",
+    "Refuerzo de conceptos en categoría débil"
+  ],
+  "tiempo_estudio_sugerido": "X horas realistas según las debilidades detectadas"
 }`;
   }
 
@@ -167,33 +197,60 @@ Responde SOLO JSON válido:
     const debilidadesText = debilidades.length > 0 ? debilidades.join(', ') : 'Conceptos básicos de programación';
     const fortalezasText = fortalezas.length > 0 ? fortalezas.join(', ') : 'Ninguna identificada';
     
-    return `Genera un test de 10 preguntas de programación.
+    return `Genera un test de 10 preguntas VARIADAS de programación.
 
-DEBILIDADES DEL ESTUDIANTE: ${debilidadesText}
-FORTALEZAS DEL ESTUDIANTE: ${fortalezasText}
+DEBILIDADES: ${debilidadesText}
+FORTALEZAS: ${fortalezasText}
 
-Crea 10 preguntas con esta distribución:
-- 5 preguntas fáciles (dificultad 1-3) sobre las DEBILIDADES
-- 2 preguntas medias (dificultad 3) mezclando temas
-- 3 preguntas difíciles (dificultad 4-5) sobre las FORTALEZAS
+DISTRIBUCIÓN (10 preguntas):
+- 5 preguntas FÁCILES (dificultad 1-3) sobre DEBILIDADES
+- 2 preguntas MEDIAS (dificultad 3) mixtas
+- 3 preguntas DIFÍCILES (dificultad 4-5) sobre FORTALEZAS
 
-Cada pregunta debe tener:
-- Una pregunta clara
-- 4 opciones (solo 1 correcta)
-- Una explicación de la respuesta correcta
+TIPOS DE PREGUNTAS (USA SOLO ESTOS VALORES):
+1. "opcion_multiple" - Pregunta con 4 opciones, solo 1 correcta
+2. "codigo" - Mostrar código y preguntar qué hace o encontrar error (4 opciones)
+3. "verdadero_falso" - Afirmación verdadera o falsa (2 opciones: "Verdadero", "Falso")
+4. "completar_blanco" - Código incompleto, elegir qué va en el espacio (4 opciones)
 
-Responde con este JSON (sin texto adicional):
+IMPORTANTE:
+- USA AL MENOS 3 TIPOS DIFERENTES en las 10 preguntas
+- INCLUYE código real en preguntas tipo "codigo" y "completar_blanco"
+- El código debe estar en el campo "codigo" (null para otros tipos)
+- El campo "tipo_pregunta" DEBE ser uno de: opcion_multiple, codigo, verdadero_falso, completar_blanco
+
+Responde SOLO JSON válido:
 {
   "preguntas": [
     {
       "categoria": "tema específico",
+      "tipo_pregunta": "codigo",
       "tipo": "refuerzo",
       "dificultad": 2,
-      "pregunta": "texto de la pregunta",
+      "pregunta": "¿Qué imprime este código?",
+      "codigo": "for(let i=0; i<3; i++) { console.log(i); }",
+      "opciones": [
+        {"texto": "0 1 2", "es_correcta": true},
+        {"texto": "1 2 3", "es_correcta": false},
+        {"texto": "0 0 0", "es_correcta": false},
+        {"texto": "Error de sintaxis", "es_correcta": false}
+      ],
+      "explicacion": "El bucle imprime i desde 0 hasta 2"
+    },
+    {
+      "categoria": "tema específico",
+      "tipo_pregunta": "verdadero_falso",
+      "tipo": "refuerzo",
+      "dificultad": 1,
+      "pregunta": "En JavaScript, 'var' tiene alcance de bloque",
       "codigo": null,
       "opciones": [
-        {"texto": "opción A", "es_correcta": true},
-        {"texto": "opción B", "es_correcta": false},
+        {"texto": "Verdadero", "es_correcta": false},
+        {"texto": "Falso", "es_correcta": true}
+      ],
+      "explicacion": "var tiene alcance de función, no de bloque. let y const sí tienen alcance de bloque"
+    }
+  ],
         {"texto": "opción C", "es_correcta": false},
         {"texto": "opción D", "es_correcta": false}
       ],

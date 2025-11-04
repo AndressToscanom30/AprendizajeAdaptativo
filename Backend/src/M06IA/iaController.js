@@ -323,9 +323,9 @@ class IAController {
             evaluacionOriginal: a.intento?.evaluacion,
             puntuacionGlobal: a.puntuacionGlobal,
             porcentajeTotal: a.porcentajeTotal,
-            debilidades: a.debilidades,
-            fortalezas: a.fortalezas,
-            recomendaciones: a.recomendaciones,
+            debilidades: typeof a.debilidades === 'string' ? JSON.parse(a.debilidades) : (a.debilidades || []),
+            fortalezas: typeof a.fortalezas === 'string' ? JSON.parse(a.fortalezas) : (a.fortalezas || []),
+            recomendaciones: typeof a.recomendaciones === 'string' ? JSON.parse(a.recomendaciones) : (a.recomendaciones || []),
             estado: a.estado,
             tieneTestAdaptativo: !!test,
             evaluacionAdaptativa: evaluacionAdaptativa,
@@ -572,9 +572,10 @@ class IAController {
         where: { analisisId: analisis.id },
       });
 
-      // 5. Si no existe test, generarlo
-      if (!testAdaptativo) {
+      // 5. Si no existe test O si falló anteriormente, (re)generarlo
+      if (!testAdaptativo || testAdaptativo.estado === "error") {
         try {
+          console.log(`🎯 Generando test adaptativo para análisis ${analisis.id}...`);
           
           const testGenerado = await groqService.generarTestAdaptativo({
             debilidades: analisis.debilidades,
@@ -583,17 +584,35 @@ class IAController {
             evaluacion_original: intento.evaluacion.titulo,
           });
 
-          testAdaptativo = await TestAdaptativo.create({
-            usuarioId: userId,
-            analisisId: analisis.id,
-            preguntas: testGenerado.preguntas,
-            enfoque: testGenerado.enfoque,
-            estado: "generado",
-          });
+          if (testAdaptativo && testAdaptativo.estado === "error") {
+            // Actualizar test existente que falló
+            await testAdaptativo.update({
+              preguntas: testGenerado.preguntas,
+              enfoque: testGenerado.enfoque,
+              estado: "generado",
+            });
+            console.log(`✅ Test adaptativo regenerado exitosamente`);
+          } else {
+            // Crear nuevo test
+            testAdaptativo = await TestAdaptativo.create({
+              usuarioId: userId,
+              analisisId: analisis.id,
+              preguntas: testGenerado.preguntas,
+              enfoque: testGenerado.enfoque,
+              estado: "generado",
+            });
+            console.log(`✅ Test adaptativo creado exitosamente`);
+          }
 
           
         } catch (error) {
           console.error("❌ Error generando test adaptativo:", error);
+          
+          // Marcar como error si existe
+          if (testAdaptativo) {
+            await testAdaptativo.update({ estado: "error" });
+          }
+          
           return { analisis };
         }
       }
@@ -605,6 +624,7 @@ class IAController {
         testAdaptativo.estado === "generado"
       ) {
         try {
+          console.log(`🔄 Convirtiendo test a evaluación...`);
           
           const evaluacionAdaptativa = await this.convertirTestAEvaluacion(
             testAdaptativo,
@@ -617,7 +637,7 @@ class IAController {
             estado: "convertido_evaluacion",
           });
 
-          
+          console.log(`✅ Test convertido a evaluación ID: ${evaluacionAdaptativa.id}`);
 
           return {
             analisis,
@@ -675,13 +695,17 @@ class IAController {
       for (let i = 0; i < preguntasIA.length; i++) {
         const preguntaIA = preguntasIA[i];
 
+        // Determinar tipo de pregunta
+        const tipoPregunta = preguntaIA.tipo_pregunta || 'opcion_multiple';
+        
         const pregunta = await Pregunta.create(
           {
             texto: preguntaIA.pregunta,
-            tipo: "opcion_multiple",
+            tipo: tipoPregunta,
             dificultad: this.mapearDificultad(preguntaIA.dificultad),
             explicacion: preguntaIA.explicacion || "",
-            creado_por: userId, // Campo requerido
+            codigo: preguntaIA.codigo || null, // ✅ Agregar código si existe
+            creado_por: userId,
           },
           { transaction: t }
         );
@@ -694,6 +718,19 @@ class IAController {
         }));
 
         await OpcionPregunta.bulkCreate(opcionesData, { transaction: t });
+
+        // ✅ Crear etiqueta con la categoría de la pregunta
+        if (preguntaIA.categoria) {
+          // Buscar o crear etiqueta
+          const [etiqueta] = await Etiqueta.findOrCreate({
+            where: { nombre: preguntaIA.categoria },
+            defaults: { nombre: preguntaIA.categoria },
+            transaction: t
+          });
+          
+          // Asociar etiqueta con pregunta
+          await pregunta.addEtiqueta(etiqueta, { transaction: t });
+        }
 
         // Vincular pregunta a evaluación
         await PreguntaEvaluacion.create(
