@@ -616,7 +616,7 @@ class IAController {
           comienza_en: new Date(),
           termina_en: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
           max_intentos: 3,
-          curso_id: cursoId,
+          curso_id: cursoId || null, // ✅ Permitir null si no hay curso
           creado_por: userId, // ✅ Cambiado de createdBy
           activa: true,
           preguntas_revueltas: false,
@@ -792,6 +792,208 @@ class IAController {
       default:
         // Si ya viene evaluado desde la BD
         return intentoRespuesta.es_correcta || false;
+    }
+  }
+
+  // 🔄 REINTENTAR CONVERSIÓN DE TESTS PENDIENTES
+  async reintentarConversionPendiente(req, res) {
+    try {
+      const userId = req.user.id;
+      const convertirTodos = req.query.todos === 'true'; // Parámetro opcional para convertir todos
+      
+      console.log(`🔄 Buscando tests pendientes de conversión${convertirTodos ? ' (TODOS)' : ` para usuario ${userId}`}...`);
+      
+      // Buscar tests en estado "generado" sin evaluacionId
+      const whereClause = {
+        estado: "generado",
+        evaluacionId: null
+      };
+      
+      // Si no se especifica "todos=true", solo buscar del usuario autenticado
+      if (!convertirTodos) {
+        whereClause.usuarioId = userId;
+      }
+      
+      const testsPendientes = await TestAdaptativo.findAll({
+        where: whereClause,
+        include: [{
+          model: AnalisisIA,
+          as: "analisis",
+          include: [{
+            model: Intento,
+            as: "intento",
+            include: [{
+              model: Evaluacion,
+              as: "evaluacion",
+              attributes: ["id", "curso_id"]
+            }]
+          }]
+        }]
+      });
+
+      if (testsPendientes.length === 0) {
+        return res.json({
+          success: true,
+          mensaje: "No hay tests pendientes de conversión",
+          convertidos: 0
+        });
+      }
+
+      console.log(`📋 Encontrados ${testsPendientes.length} tests pendientes`);
+
+      const resultados = [];
+      
+      for (const test of testsPendientes) {
+        try {
+          console.log(`📝 Convirtiendo test ${test.id}...`);
+          
+          // ✅ Permitir curso_id null (evaluaciones sin curso asignado)
+          const cursoId = test.analisis?.intento?.evaluacion?.curso_id || null;
+          
+          // ✅ Usar el usuarioId del test, no del token
+          const testUserId = test.usuarioId;
+          
+          const evaluacionAdaptativa = await this.convertirTestAEvaluacion(
+            test,
+            cursoId,
+            testUserId
+          );
+
+          await test.update({
+            evaluacionId: evaluacionAdaptativa.id,
+            estado: "convertido_evaluacion"
+          });
+
+          console.log(`✅ Test ${test.id} convertido a evaluación ${evaluacionAdaptativa.id}`);
+          resultados.push({ 
+            testId: test.id, 
+            evaluacionId: evaluacionAdaptativa.id,
+            usuarioId: testUserId,
+            success: true
+          });
+
+        } catch (error) {
+          console.error(`❌ Error convirtiendo test ${test.id}:`, error);
+          resultados.push({ 
+            testId: test.id, 
+            error: error.message,
+            success: false
+          });
+        }
+      }
+
+      const exitosos = resultados.filter(r => r.success).length;
+
+      return res.json({
+        success: true,
+        mensaje: `Se convirtieron ${exitosos} de ${testsPendientes.length} tests`,
+        convertidos: exitosos,
+        total: testsPendientes.length,
+        detalles: resultados
+      });
+
+    } catch (error) {
+      console.error("❌ Error en reintentarConversionPendiente:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Error al reintentar conversión",
+        error: error.message
+      });
+    }
+  }
+
+  // 🔄 REGENERAR ANÁLISIS EN ERROR
+  async regenerarAnalisisError(req, res) {
+    try {
+      const userId = req.user.id;
+      
+      console.log(`🔄 Buscando análisis en error para regenerar...`);
+      
+      // Buscar análisis en estado "error" del usuario
+      const analisisError = await AnalisisIA.findAll({
+        where: {
+          usuarioId: userId,
+          estado: "error"
+        },
+        include: [{
+          model: Intento,
+          as: "intento",
+          include: [{
+            model: Evaluacion,
+            as: "evaluacion",
+            attributes: ["id", "titulo"]
+          }]
+        }]
+      });
+
+      if (analisisError.length === 0) {
+        return res.json({
+          success: true,
+          mensaje: "No hay análisis en error",
+          regenerados: 0
+        });
+      }
+
+      console.log(`📋 Encontrados ${analisisError.length} análisis en error`);
+
+      const resultados = [];
+      
+      for (const analisis of analisisError) {
+        try {
+          console.log(`🔄 Regenerando análisis ${analisis.id} (intento: ${analisis.intentoId})...`);
+          
+          // Reintentar el análisis completo
+          const resultado = await this.analizarYGenerarAutomatico(
+            analisis.intentoId,
+            userId
+          );
+
+          if (resultado && resultado.analisis && resultado.analisis.estado === 'completado') {
+            console.log(`✅ Análisis ${analisis.id} regenerado exitosamente`);
+            resultados.push({ 
+              analisisId: analisis.id,
+              intentoId: analisis.intentoId,
+              estado: 'completado',
+              success: true
+            });
+          } else {
+            console.log(`⚠️ Análisis ${analisis.id} falló nuevamente`);
+            resultados.push({ 
+              analisisId: analisis.id,
+              intentoId: analisis.intentoId,
+              error: 'Falló al regenerar',
+              success: false
+            });
+          }
+
+        } catch (error) {
+          console.error(`❌ Error regenerando análisis ${analisis.id}:`, error.message);
+          resultados.push({ 
+            analisisId: analisis.id,
+            intentoId: analisis.intentoId,
+            error: error.message,
+            success: false
+          });
+        }
+      }
+
+      const exitosos = resultados.filter(r => r.success).length;
+
+      return res.json({
+        success: true,
+        mensaje: `Se regeneraron ${exitosos} de ${analisisError.length} análisis`,
+        regenerados: exitosos,
+        total: analisisError.length,
+        detalles: resultados
+      });
+
+    } catch (error) {
+      console.error("❌ Error en regenerarAnalisisError:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Error al regenerar análisis",
+        error: error.message
+      });
     }
   }
 }

@@ -60,4 +60,10 @@ router.get("/mis-evaluaciones-adaptativas", async (req, res) => {
   }
 });
 
+// 🔄 REINTENTAR CONVERSIÓN DE TESTS PENDIENTES
+router.post("/reintentar-conversion", (req, res) => iaController.reintentarConversionPendiente(req, res));
+
+// 🔄 REGENERAR ANÁLISIS EN ERROR
+router.post("/regenerar-analisis-error", (req, res) => iaController.regenerarAnalisisError(req, res));
+
 export default router;
