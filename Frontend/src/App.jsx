@@ -201,8 +201,6 @@ function App() {
                     </ProtectedRoute>}
                 />
 
-<<<<<<< Updated upstream
-=======
                 {/* Ruta de Revisión de Intento */}
                 <Route path="/estudiante/intento/:intentoId/revision"
                   element={
@@ -211,7 +209,6 @@ function App() {
                     </ProtectedRoute>}
                 />
 
->>>>>>> Stashed changes
                 {/* Ruta de Análisis IA */}
                 <Route path="/estudiante/analisis-ia"
                   element={
