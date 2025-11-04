@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
-import { ArrowLeft, Save, Loader2, AlertCircle, BookOpen } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, AlertCircle, BookOpen, List } from 'lucide-react';
 
 function EditarEvaluacionForm() {
     const { id } = useParams();
@@ -45,16 +45,14 @@ function EditarEvaluacionForm() {
 
             const data = await response.json();
             
-            // Formatear fechas para input datetime-local
+            // Formatear fechas para input datetime-local (YYYY-MM-DDTHH:mm)
             const formatearFecha = (fecha) => {
                 if (!fecha) return '';
                 const date = new Date(fecha);
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${year}-${month}-${day}T${hours}:${minutes}`;
+                // Ajustar a zona horaria local
+                const offset = date.getTimezoneOffset();
+                const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+                return localDate.toISOString().slice(0, 16);
             };
 
             setFormData({
@@ -155,13 +153,24 @@ function EditarEvaluacionForm() {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-4 sm:p-8">
             <div className="max-w-4xl mx-auto">
                 {/* Header con botón volver */}
-                <button
-                    onClick={() => navigate('/profesor/evaluaciones')}
-                    className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors font-medium mb-6"
-                >
-                    <ArrowLeft className="w-5 h-5" />
-                    Volver a Evaluaciones
-                </button>
+                <div className="flex items-center justify-between mb-6">
+                    <button
+                        onClick={() => navigate('/profesor/evaluaciones')}
+                        className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors font-medium"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                        Volver a Evaluaciones
+                    </button>
+                    
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/profesor/evaluaciones/detalle/${id}`)}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
+                    >
+                        <List className="w-5 h-5" />
+                        Gestionar Preguntas
+                    </button>
+                </div>
 
                 {/* Card Principal */}
                 <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-8">
@@ -287,6 +296,13 @@ function EditarEvaluacionForm() {
                             <label htmlFor="activa" className="text-sm font-semibold text-slate-700 cursor-pointer">
                                 Evaluación activa (visible para estudiantes)
                             </label>
+                        </div>
+
+                        {/* Info sobre preguntas */}
+                        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                            <p className="text-sm text-blue-800">
+                                <strong>Nota:</strong> Para agregar, editar o eliminar preguntas, haz clic en el botón "Gestionar Preguntas" en la parte superior de esta página.
+                            </p>
                         </div>
 
                         {/* Botones */}

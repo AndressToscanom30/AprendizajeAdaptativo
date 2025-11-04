@@ -238,3 +238,63 @@ export const eliminarCurso = async (req, res) => {
         return res.status(500).json({ message: "Error al eliminar curso", error: error.message });
     }
 };
+
+// Obtener compañeros de curso (para estudiantes)
+export const obtenerCompañerosCurso = async (req, res) => {
+    try {
+        const { id } = req.params; // ID del curso
+        const estudianteId = req.user.id;
+
+        // Verificar que el estudiante esté inscrito en el curso
+        const inscripcion = await CourseStudent.findOne({
+            where: {
+                courseId: id,
+                studentId: estudianteId
+            }
+        });
+
+        if (!inscripcion) {
+            return res.status(403).json({ message: "No estás inscrito en este curso" });
+        }
+
+        // Obtener todos los estudiantes del curso (incluyendo al que hace la consulta)
+        const curso = await Course.findByPk(id, {
+            include: [
+                {
+                    model: User,
+                    as: "estudiantes",
+                    attributes: ["id", "nombre", "email"],
+                    through: { 
+                        attributes: ["inscrito_en", "estado"]
+                    }
+                },
+                {
+                    model: User,
+                    as: "profesor",
+                    attributes: ["id", "nombre", "email"]
+                }
+            ]
+        });
+
+        if (!curso) {
+            return res.status(404).json({ message: "Curso no encontrado" });
+        }
+
+        // Filtrar para no incluir al estudiante que consulta en la lista de compañeros
+        const compañeros = curso.estudiantes.filter(est => est.id !== estudianteId);
+
+        return res.json({
+            curso: {
+                id: curso.id,
+                titulo: curso.titulo,
+                profesor: curso.profesor
+            },
+            total_estudiantes: curso.estudiantes.length,
+            compañeros: compañeros
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error al obtener compañeros", error: error.message });
+    }
+};
+

@@ -30,6 +30,12 @@ import EditarEvaluacionForm from "./pages/evaluaciones/profesor/EditarEvaluacion
 import Evaluacion from "./pages/evaluaciones/Evaluaciones.jsx";
 import CursosProfesor from "./pages/cursos/profesor/CursosProfesor.jsx";
 import DetalleCurso from "./pages/cursos/profesor/DetalleCurso.jsx";
+import MisCursos from "./pages/cursos/estudiante/MisCursos.jsx";
+import DetalleCursoEstudiante from "./pages/cursos/estudiante/DetalleCursoEstudiante.jsx";
+import EvaluacionesEstudiante from "./pages/evaluaciones/EvaluacionesEstudiante.jsx";
+import DetalleEvaluacionEstudiante from "./pages/evaluaciones/estudiante/DetalleEvaluacionEstudiante.jsx";
+import EvaluacionIntento from "./pages/evaluaciones/estudiante/EvaluacionIntento.jsx";
+import AnalisisIA from "./pages/evaluaciones/estudiante/AnalisisIA.jsx";
 import GestionRelaciones from "./pages/admin/GestionRelaciones.jsx";
 import VerificarRelacion from "./pages/admin/VerificarRelacion.jsx";
 
@@ -145,6 +151,61 @@ function App() {
                   <ProtectedRoute roles={["estudiante"]}>
                     <StudentLayout>
                       <DashboardE />
+                    </StudentLayout>
+                  </ProtectedRoute>}
+              />
+
+              {/* Rutas de Cursos Estudiante */}
+              <Route path="/estudiante/cursos"
+                element={
+                  <ProtectedRoute roles={["estudiante"]}>
+                    <StudentLayout>
+                      <MisCursos />
+                    </StudentLayout>
+                  </ProtectedRoute>}
+              />
+
+              <Route path="/estudiante/cursos/:id"
+                element={
+                  <ProtectedRoute roles={["estudiante"]}>
+                    <StudentLayout>
+                      <DetalleCursoEstudiante />
+                    </StudentLayout>
+                  </ProtectedRoute>}
+              />
+
+              {/* Rutas de Evaluaciones Estudiante */}
+              <Route path="/estudiante/evaluaciones"
+                element={
+                  <ProtectedRoute roles={["estudiante"]}>
+                    <StudentLayout>
+                      <EvaluacionesEstudiante />
+                    </StudentLayout>
+                  </ProtectedRoute>}
+              />
+
+              <Route path="/estudiante/evaluacion/:id"
+                element={
+                  <ProtectedRoute roles={["estudiante"]}>
+                    <StudentLayout>
+                      <DetalleEvaluacionEstudiante />
+                    </StudentLayout>
+                  </ProtectedRoute>}
+              />
+
+              <Route path="/estudiante/evaluacion/:id/intento"
+                element={
+                  <ProtectedRoute roles={["estudiante"]}>
+                    <EvaluacionIntento />
+                  </ProtectedRoute>}
+              />
+
+              {/* Ruta de Análisis IA */}
+              <Route path="/estudiante/analisis-ia"
+                element={
+                  <ProtectedRoute roles={["estudiante"]}>
+                    <StudentLayout>
+                      <AnalisisIA />
                     </StudentLayout>
                   </ProtectedRoute>}
               />

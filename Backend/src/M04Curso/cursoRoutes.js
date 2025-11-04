@@ -9,7 +9,8 @@ import {
     obtenerEstudiantesCurso,
     eliminarEstudianteCurso,
     actualizarCurso,
-    eliminarCurso
+    eliminarCurso,
+    obtenerCompañerosCurso
 } from './cursoController.js';
 
 const router = Router();
@@ -25,5 +26,6 @@ router.delete('/:cursoId/estudiantes/:estudianteId', verifyToken, rolRequerido("
 
 // Rutas para estudiantes
 router.get('/estudiante', verifyToken, rolRequerido("estudiante"), obtenerCursosEstudiante);
+router.get('/:id/compañeros', verifyToken, rolRequerido("estudiante"), obtenerCompañerosCurso);
 
 export default router;

@@ -1,17 +1,34 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
-function OpcionMultiple() {
-  const [opciones, setOpciones] = useState([
-    { id: 1, texto: "Opción 1" },
-    { id: 2, texto: "Opción 2" },
-  ]);
-  const [correcto, setCorrecto] = useState(null);
-  const nextId = useRef(3);
+function OpcionMultiple({ initialOpciones = [], onChange }) {
+  const [opciones, setOpciones] = useState(
+    initialOpciones.length > 0 
+      ? initialOpciones.map((op, idx) => ({ id: idx + 1, texto: op.texto, correcta: op.es_correcta }))
+      : [
+          { id: 1, texto: "Opción 1", correcta: false },
+          { id: 2, texto: "Opción 2", correcta: false },
+        ]
+  );
+  const [correcto, setCorrecto] = useState(() => {
+    const correctaIndex = initialOpciones.findIndex(op => op.es_correcta);
+    return correctaIndex >= 0 ? correctaIndex + 1 : null;
+  });
+  const nextId = useRef(initialOpciones.length > 0 ? initialOpciones.length + 1 : 3);
   const radioNameRef = useRef(`opciones-${Date.now()}`);
+
+  useEffect(() => {
+    if (onChange) {
+      const opcionesFormateadas = opciones.map(op => ({
+        texto: op.texto,
+        es_correcta: op.id === correcto
+      }));
+      onChange(opcionesFormateadas);
+    }
+  }, [opciones, correcto]);
 
   const agregarOpcion = () => {
     const id = nextId.current++;
-    setOpciones((prev) => [...prev, { id, texto: `Opción ${id}` }]);
+    setOpciones((prev) => [...prev, { id, texto: `Opción ${id}`, correcta: false }]);
   };
 
   const cambiarTexto = (id, nuevoTexto) => {

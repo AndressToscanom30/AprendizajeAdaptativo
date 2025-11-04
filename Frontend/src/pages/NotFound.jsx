@@ -123,7 +123,7 @@ const handleSearch = (e) => {
         <Link to={"/"}>
             <button className="group flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-full hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
                 <Home className="w-5 h-5 transition-transform group-hover:scale-110" />
-                <a >Ir al inicio</a>
+                <span>Ir al inicio</span>
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </button>
           </Link>

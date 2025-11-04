@@ -1,11 +1,26 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
-function SeleccionMultiple() {
-  const [opciones, setOpciones] = useState([
-    { id: 1, texto: "Opción 1", correcta: false },
-    { id: 2, texto: "Opción 2", correcta: false },
-  ]);
-  const nextId = useRef(3);
+function SeleccionMultiple({ initialOpciones = [], onChange }) {
+  const [opciones, setOpciones] = useState(
+    initialOpciones.length > 0
+      ? initialOpciones.map((op, idx) => ({ id: idx + 1, texto: op.texto, correcta: op.es_correcta }))
+      : [
+          { id: 1, texto: "Opción 1", correcta: false },
+          { id: 2, texto: "Opción 2", correcta: false },
+        ]
+  );
+  const nextId = useRef(initialOpciones.length > 0 ? initialOpciones.length + 1 : 3);
+
+  // Notificar cambios al padre
+  useEffect(() => {
+    if (onChange) {
+      const opcionesFormateadas = opciones.map(op => ({
+        texto: op.texto,
+        es_correcta: op.correcta
+      }));
+      onChange(opcionesFormateadas);
+    }
+  }, [opciones]);
 
   const agregarOpcion = () => {
     const id = nextId.current++;

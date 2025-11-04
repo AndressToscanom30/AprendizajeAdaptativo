@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { PlusCircle, Clock, Calendar, Shuffle, Save } from "lucide-react";
-import PreguntaEditor from "../../../components/evaluaciones/PreguntaEditor.jsx";
+import { PlusCircle, Clock, Calendar, Shuffle, Save, BookOpen } from "lucide-react";
+import PreguntaEditor from "../../../components/evaluaciones/PreguntaEditorMejorado.jsx";
 import { useAuth } from "../../../context/AuthContext.jsx";
 
 function CrearEvaluacionForm() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [preguntas, setPreguntas] = useState([]);
+    const [cursos, setCursos] = useState([]);
     const [evaluacion, setEvaluacion] = useState({
         titulo: "",
         descripcion: "",
@@ -16,11 +17,30 @@ function CrearEvaluacionForm() {
         termina_en: "",
         preguntas_revueltas: false,
         max_intentos: 3,
-        curso_id: null,
+        curso_id: "",
         activa: true
     });
     const [loading, setLoading] = useState(false);
     const [mensaje, setMensaje] = useState("");
+
+    useEffect(() => {
+        cargarCursos();
+    }, []);
+
+    const cargarCursos = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch("http://localhost:4000/api/cursos/profesor", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setCursos(data);
+            }
+        } catch (error) {
+            console.error("Error al cargar cursos:", error);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -66,12 +86,24 @@ function CrearEvaluacionForm() {
                 throw new Error('No hay token de autenticación');
             }
 
-            // Crear evaluación
+            // Preparar preguntas en el formato correcto
+            const preguntasFormateadas = preguntas.map(pregunta => ({
+                texto: pregunta.texto || pregunta.titulo || "Pregunta sin título",
+                tipo: pregunta.tipo || "opcion_multiple",
+                dificultad: pregunta.dificultad || "medio",
+                puntos: pregunta.puntaje || 1,
+                tiempo_sugerido: 60,
+                explicacion: pregunta.descripcion || "",
+                opciones: pregunta.opciones || []
+            }));
+
+            // Crear evaluación CON las preguntas
             const evaluacionData = {
                 ...evaluacion,
                 profesor_id: user?.id,
                 duracion_minutos: parseInt(evaluacion.duracion_minutos),
                 max_intentos: parseInt(evaluacion.max_intentos),
+                preguntas: preguntasFormateadas // Enviar preguntas junto con la evaluación
             };
 
             const resEval = await fetch("http://localhost:4000/api/evaluaciones", {
@@ -85,61 +117,16 @@ function CrearEvaluacionForm() {
 
             if (!resEval.ok) {
                 const errorData = await resEval.json();
-                throw new Error(errorData.error || "Error al crear la evaluación");
+                throw new Error(errorData.message || errorData.error || "Error al crear la evaluación");
             }
 
             const nuevaEval = await resEval.json();
 
-            // Crear preguntas si hay
-            if (preguntas.length > 0) {
-                for (const pregunta of preguntas) {
-                    const preguntaData = {
-                        texto: pregunta.texto || pregunta.titulo || "Pregunta sin título",
-                        tipo: pregunta.tipo || "opcion_multiple",
-                        dificultad: pregunta.dificultad || "media",
-                        metadata: JSON.stringify({
-                            opciones: pregunta.opciones || [],
-                            respuesta_correcta: pregunta.respuesta_correcta || "",
-                        }),
-                        explicacion: pregunta.descripcion || "",
-                    };
-
-                    const resCrearPregunta = await fetch("http://localhost:4000/api/preguntas", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`,
-                        },
-                        body: JSON.stringify(preguntaData),
-                    });
-
-                    if (!resCrearPregunta.ok) {
-                        console.warn("Error al crear una pregunta");
-                        continue;
-                    }
-
-                    const nuevaPregunta = await resCrearPregunta.json();
-
-                    // Asociar pregunta a evaluación
-                    await fetch(
-                        `http://localhost:4000/api/evaluaciones/${nuevaEval.id}/preguntas`,
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Authorization": `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({ preguntaId: nuevaPregunta.id }),
-                        }
-                    );
-                }
-            }
-
-            setMensaje("✅ Evaluación creada exitosamente");
+            setMensaje("✓ Evaluación creada exitosamente con " + preguntasFormateadas.length + " preguntas");
             
             // Redirigir después de 1.5 segundos
             setTimeout(() => {
-                navigate('/profesor/evaluaciones');
+                navigate("/profesor/evaluaciones");
             }, 1500);
 
         } catch (error) {
@@ -203,6 +190,30 @@ function CrearEvaluacionForm() {
                     ></textarea>
                 </div>
 
+                {/* Selector de Curso */}
+                <div>
+                    <label className="flex items-center gap-2 text-slate-700 font-semibold mb-2 text-lg">
+                        <BookOpen className="w-5 h-5 text-blue-600" /> 
+                        Asignar a Curso (Opcional)
+                    </label>
+                    <select
+                        name="curso_id"
+                        value={evaluacion.curso_id}
+                        onChange={handleChange}
+                        className="w-full border-2 border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 hover:border-blue-400 bg-white"
+                    >
+                        <option value="">Sin asignar a curso específico</option>
+                        {cursos.map((curso) => (
+                            <option key={curso.id} value={curso.id}>
+                                {curso.titulo} ({curso.estudiantes?.length || 0} estudiantes)
+                            </option>
+                        ))}
+                    </select>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Si seleccionas un curso, la evaluación se asignará automáticamente a todos sus estudiantes
+                    </p>
+                </div>
+
                 {/* Duración e Intentos */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
@@ -240,13 +251,13 @@ function CrearEvaluacionForm() {
                     <div>
                         <label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
                             <Calendar className="w-5 h-5 text-blue-600" /> 
-                            Fecha de inicio
+                            Fecha y hora de inicio
                         </label>
                         <input
                             name="comienza_en"
                             value={evaluacion.comienza_en}
                             onChange={handleChange}
-                            type="date"
+                            type="datetime-local"
                             className="w-full border-2 border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 hover:border-blue-400"
                         />
                     </div>
@@ -254,13 +265,13 @@ function CrearEvaluacionForm() {
                     <div>
                         <label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
                             <Calendar className="w-5 h-5 text-blue-600" /> 
-                            Fecha de finalización
+                            Fecha y hora de finalización
                         </label>
                         <input
                             name="termina_en"
                             value={evaluacion.termina_en}
                             onChange={handleChange}
-                            type="date"
+                            type="datetime-local"
                             className="w-full border-2 border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 hover:border-blue-400"
                         />
                     </div>
@@ -320,13 +331,15 @@ function CrearEvaluacionForm() {
                     </h2>
                 </div>
 
-                {preguntas.map((p) => (
-                    <PreguntaEditor
-                        key={p.id}
-                        pregunta={p}
-                        onDelete={() => eliminarPregunta(p.id)}
-                        onChange={(newP) => actualizarPregunta(p.id, newP)}
-                    />
+                {preguntas.map((p, index) => (
+                    <div key={p.id} className="mb-6">
+                        <PreguntaEditor
+                            numero={index + 1}
+                            initialData={p}
+                            onDelete={() => eliminarPregunta(p.id)}
+                            onChange={(newP) => actualizarPregunta(p.id, newP)}
+                        />
+                    </div>
                 ))}
 
                 {/* Botón Agregar Pregunta */}

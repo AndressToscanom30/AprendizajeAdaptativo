@@ -1,11 +1,14 @@
 import groqService from "./services/groqService.js";
 import AnalisisIA from "./models/AnalisisIA.js";
 import TestAdaptativo from "./models/TestAdaptativo.js";
-import Intento from "../M05Evaluacion/intento.js";
+import Intento from "../M05Evaluacion/Intento.js";
 import IntentoRespuesta from "../M05Evaluacion/IntentoRespuesta.js";
 import Evaluacion from "../M05Evaluacion/Evaluacion.js";
 import Pregunta from "../M05Evaluacion/Pregunta.js";
 import OpcionPregunta from "../M05Evaluacion/OpcionPregunta.js";
+import PreguntaEvaluacion from "../M05Evaluacion/PreguntaEvaluacion.js";
+import EvaluacionUsuario from "../M05Evaluacion/EvaluacionUsuario.js";
+import sequelize from "../config/db.js";
 
 class IAController {
   async analizarIntento(req, res) {
@@ -263,15 +266,49 @@ class IAController {
               },
             ],
           },
+          {
+            model: TestAdaptativo,
+            as: "tests",
+            required: false,
+          },
         ],
         order: [["createdAt", "DESC"]],
         limit: 20,
       });
 
+      // Enriquecer con información de evaluaciones adaptativas generadas
+      const analisisEnriquecidos = await Promise.all(
+        analisis.map(async (a) => {
+          const test = a.tests?.[0];
+          let evaluacionAdaptativa = null;
+
+          if (test?.evaluacionId) {
+            evaluacionAdaptativa = await Evaluacion.findByPk(test.evaluacionId, {
+              attributes: ["id", "titulo", "descripcion", "tipo"],
+            });
+          }
+
+          return {
+            id: a.id,
+            intentoId: a.intentoId,
+            evaluacionOriginal: a.intento?.evaluacion,
+            puntuacionGlobal: a.puntuacionGlobal,
+            porcentajeTotal: a.porcentajeTotal,
+            debilidades: a.debilidades,
+            fortalezas: a.fortalezas,
+            recomendaciones: a.recomendaciones,
+            estado: a.estado,
+            tieneTestAdaptativo: !!test,
+            evaluacionAdaptativa: evaluacionAdaptativa,
+            createdAt: a.createdAt,
+          };
+        })
+      );
+
       return res.json({
         success: true,
-        total: analisis.length,
-        analisis,
+        total: analisisEnriquecidos.length,
+        analisis: analisisEnriquecidos,
       });
     } catch (error) {
       console.error("Error al obtener análisis:", error);
@@ -384,7 +421,260 @@ class IAController {
     }
   }
 
-  // ✅ Método estático (se llama con IAController.prepararDatosParaIA)
+  // ✅ NUEVO: Análisis y generación automática después de completar intento
+  async analizarYGenerarAutomatico(intentoId, userId) {
+    try {
+      console.log(`🤖 Iniciando análisis automático para intento ${intentoId}`);
+
+      // 1. Obtener el intento completo
+      const intento = await Intento.findByPk(intentoId, {
+        include: [
+          {
+            model: Evaluacion,
+            as: "evaluacion",
+            attributes: ["id", "titulo", "descripcion", "curso_id"],
+          },
+          {
+            model: IntentoRespuesta,
+            as: "respuestas",
+            include: [
+              {
+                model: Pregunta,
+                as: "pregunta",
+                attributes: ["id", "texto", "tipo", "dificultad", "puntos"],
+                include: [
+                  {
+                    model: OpcionPregunta,
+                    as: "opciones",
+                    attributes: ["id", "texto", "es_correcta"],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      if (!intento) {
+        console.log("⚠️ Intento no encontrado");
+        return null;
+      }
+
+      // 2. Verificar si ya existe análisis
+      let analisis = await AnalisisIA.findOne({
+        where: { intentoId: intentoId },
+      });
+
+      // 3. Si no existe o falló, crear/regenerar análisis
+      if (!analisis || analisis.estado === "error") {
+        const datosAnalisis = IAController.prepararDatosParaIA(intento);
+
+        analisis = await AnalisisIA.create({
+          usuarioId: userId,
+          intentoId: intentoId,
+          puntuacionGlobal: 0,
+          porcentajeTotal: 0,
+          estado: "procesando",
+        });
+
+        try {
+          console.log("🧠 Solicitando análisis a IA...");
+          const resultadoIA = await groqService.analizarDiagnostico(
+            datosAnalisis.resultados,
+            datosAnalisis.preguntas
+          );
+
+          await analisis.update({
+            puntuacionGlobal: resultadoIA.puntuacion_global,
+            porcentajeTotal: resultadoIA.porcentaje_total,
+            debilidades: resultadoIA.debilidades,
+            fortalezas: resultadoIA.fortalezas,
+            categoriasAnalisis: resultadoIA.categorias,
+            recomendaciones: resultadoIA.recomendaciones,
+            tiempoEstudioSugerido: resultadoIA.tiempo_estudio_sugerido,
+            estado: "completado",
+          });
+
+          console.log("✅ Análisis completado");
+        } catch (error) {
+          console.error("❌ Error en análisis IA:", error);
+          await analisis.update({ estado: "error" });
+          return null;
+        }
+      }
+
+      // 4. Verificar si ya existe test adaptativo
+      let testAdaptativo = await TestAdaptativo.findOne({
+        where: { analisisId: analisis.id },
+      });
+
+      // 5. Si no existe test, generarlo
+      if (!testAdaptativo) {
+        try {
+          console.log("🎯 Generando test adaptativo...");
+          const testGenerado = await groqService.generarTestAdaptativo({
+            debilidades: analisis.debilidades,
+            fortalezas: analisis.fortalezas,
+            categorias: analisis.categoriasAnalisis,
+            evaluacion_original: intento.evaluacion.titulo,
+          });
+
+          testAdaptativo = await TestAdaptativo.create({
+            usuarioId: userId,
+            analisisId: analisis.id,
+            preguntas: testGenerado.preguntas,
+            enfoque: testGenerado.enfoque,
+            estado: "generado",
+          });
+
+          console.log("✅ Test adaptativo generado");
+        } catch (error) {
+          console.error("❌ Error generando test adaptativo:", error);
+          return { analisis };
+        }
+      }
+
+      // 6. Convertir test a evaluación real si no se ha hecho
+      if (
+        testAdaptativo &&
+        !testAdaptativo.evaluacionId &&
+        testAdaptativo.estado === "generado"
+      ) {
+        try {
+          console.log("📝 Convirtiendo test a evaluación...");
+          const evaluacionAdaptativa = await this.convertirTestAEvaluacion(
+            testAdaptativo,
+            intento.evaluacion.curso_id,
+            userId
+          );
+
+          await testAdaptativo.update({
+            evaluacionId: evaluacionAdaptativa.id,
+            estado: "convertido_evaluacion",
+          });
+
+          console.log(
+            `🎉 Evaluación adaptativa creada: ${evaluacionAdaptativa.id}`
+          );
+
+          return {
+            analisis,
+            testAdaptativo,
+            evaluacionAdaptativa,
+          };
+        } catch (error) {
+          console.error("❌ Error convirtiendo test a evaluación:", error);
+          return { analisis, testAdaptativo };
+        }
+      }
+
+      return { analisis, testAdaptativo };
+    } catch (error) {
+      console.error("❌ Error en análisis automático:", error);
+      return null;
+    }
+  }
+
+  // ✅ NUEVO: Convertir test adaptativo a evaluación real
+  async convertirTestAEvaluacion(testAdaptativo, cursoId, userId) {
+    const t = await sequelize.transaction();
+
+    try {
+      // 1. Crear la evaluación adaptativa
+      const evaluacion = await Evaluacion.create(
+        {
+          titulo: `Test Adaptativo - Refuerzo Personalizado`,
+          descripcion: `Evaluación generada automáticamente por IA basada en tu desempeño. Enfoque: ${
+            testAdaptativo.enfoque?.areas_reforzar?.join(", ") || "Refuerzo general"
+          }`,
+          duracion_minutos: 30,
+          comienza_en: new Date(),
+          termina_en: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
+          max_intentos: 3,
+          curso_id: cursoId,
+          creado_por: userId, // ✅ Cambiado de createdBy
+          activa: true,
+          preguntas_revueltas: false,
+          tipo: "adaptativo", // Marcador especial
+          configuracion: {
+            mostrar_resultados: true,
+            aleatorizar_preguntas: true,
+            aleatorizar_opciones: true,
+            aprobacion_minima: 60,
+            generado_por_ia: true
+          }
+        },
+        { transaction: t }
+      );
+
+      // 2. Crear preguntas y opciones
+      const preguntasIA = testAdaptativo.preguntas;
+
+      for (let i = 0; i < preguntasIA.length; i++) {
+        const preguntaIA = preguntasIA[i];
+
+        const pregunta = await Pregunta.create(
+          {
+            texto: preguntaIA.pregunta,
+            tipo: "opcion_multiple",
+            dificultad: this.mapearDificultad(preguntaIA.dificultad),
+            puntos: preguntaIA.dificultad || 1,
+            tiempo_sugerido: 60,
+            explicacion: preguntaIA.explicacion || "",
+          },
+          { transaction: t }
+        );
+
+        // Crear opciones
+        const opcionesData = preguntaIA.opciones.map((op) => ({
+          preguntaId: pregunta.id,
+          texto: op.texto,
+          es_correcta: op.es_correcta || false,
+        }));
+
+        await OpcionPregunta.bulkCreate(opcionesData, { transaction: t });
+
+        // Vincular pregunta a evaluación
+        await PreguntaEvaluacion.create(
+          {
+            evaluacionId: evaluacion.id,
+            preguntaId: pregunta.id,
+            orden: i + 1,
+          },
+          { transaction: t }
+        );
+      }
+
+      // 3. Asignar evaluación al estudiante automáticamente
+      await EvaluacionUsuario.create(
+        {
+          usuarioId: userId,
+          evaluacionId: evaluacion.id,
+          estado: "pendiente",
+          fecha_asignacion: new Date(),
+        },
+        { transaction: t }
+      );
+
+      await t.commit();
+
+      console.log(
+        `✅ Evaluación adaptativa creada con ${preguntasIA.length} preguntas`
+      );
+      return evaluacion;
+    } catch (error) {
+      await t.rollback();
+      console.error("❌ Error al convertir test a evaluación:", error);
+      throw error;
+    }
+  }
+
+  // Helper para mapear dificultad numérica a texto
+  mapearDificultad(nivel) {
+    if (nivel <= 2) return "facil";
+    if (nivel <= 3) return "medio";
+    return "dificil";
+  }
   static prepararDatosParaIA(intento) {
     // ✅ Calcular puntaje si no existe
     const respuestasCorrectas = (intento.respuestas || []).filter(

@@ -78,8 +78,8 @@ Etiqueta.belongsToMany(Pregunta, {
 
 // Usuario <--> AnalisisIA
 User.hasMany(AnalisisIA, { 
-  foreignKey: "usuarioId",  // ✅ camelCase en el modelo
-  as: "analisis" 
+  foreignKey: "usuarioId",
+  as: "analisisIA" 
 });
 AnalisisIA.belongsTo(User, { 
   foreignKey: "usuarioId", 
@@ -96,34 +96,34 @@ AnalisisIA.belongsTo(Intento, {
   as: "intento" 
 });
 
-// Usuario <--> TestAdaptativo
-User.hasMany(TestAdaptativo, { 
+// Usuario <--> TestAdaptativoM06
+User.hasMany(TestAdaptativoM06, { 
   foreignKey: "usuarioId", 
-  as: "testsAdaptativos" 
+  as: "testsAdaptativosIA" 
 });
-TestAdaptativo.belongsTo(User, { 
+TestAdaptativoM06.belongsTo(User, { 
   foreignKey: "usuarioId", 
   as: "usuario" 
 });
 
-// AnalisisIA <--> TestAdaptativo (uno a uno)
-AnalisisIA.hasOne(TestAdaptativo, { 
+// AnalisisIA <--> TestAdaptativoM06 (uno a muchos)
+AnalisisIA.hasMany(TestAdaptativoM06, { 
   foreignKey: "analisisId", 
-  as: "testAdaptativo" 
+  as: "tests" 
 });
-TestAdaptativo.belongsTo(AnalisisIA, { 
+TestAdaptativoM06.belongsTo(AnalisisIA, { 
   foreignKey: "analisisId", 
   as: "analisis" 
 });
 
-// TestAdaptativo <--> Evaluacion (opcional)
+// TestAdaptativoM06 <--> Evaluacion (opcional)
 TestAdaptativoM06.belongsTo(Evaluacion, { 
   foreignKey: "evaluacionId", 
   as: "evaluacion" 
 });
 Evaluacion.hasMany(TestAdaptativoM06, { 
   foreignKey: "evaluacionId", 
-  as: "testsAdaptativos" 
+  as: "testsAdaptativosGenerados" 
 });
 
 // ===== RELACIONES M08 TEST ADAPTATIVOS =====

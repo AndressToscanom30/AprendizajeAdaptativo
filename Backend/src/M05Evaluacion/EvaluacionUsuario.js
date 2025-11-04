@@ -9,6 +9,22 @@ const EvaluacionUsuario = sequelize.define("EvaluacionUsuario", {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  usuarioId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  },
+  evaluacionId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'Evaluacions',
+      key: 'id'
+    }
+  },
   estado: {
     type: DataTypes.ENUM("pendiente", "en_progreso", "completada"),
     defaultValue: "pendiente",
@@ -25,6 +41,9 @@ const EvaluacionUsuario = sequelize.define("EvaluacionUsuario", {
     type: DataTypes.DATE,
     allowNull: true,
   },
+}, {
+  tableName: 'EvaluacionUsuarios',
+  underscored: false
 });
 
 // Relaciones belongsTo para poder hacer includes

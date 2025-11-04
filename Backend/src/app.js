@@ -5,6 +5,7 @@ import authRoutes from "./M01Auth/authRoutes.js";
 import diagnosticoRoutes from "./M03Diagnostico/DiagnosticRoutes.js";
 import cursoRoutes from "./M04Curso/cursoRoutes.js";
 import evaluacionRoutes from "./M05Evaluacion/evaluacionRoutes.js";
+import evaluacionUsuarioRoutes from "./M05Evaluacion/evaluacionUsuarioRoutes.js";
 import preguntaRoutes from "./M05Evaluacion/preguntaRoutes.js";
 import intentoRoutes from "./M05Evaluacion/intentoRoutes.js";
 import iaRoutes from "./M06IA/iaRoutes.js";
@@ -42,6 +43,7 @@ app.use("/api/cursos", cursoRoutes);
 
 //Rutas evaluaciones
 app.use("/api/evaluaciones", evaluacionRoutes);
+app.use("/api/evaluaciones-usuarios", evaluacionUsuarioRoutes);
 app.use("/api/preguntas", preguntaRoutes);
 app.use("/api/intentos", intentoRoutes);
 app.use("/api/ia", iaRoutes);

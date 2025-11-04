@@ -4,11 +4,15 @@ import {
     PreguntaEvaluacion,
     Intento,
     OpcionPregunta,
-    User
+    User,
+    Course,
+    CourseStudent
 } from "../config/relaciones.js";
 import EvaluacionUsuario from "./EvaluacionUsuario.js";
+import sequelize from "../config/db.js";
 
 export const crearEvaluacion = async (req, res) => {
+    const t = await sequelize.transaction();
     try {
         const {
             titulo,
@@ -21,10 +25,12 @@ export const crearEvaluacion = async (req, res) => {
             configuracion,
             profesor_id,
             curso_id,
-            activa
+            activa,
+            preguntas // Array de preguntas con sus opciones
         } = req.body;
         const creado_por = req.body.profesor_id || req.user.id;
 
+        // 1. Crear la evaluación
         const nueva = await Evaluacion.create({
             titulo, 
             descripcion, 
@@ -37,10 +43,90 @@ export const crearEvaluacion = async (req, res) => {
             configuracion,
             curso_id,
             activa: activa !== undefined ? activa : true
+        }, { transaction: t });
+
+        // 2. Crear preguntas si se proporcionan
+        if (preguntas && Array.isArray(preguntas) && preguntas.length > 0) {
+            for (let i = 0; i < preguntas.length; i++) {
+                const preguntaData = preguntas[i];
+                
+                // Crear la pregunta
+                const pregunta = await Pregunta.create({
+                    texto: preguntaData.texto,
+                    tipo: preguntaData.tipo,
+                    dificultad: preguntaData.dificultad || 'medio',
+                    puntos: preguntaData.puntos || 1,
+                    tiempo_sugerido: preguntaData.tiempo_sugerido || 60,
+                    explicacion: preguntaData.explicacion || null,
+                    metadata: preguntaData.metadata || null,
+                    creado_por
+                }, { transaction: t });
+
+                // Crear opciones si existen
+                if (preguntaData.opciones && Array.isArray(preguntaData.opciones) && preguntaData.opciones.length > 0) {
+                    const opcionesData = preguntaData.opciones.map(opcion => ({
+                        preguntaId: pregunta.id,
+                        texto: opcion.texto,
+                        es_correcta: opcion.es_correcta || false,
+                        metadata: opcion.metadata || null
+                    }));
+                    
+                    await OpcionPregunta.bulkCreate(opcionesData, { transaction: t });
+                }
+
+                // Asociar pregunta con evaluación
+                await PreguntaEvaluacion.create({
+                    evaluacionId: nueva.id,
+                    preguntaId: pregunta.id,
+                    puntos: preguntaData.puntos || 1,
+                    orden: i + 1
+                }, { transaction: t });
+            }
+        }
+
+        // 3. Si se asignó a un curso, asignar automáticamente a todos los estudiantes
+        if (curso_id) {
+            const estudiantes = await CourseStudent.findAll({
+                where: { courseId: curso_id },
+                attributes: ['studentId'],
+                transaction: t
+            });
+
+            if (estudiantes.length > 0) {
+                const asignaciones = estudiantes.map(est => ({
+                    evaluacionId: nueva.id,
+                    usuarioId: est.studentId,
+                    estado: 'pendiente'
+                }));
+
+                await EvaluacionUsuario.bulkCreate(asignaciones, { transaction: t });
+            }
+        }
+
+        await t.commit();
+
+        // Recargar con preguntas incluidas
+        const evaluacionCompleta = await Evaluacion.findByPk(nueva.id, {
+            include: [
+                {
+                    model: Pregunta,
+                    as: "Preguntas",
+                    include: [
+                        {
+                            model: OpcionPregunta,
+                            as: "opciones"
+                        }
+                    ],
+                    through: {
+                        attributes: ["puntos", "orden"]
+                    }
+                }
+            ]
         });
 
-        return res.status(201).json(nueva);
+        return res.status(201).json(evaluacionCompleta);
     } catch (error) {
+        await t.rollback();
         console.error(error);
         return res.status(500).json({ message: "Error al crear la evaluación", error: error.message });
     }
@@ -54,8 +140,8 @@ export const editarEvaluacion = async (req, res) => {
         const evaluacion = await Evaluacion.findByPk(id);
         if (!evaluacion) return res.status(404).json({ messsage: "Evaluación no encontrada." });
 
-        if (req.user.role !== "profesor" && req.user.role !== "ia") {
-            return res.status(403).json({ message: "No tienes permisos para crear evaluaciones." });
+        if (req.user.rol !== "profesor" && req.user.rol !== "ia") {
+            return res.status(403).json({ message: "No tienes permisos para editar evaluaciones." });
         }
 
         await evaluacion.update(payload);

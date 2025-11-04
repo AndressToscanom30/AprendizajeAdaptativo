@@ -1,7 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-function VerdaderoFalso() {
-  const [correcta, setCorrecta] = useState("verdadero");
+function VerdaderoFalso({ initialValue = true, onChange }) {
+  const [correcta, setCorrecta] = useState(initialValue ? "verdadero" : "falso");
+
+  // Notificar cambios al padre
+  useEffect(() => {
+    if (onChange) {
+      const opciones = [
+        { texto: "Verdadero", es_correcta: correcta === "verdadero" },
+        { texto: "Falso", es_correcta: correcta === "falso" }
+      ];
+      onChange(opciones);
+    }
+  }, [correcta]);
 
   return (
     <div className="bg-gray-50 rounded-lg p-3 border space-y-2">

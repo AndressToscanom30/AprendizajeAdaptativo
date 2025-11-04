@@ -47,6 +47,11 @@ const Evaluacion = sequelize.define('Evaluacion', {
         type: DataTypes.BOOLEAN,
         defaultValue: true
     },
+    tipo: {
+        type: DataTypes.ENUM('normal', 'adaptativo', 'diagnostico'),
+        defaultValue: 'normal',
+        allowNull: false
+    },
     configuracion: {
         type: DataTypes.JSONB,
         allowNull: true

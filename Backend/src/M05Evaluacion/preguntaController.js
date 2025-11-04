@@ -1,41 +1,142 @@
 import Pregunta from "./Pregunta.js";
 import OpcionPregunta from "./OpcionPregunta.js";
+import PreguntaEvaluacion from "./PreguntaEvaluacion.js";
+import sequelize from "../config/db.js";
 
 export const crearPregunta = async (req, res) => {
+    const t = await sequelize.transaction();
     try {
         const {
             texto,
             tipo,
             dificultad,
+            puntos,
+            tiempo_sugerido,
             metadata,
-            explicacion
+            explicacion,
+            opciones,
+            evaluacion_id
         } = req.body;
         const creado_por = req.user.id;
 
-        const pregunta = await Pregunta.create(({
+        // Crear la pregunta
+        const pregunta = await Pregunta.create({
             texto,
             tipo,
             dificultad,
+            puntos,
+            tiempo_sugerido,
             metadata,
             explicacion,
             creado_por
-        }));
-        return res.status(201).json(pregunta);
+        }, { transaction: t });
+
+        // Crear las opciones si existen
+        if (opciones && Array.isArray(opciones) && opciones.length > 0) {
+            const opcionesData = opciones.map(opcion => ({
+                preguntaId: pregunta.id,
+                texto: opcion.texto,
+                es_correcta: opcion.es_correcta || false,
+                metadata: opcion.metadata || null
+            }));
+            
+            await OpcionPregunta.bulkCreate(opcionesData, { transaction: t });
+        }
+
+        // Asociar con evaluación si se proporciona
+        if (evaluacion_id) {
+            await PreguntaEvaluacion.create({
+                evaluacionId: evaluacion_id,
+                preguntaId: pregunta.id,
+                puntos: puntos || 1,
+                orden: 0 // Puedes ajustar esto según necesites
+            }, { transaction: t });
+        }
+
+        await t.commit();
+
+        // Recargar con opciones para retornar
+        const preguntaCompleta = await Pregunta.findByPk(pregunta.id, {
+            include: [{
+                model: OpcionPregunta,
+                as: "opciones"
+            }]
+        });
+
+        return res.status(201).json(preguntaCompleta);
     } catch (error) {
+        await t.rollback();
         console.error(error);
         return res.status(500).json({ message: "Error al crear pregunta", error: error.message });
     }
 };
 
 export const editarPregunta = async (req, res) => {
+    const t = await sequelize.transaction();
     try {
-        const { id } = req.body;
-        const pregunta = await Pregunta.findByPk(id);
-        if (!pregunta) return res.status(404).json({ message: "Pregunta no encontrada" });
+        const { id } = req.params;
+        const {
+            texto,
+            tipo,
+            dificultad,
+            puntos,
+            tiempo_sugerido,
+            metadata,
+            explicacion,
+            opciones
+        } = req.body;
 
-        await pregunta.update(payload);
-        return res.json(pregunta);
+        const pregunta = await Pregunta.findByPk(id, { transaction: t });
+        if (!pregunta) {
+            await t.rollback();
+            return res.status(404).json({ message: "Pregunta no encontrada" });
+        }
+
+        // Actualizar pregunta
+        await pregunta.update({
+            texto,
+            tipo,
+            dificultad,
+            puntos,
+            tiempo_sugerido,
+            metadata,
+            explicacion
+        }, { transaction: t });
+
+        // Actualizar opciones si se proporcionan
+        if (opciones && Array.isArray(opciones)) {
+            // Eliminar opciones existentes
+            await OpcionPregunta.destroy({
+                where: { preguntaId: id },
+                transaction: t
+            });
+
+            // Crear nuevas opciones
+            if (opciones.length > 0) {
+                const opcionesData = opciones.map(opcion => ({
+                    preguntaId: id,
+                    texto: opcion.texto,
+                    es_correcta: opcion.es_correcta || false,
+                    metadata: opcion.metadata || null
+                }));
+                
+                await OpcionPregunta.bulkCreate(opcionesData, { transaction: t });
+            }
+        }
+
+        await t.commit();
+
+        // Recargar con opciones
+        const preguntaCompleta = await Pregunta.findByPk(id, {
+            include: [{
+                model: OpcionPregunta,
+                as: "opciones"
+            }]
+        });
+
+        return res.json(preguntaCompleta);
     } catch (error) {
+        await t.rollback();
         console.error(error);
         return res.status(500).json({ message: "Error al editar pregunta", error: error.message });
     }

@@ -14,7 +14,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
-  Mail
+  Mail,
+  Brain,
+  BookMarked,
+  Lightbulb
 } from "lucide-react";
 
 export default function NavBarEstudiantes() {
@@ -40,7 +43,10 @@ export default function NavBarEstudiantes() {
 
   const studentMenuItems = [
     { name: "Dashboard", href: "/dashboardE", icon: LayoutDashboard },
-    { name: "Evaluaciones", href: "/diagnostico", icon: ClipboardList },
+    { name: "Mis Cursos", href: "/estudiante/cursos", icon: BookMarked },
+    { name: "Evaluaciones", href: "/estudiante/evaluaciones", icon: ClipboardList },
+    { name: "Análisis IA", href: "/estudiante/analisis-ia", icon: Brain },
+    { name: "Recursos", href: "/recursos", icon: Lightbulb },
     { name: "Perfil", href: "/perfil", icon: UserCircle },
   ];
 

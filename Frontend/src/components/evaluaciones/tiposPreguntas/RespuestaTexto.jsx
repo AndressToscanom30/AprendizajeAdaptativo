@@ -1,9 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-function RespuestaTexto({ tipo = "corta" }) {
-  const [respuesta, setRespuesta] = useState("");
+function RespuestaTexto({ tipo = "corta", initialValue = "", onChange }) {
+  const [respuesta, setRespuesta] = useState(initialValue);
 
   const isLarga = tipo === "larga";
+
+  // Notificar cambios al padre
+  useEffect(() => {
+    if (onChange) {
+      const opciones = [{ texto: respuesta, es_correcta: true }];
+      onChange(opciones);
+    }
+  }, [respuesta]);
 
   return (
     <div className="bg-gray-50 rounded-lg p-3 border space-y-2">
@@ -12,7 +20,7 @@ function RespuestaTexto({ tipo = "corta" }) {
         <textarea
           value={respuesta}
           onChange={(e) => setRespuesta(e.target.value)}
-          placeholder="Escribe la respuesta del estudiante..."
+          placeholder="Escribe la respuesta esperada..."
           className="w-full border rounded-md p-2 focus:outline-none resize-y min-h-[100px]"
         />
       ) : (
@@ -20,7 +28,7 @@ function RespuestaTexto({ tipo = "corta" }) {
           type="text"
           value={respuesta}
           onChange={(e) => setRespuesta(e.target.value)}
-          placeholder="Escribe la respuesta del estudiante..."
+          placeholder="Escribe la respuesta esperada..."
           className="w-full border rounded-md p-2 focus:outline-none"
         />
       )}

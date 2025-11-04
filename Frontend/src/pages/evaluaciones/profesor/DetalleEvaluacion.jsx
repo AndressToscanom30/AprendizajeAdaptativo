@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Clock, Calendar, Users, Trophy, Loader2, AlertCircle, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Calendar, Users, Trophy, Loader2, AlertCircle, Edit, Trash2, Plus, X } from 'lucide-react';
+import FormularioPregunta from '../../../components/evaluaciones/FormularioPregunta';
 
 function DetalleEvaluacion() {
     const { id } = useParams();
@@ -8,6 +9,8 @@ function DetalleEvaluacion() {
     const [evaluacion, setEvaluacion] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [mostrarFormPregunta, setMostrarFormPregunta] = useState(false);
+    const [preguntaEditando, setPreguntaEditando] = useState(null);
 
     useEffect(() => {
         cargarEvaluacion();
@@ -65,6 +68,82 @@ function DetalleEvaluacion() {
             console.error('Error:', error);
             alert('Error al eliminar la evaluación');
         }
+    };
+
+    const handleEliminarPregunta = async (preguntaId) => {
+        if (!confirm('¿Estás seguro de eliminar esta pregunta?')) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(
+                `http://localhost:4000/api/preguntas/${preguntaId}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Error al eliminar pregunta');
+            }
+
+            // Recargar evaluación para actualizar lista de preguntas
+            cargarEvaluacion();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al eliminar la pregunta');
+        }
+    };
+
+    const handleEditarPregunta = (pregunta) => {
+        setPreguntaEditando(pregunta);
+        setMostrarFormPregunta(true);
+    };
+
+    const handleAgregarPregunta = () => {
+        setPreguntaEditando(null);
+        setMostrarFormPregunta(true);
+    };
+
+    const handleGuardarPregunta = async (preguntaData) => {
+        try {
+            const token = localStorage.getItem('token');
+            const isEditing = !!preguntaEditando;
+            const url = isEditing
+                ? `http://localhost:4000/api/preguntas/${preguntaEditando.id}`
+                : `http://localhost:4000/api/preguntas`;
+
+            const response = await fetch(url, {
+                method: isEditing ? 'PUT' : 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...preguntaData,
+                    evaluacion_id: id,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al guardar pregunta');
+            }
+
+            // Cerrar formulario y recargar
+            setMostrarFormPregunta(false);
+            setPreguntaEditando(null);
+            cargarEvaluacion();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al guardar la pregunta');
+        }
+    };
+
+    const handleCancelarPregunta = () => {
+        setMostrarFormPregunta(false);
+        setPreguntaEditando(null);
     };
 
     if (loading) {
@@ -201,30 +280,89 @@ function DetalleEvaluacion() {
                     </div>
 
                     {/* Preguntas */}
-                    {evaluacion.Preguntas && evaluacion.Preguntas.length > 0 && (
-                        <div className="mt-8">
-                            <div className="flex items-center gap-3 mb-4">
+                    <div className="mt-8">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
                                 <div className="bg-gradient-to-br from-indigo-600 to-blue-600 rounded-xl p-2 shadow-lg">
                                     <Users className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-slate-800">
-                                    Preguntas ({evaluacion.Preguntas.length})
+                                    Preguntas ({evaluacion.Preguntas?.length || 0})
                                 </h2>
                             </div>
+                            <button
+                                onClick={handleAgregarPregunta}
+                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-300 shadow-md hover:shadow-lg font-semibold"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Agregar Pregunta
+                            </button>
+                        </div>
+
+                        {/* Formulario de pregunta (agregar/editar) */}
+                        {mostrarFormPregunta && (
+                            <div className="mb-6 bg-blue-50 border-2 border-blue-300 rounded-2xl p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xl font-bold text-slate-800">
+                                        {preguntaEditando ? 'Editar Pregunta' : 'Nueva Pregunta'}
+                                    </h3>
+                                    <button
+                                        onClick={handleCancelarPregunta}
+                                        className="text-slate-600 hover:text-red-600 transition-colors"
+                                    >
+                                        <X className="w-6 h-6" />
+                                    </button>
+                                </div>
+                                <FormularioPregunta
+                                    preguntaInicial={preguntaEditando}
+                                    onGuardar={handleGuardarPregunta}
+                                    onCancelar={handleCancelarPregunta}
+                                />
+                            </div>
+                        )}
+
+                        {/* Lista de preguntas */}
+                        {evaluacion.Preguntas && evaluacion.Preguntas.length > 0 ? (
                             <div className="space-y-3">
                                 {evaluacion.Preguntas.map((pregunta, index) => (
-                                    <div key={pregunta.id} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                                        <p className="font-semibold text-slate-800">
-                                            {index + 1}. {pregunta.texto}
-                                        </p>
-                                        <p className="text-sm text-slate-600 mt-1">
-                                            Tipo: {pregunta.tipo} | Dificultad: {pregunta.dificultad}
-                                        </p>
+                                    <div key={pregunta.id} className="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-blue-300 transition-colors">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <p className="font-semibold text-slate-800">
+                                                    {index + 1}. {pregunta.texto}
+                                                </p>
+                                                <p className="text-sm text-slate-600 mt-1">
+                                                    Tipo: {pregunta.tipo} | Dificultad: {pregunta.dificultad} | Puntos: {pregunta.puntos}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2 ml-4">
+                                                <button
+                                                    onClick={() => handleEditarPregunta(pregunta)}
+                                                    className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors"
+                                                    title="Editar pregunta"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleEliminarPregunta(pregunta.id)}
+                                                    className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                                    title="Eliminar pregunta"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center">
+                                <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                                <p className="text-slate-600 font-medium mb-2">No hay preguntas aún</p>
+                                <p className="text-sm text-slate-500">Haz clic en "Agregar Pregunta" para comenzar</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

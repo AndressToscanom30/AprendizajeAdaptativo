@@ -96,7 +96,7 @@ export const obtenerEstadisticasDashboard = async (req, res) => {
             {
               model: User,
               as: "profesor",
-              attributes: ["id", "nombre", "apellidos"]
+              attributes: ["id", "nombre", "email"]
             }
           ],
           through: { attributes: ["inscrito_en", "estado"] }
@@ -167,17 +167,21 @@ export const obtenerEstadisticasDashboard = async (req, res) => {
 
     return res.json({
       cursos: estudiante.cursosInscritos || [],
-      evaluaciones_pendientes: evaluacionesPendientes.map(ev => ({
-        id: ev.evaluacion.id,
-        titulo: ev.evaluacion.titulo,
-        descripcion: ev.evaluacion.descripcion,
-        termina_en: ev.evaluacion.termina_en,
-        duracion_minutos: ev.evaluacion.duracion_minutos,
-        estado: ev.estado
-      })),
-      ultimos_intentos: ultimosIntentos.map(i => ({
-        id: i.id,
-        evaluacion_titulo: i.evaluacion?.titulo,
+      evaluaciones_pendientes: evaluacionesPendientes
+        .filter(ev => ev.evaluacion !== null) // Filtrar evaluaciones eliminadas
+        .map(ev => ({
+          id: ev.evaluacion.id,
+          titulo: ev.evaluacion.titulo,
+          descripcion: ev.evaluacion.descripcion,
+          termina_en: ev.evaluacion.termina_en,
+          duracion_minutos: ev.evaluacion.duracion_minutos,
+          estado: ev.estado
+        })),
+      ultimos_intentos: ultimosIntentos
+        .filter(i => i.evaluacion !== null) // Filtrar intentos de evaluaciones eliminadas
+        .map(i => ({
+          id: i.id,
+          evaluacion_titulo: i.evaluacion?.titulo,
         puntaje: i.total_puntaje,
         status: i.status,
         finalizado_en: i.finalizado_en
@@ -221,7 +225,7 @@ export const obtenerProgresoCurso = async (req, res) => {
         {
           model: User,
           as: "profesor",
-          attributes: ["id", "nombre", "apellidos", "email"]
+          attributes: ["id", "nombre", "email"]
         }
       ]
     });
