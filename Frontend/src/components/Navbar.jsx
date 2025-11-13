@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { Home, Info, Mail, LogIn, UserPlus, Menu, X } from "lucide-react";
 
@@ -8,8 +8,35 @@ const Navbar = () => {
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { user } = useAuth();
+    const menuRef = useRef(null);
+    const buttonRef = useRef(null);
 
     const currentPath = location.pathname;
+
+    // Prevenir scroll cuando el menú está abierto
+    useEffect(() => {
+        console.log('isMenuOpen changed:', isMenuOpen);
+        if (isMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isMenuOpen]);
+
+    // Debug: Log cuando el componente se monta
+    useEffect(() => {
+        console.log('Navbar mounted');
+        return () => console.log('Navbar unmounted');
+    }, []);
+
+    // Debug: Log cuando cambia la ubicación
+    useEffect(() => {
+        console.log('Location changed:', location.pathname);
+        console.log('Menu is open:', isMenuOpen);
+    }, [location.pathname, isMenuOpen]);
 
     const primaryNav = [
         { name: "Inicio", href: "/", icon: Home },
@@ -97,7 +124,13 @@ const Navbar = () => {
 
                     <div className="md:hidden">
                         <button 
-                            onClick={() => setIsMenuOpen(!isMenuOpen)} 
+                            ref={buttonRef}
+                            onClick={() => {
+                                console.log('=== BUTTON CLICKED ===');
+                                console.log('Current isMenuOpen:', isMenuOpen);
+                                setIsMenuOpen(!isMenuOpen);
+                                console.log('After setState call (next will be):', !isMenuOpen);
+                            }} 
                             className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         >
                             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -108,89 +141,106 @@ const Navbar = () => {
 
             {isMenuOpen && (
                 <>
+                    {/* Mobile Menu Overlay */}
                     <div 
-                        className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
-                        onClick={() => setIsMenuOpen(false)}
+                        className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm animate-fadeIn"
+                        onClick={() => {
+                            console.log('Overlay clicked');
+                            setIsMenuOpen(false);
+                        }}
                     />
 
-                    <div className="fixed top-0 right-0 h-full w-[85vw] max-w-sm bg-white z-50 md:hidden shadow-2xl transform transition-transform duration-300 overflow-y-auto">
-                        <div className="flex justify-between items-center p-6 border-b border-slate-200">
-                            <div className="flex items-center gap-2">
-                                <img src="/finalaa.png" width={40} height={40} alt="Logo" className="rounded-lg" />
+                    {/* Mobile Menu Sidebar */}
+                    <div 
+                        ref={menuRef}
+                        className="fixed top-0 right-0 h-full w-[85vw] max-w-sm bg-white z-50 md:hidden shadow-2xl animate-slideInRight overflow-y-auto"
+                    >
+                <div className="flex justify-between items-center p-6 border-b border-slate-200">
+                    <div className="flex items-center gap-2">
+                        <img src="/finalaa.png" width={40} height={40} alt="Logo" className="rounded-lg" />
+                        <div>
+                            <span className="text-lg font-light text-slate-800">Aprendizaje</span>
+                            <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent ml-1">
+                                Adaptativo
+                            </span>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => {
+                            console.log('Close button clicked');
+                            setIsMenuOpen(false);
+                        }} 
+                        className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <nav className="p-6 space-y-2">
+                    {primaryNav.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = currentPath === item.href;
+                        return (
+                            <button
+                                key={item.name}
+                                onClick={() => {
+                                    console.log('Nav item clicked:', item.name);
+                                    navigate(item.href);
+                                    setIsMenuOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-300 ${
+                                    isActive
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                                        : 'text-slate-600 hover:bg-blue-50 hover:text-blue-600'
+                                }`}
+                            >
+                                <Icon className="w-5 h-5" />
+                                {item.name}
+                            </button>
+                        );
+                    })}
+
+                    {user ? (
+                        <div className="pt-6 border-t border-slate-200 mt-6">
+                            <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-50 to-slate-50 rounded-xl">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                    {(user.nombre || user.email)[0].toUpperCase()}
+                                </div>
                                 <div>
-                                    <span className="text-lg font-light text-slate-800">Aprendizaje</span>
-                                    <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent ml-1">
-                                        Adaptativo
-                                    </span>
+                                    <p className="text-xs text-slate-500">Bienvenido</p>
+                                    <p className="text-sm font-medium text-slate-700">{user.nombre || user.email}</p>
                                 </div>
                             </div>
-                            <button onClick={() => setIsMenuOpen(false)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
-                                <X className="w-5 h-5" />
+                        </div>
+                    ) : (
+                        <div className="pt-6 border-t border-slate-200 mt-6 space-y-3">
+                            <button
+                                onClick={() => {
+                                    console.log('Login button clicked');
+                                    navigate('/login');
+                                    setIsMenuOpen(false);
+                                }}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-base font-medium text-slate-700 border-2 border-slate-200 hover:border-blue-300 hover:text-blue-600 rounded-xl transition-all duration-300"
+                            >
+                                <LogIn className="w-5 h-5" />
+                                Iniciar sesión
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    console.log('Register button clicked');
+                                    navigate('/register');
+                                    setIsMenuOpen(false);
+                                }}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-base font-medium bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl shadow-lg shadow-blue-200 hover:shadow-xl transition-all duration-300"
+                            >
+                                <UserPlus className="w-5 h-5" />
+                                Registrarse
                             </button>
                         </div>
-
-                        <nav className="p-6 space-y-2">
-                            {primaryNav.map((item) => {
-                                const Icon = item.icon;
-                                const isActive = currentPath === item.href;
-                                return (
-                                    <button
-                                        key={item.name}
-                                        onClick={() => {
-                                            navigate(item.href);
-                                            setIsMenuOpen(false);
-                                        }}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-300 ${
-                                            isActive
-                                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
-                                                : 'text-slate-600 hover:bg-blue-50 hover:text-blue-600'
-                                        }`}
-                                    >
-                                        <Icon className="w-5 h-5" />
-                                        {item.name}
-                                    </button>
-                                );
-                            })}
-
-                            {user ? (
-                                <div className="pt-6 border-t border-slate-200 mt-6">
-                                    <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-50 to-slate-50 rounded-xl">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                            {(user.nombre || user.email)[0].toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-slate-500">Bienvenido</p>
-                                            <p className="text-sm font-medium text-slate-700">{user.nombre || user.email}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="pt-6 border-t border-slate-200 mt-6 space-y-3">
-                                    <button
-                                        onClick={() => {
-                                            navigate('/login');
-                                            setIsMenuOpen(false);
-                                        }}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-base font-medium text-slate-700 border-2 border-slate-200 hover:border-blue-300 hover:text-blue-600 rounded-xl transition-all duration-300"
-                                    >
-                                        <LogIn className="w-5 h-5" />
-                                        Iniciar sesión
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            navigate('/register');
-                                            setIsMenuOpen(false);
-                                        }}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-base font-medium bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl shadow-lg shadow-blue-200 hover:shadow-xl transition-all duration-300"
-                                    >
-                                        <UserPlus className="w-5 h-5" />
-                                        Registrarse
-                                    </button>
-                                </div>
-                            )}
-                        </nav>
-                    </div>
+                    )}
+                </nav>
+            </div>
                 </>
             )}
         </nav>

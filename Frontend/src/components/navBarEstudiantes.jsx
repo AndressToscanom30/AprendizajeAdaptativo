@@ -28,10 +28,6 @@ export default function NavBarEstudiantes() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    closeSidebar();
-  }, [location.pathname, closeSidebar]);
-
-  useEffect(() => {
     const handleScroll = () => {
       setScrolled(globalThis.scrollY > 20);
     };
@@ -117,17 +113,17 @@ export default function NavBarEstudiantes() {
       {/* Overlay para cerrar el sidebar en móvil */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm"
           onClick={closeSidebar}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-20 left-0 h-[calc(100vh-5rem)] bg-white border-r border-slate-200 z-30 
+        className={`fixed top-0 left-0 h-screen bg-white border-r border-slate-200 z-40 
         transform transition-all duration-300 ease-in-out shadow-xl overflow-x-hidden
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-        lg:translate-x-0 ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'} w-72`}
+        lg:translate-x-0 lg:top-20 lg:h-[calc(100vh-5rem)] ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'} w-72`}
       >
         <div className="flex flex-col h-full overflow-x-hidden">
           {/* Header del Sidebar */}

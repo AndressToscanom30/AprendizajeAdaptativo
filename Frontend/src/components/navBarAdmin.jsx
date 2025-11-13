@@ -28,9 +28,10 @@ export default function NavBarAdmin() {
   const { sidebarOpen, toggleSidebar, closeSidebar, sidebarCollapsed, toggleSidebarCollapse } = useSidebar();
   const [scrolled, setScrolled] = useState(false);
 
-  useEffect(() => {
-    closeSidebar();
-  }, [location.pathname, closeSidebar]);
+  // COMENTADO TEMPORALMENTE - Este useEffect cierra el sidebar automáticamente
+  // useEffect(() => {
+  //   closeSidebar();
+  // }, [location.pathname, closeSidebar]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -117,13 +118,13 @@ export default function NavBarAdmin() {
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm mt-20"
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm mt-20"
           onClick={closeSidebar}
         />
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-screen bg-white border-r border-slate-200 z-30 
+        className={`fixed top-0 left-0 h-screen bg-white border-r border-slate-200 z-40 
         transform transition-all duration-300 ease-in-out shadow-xl pt-20
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
         lg:translate-x-0 ${sidebarCollapsed ? 'lg:w-20' : 'w-72'}`}
